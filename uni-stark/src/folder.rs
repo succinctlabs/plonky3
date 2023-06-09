@@ -25,9 +25,9 @@ where
     type F = F;
     type Expr = F::Packing;
     type Var = F::Packing;
-    type M = TwoRowMatrixView<'a, F::Packing>;
+    type M<'b> = TwoRowMatrixView<'a, F::Packing> where Self: 'b;
 
-    fn main(&self) -> Self::M {
+    fn main(&self) -> Self::M<'a> {
         self.main
     }
 

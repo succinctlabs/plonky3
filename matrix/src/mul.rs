@@ -1,6 +1,6 @@
 use crate::dense::RowMajorMatrix;
 use crate::sparse::CsrMatrix;
-use crate::Matrix;
+use crate::{DenseMatrix, Matrix};
 use alloc::vec;
 use p3_field::Field;
 
@@ -8,7 +8,7 @@ use p3_field::Field;
 ///
 /// # Panics
 /// Panics if dimensions of input matrices don't match.
-pub fn mul_csr_dense_v2<F: Field, B: Matrix<F>>(a: &CsrMatrix<F>, b: &B) -> RowMajorMatrix<F> {
+pub fn mul_csr_dense_v2<F: Field, B: DenseMatrix<F>>(a: &CsrMatrix<F>, b: &B) -> RowMajorMatrix<F> {
     assert_eq!(a.width(), b.height(), "A, B dimensions don't match");
     let c_width = b.width();
     let c_height = a.height();
@@ -17,9 +17,19 @@ pub fn mul_csr_dense_v2<F: Field, B: Matrix<F>>(a: &CsrMatrix<F>, b: &B) -> RowM
     for a_row_idx in 0..a.height() {
         let c_row = c.row_mut(a_row_idx);
         for &(a_col_idx, a_val) in a.row(a_row_idx) {
-            F::add_scaled_slice_in_place(c_row, b.row(a_col_idx), a_val);
+            add_scaled_slice_in_place(c_row, b.row(a_col_idx).into_iter(), a_val);
         }
     }
 
     c
+}
+
+/// `x += y * s`, where `s` is a scalar.
+fn add_scaled_slice_in_place<'a, F, Y>(x: &'a mut [F], y: Y, s: F)
+where
+    F: Field,
+    Y: Iterator<Item = &'a F>,
+{
+    // TODO: Use PackedField
+    x.iter_mut().zip(y).for_each(|(x_i, y_i)| *x_i += *y_i * s);
 }

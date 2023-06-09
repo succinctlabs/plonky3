@@ -9,7 +9,7 @@ use core::marker::PhantomData;
 use itertools::Itertools;
 use p3_commit::{Dimensions, DirectMMCS, MMCS};
 use p3_matrix::dense::RowMajorMatrix;
-use p3_matrix::Matrix;
+use p3_matrix::{DenseMatrix, Matrix};
 use p3_symmetric::compression::PseudoCompressionFunction;
 use p3_symmetric::hasher::CryptographicHasher;
 

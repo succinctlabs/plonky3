@@ -1,4 +1,4 @@
-use p3_matrix::Matrix;
+use p3_matrix::{DenseMatrix, Matrix};
 
 #[derive(Copy, Clone)]
 pub struct TwoRowMatrixView<'a, T> {
@@ -20,12 +20,16 @@ impl<'a, T> Matrix<T> for TwoRowMatrixView<'a, T> {
     fn height(&self) -> usize {
         2
     }
+}
 
-    fn row(&self, r: usize) -> &[T] {
+impl<T> DenseMatrix<T> for TwoRowMatrixView<'_, T> {
+    type Row<'a> = &'a [T] where Self: 'a, T: 'a;
+
+    fn row<'a>(&'a self, r: usize) -> &'a [T] {
         match r {
             0 => self.local,
             1 => self.next,
-            _ => panic!("BasicAirWindow only supports two-rows windows"),
+            _ => panic!("Only two rows available"),
         }
     }
 }

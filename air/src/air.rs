@@ -1,7 +1,7 @@
 use core::ops::{Add, Mul, Sub};
 use p3_field::{AbstractField, AbstractionOf, Field};
 use p3_matrix::dense::RowMajorMatrix;
-use p3_matrix::Matrix;
+use p3_matrix::DenseMatrix;
 
 pub trait Air<AB: AirBuilder>: Sync {
     fn eval(&self, builder: &mut AB);
@@ -19,7 +19,8 @@ pub trait AirBuilder: Sized {
         + Sub<Self::Var, Output = Self::Expr>
         + Mul<Self::Var, Output = Self::Expr>;
 
-    type Var: Into<Self::Expr>
+    type Var: 'static
+        + Into<Self::Expr>
         + Copy
         + Add<Self::F, Output = Self::Expr>
         + Add<Self::Var, Output = Self::Expr>
@@ -31,9 +32,11 @@ pub trait AirBuilder: Sized {
         + Mul<Self::Var, Output = Self::Expr>
         + Mul<Self::Expr, Output = Self::Expr>;
 
-    type M: Matrix<Self::Var>;
+    type M<'a>: DenseMatrix<Self::Var, Row<'a> = &'a [Self::Var]>
+    where
+        Self: 'a;
 
-    fn main(&self) -> Self::M;
+    fn main<'a>(&'a self) -> Self::M<'a>;
 
     fn is_first_row(&self) -> Self::Expr;
     fn is_last_row(&self) -> Self::Expr;
@@ -97,11 +100,11 @@ pub trait AirBuilder: Sized {
 }
 
 pub trait PairBuilder: AirBuilder {
-    fn preprocessed(&self) -> Self::M;
+    fn preprocessed<'a>(&'a self) -> Self::M<'a>;
 }
 
 pub trait PermutationAirBuilder: AirBuilder {
-    fn permutation(&self) -> Self::M;
+    fn permutation<'a>(&'a self) -> Self::M<'a>;
 
     fn permutation_randomness(&self) -> &[Self::Expr];
 }
@@ -115,9 +118,9 @@ impl<'a, AB: AirBuilder> AirBuilder for FilteredAirBuilder<'a, AB> {
     type F = AB::F;
     type Expr = AB::Expr;
     type Var = AB::Var;
-    type M = AB::M;
+    type M<'b> = AB::M<'b> where Self: 'b;
 
-    fn main(&self) -> Self::M {
+    fn main<'b>(&'b self) -> Self::M<'b> {
         self.inner.main()
     }
 
@@ -141,17 +144,18 @@ impl<'a, AB: AirBuilder> AirBuilder for FilteredAirBuilder<'a, AB> {
 #[cfg(test)]
 mod tests {
     use crate::{Air, AirBuilder};
-    use p3_matrix::Matrix;
+    use p3_matrix::DenseMatrix;
 
     struct FibonacciAir;
 
     impl<AB: AirBuilder> Air<AB> for FibonacciAir {
-        fn eval(&self, builder: &mut AB) {
-            let main = builder.main();
+        fn eval<'a>(&'a self, builder: &'a mut AB) {
+            let main: AB::M<'a> = builder.main();
 
-            let x_0 = main.row(0)[0];
-            let x_1 = main.row(1)[0];
-            let x_2 = main.row(2)[0];
+            let x_0: AB::Var = main.row(0)[0];
+            let x_1: AB::Var = main.row(1)[0];
+            let x_2: AB::Var = main.row(2)[0];
+            drop(main);
 
             builder.when_first_row().assert_zero(x_0);
             builder.when_first_row().assert_one(x_1);

@@ -14,14 +14,27 @@ pub mod stack;
 pub trait Matrix<T> {
     fn width(&self) -> usize;
     fn height(&self) -> usize;
+}
 
-    fn row(&self, r: usize) -> &[T];
+/// A `Matrix` that supports randomly accessing particular rows or entries. Generally dense matrices
+/// should implement this, but sparse matrices may not.
+pub trait DenseMatrix<T>: Matrix<T> {
+    type Row<'a>: IntoIterator<Item = &'a T>
+    where
+        Self: 'a,
+        T: 'a;
+
+    fn row<'a>(&'a self, r: usize) -> Self::Row<'a>;
 
     fn get(&self, r: usize, c: usize) -> T
     where
-        T: Copy,
+        T: Clone,
     {
-        self.row(r)[c]
+        self.row(r)
+            .into_iter()
+            .nth(c)
+            .expect("c out of range")
+            .clone()
     }
 }
 
@@ -34,7 +47,7 @@ impl<T> Matrix<T> for Box<dyn Matrix<T>> {
         self.as_ref().height()
     }
 
-    fn row(&self, r: usize) -> &[T] {
-        self.as_ref().row(r)
-    }
+    // fn row(&self, r: usize) -> &[T] {
+    //     self.as_ref().row(r)
+    // }
 }
