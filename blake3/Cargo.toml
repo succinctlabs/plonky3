@@ -6,4 +6,5 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 blake3 = { git = "https://github.com/npwardberkeley/BLAKE3" }
+itertools = "0.11.0"
 p3-symmetric = { path = "../symmetric" }
