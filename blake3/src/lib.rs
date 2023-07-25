@@ -28,7 +28,7 @@ impl CryptographicHasher<u8, [[u8; 32]; VSIZE]> for Blake3Hash {
         output.intern.chunks(chunk_size).map(|chunk| chunk.try_into().unwrap()).collect_vec().try_into().unwrap()
     }
 
-    fn hash_iter_slices<'a, I>(&self, input: I) -> [[u8; 32]; VSIZE]
+    fn hash_iter_slices<'a, I>(&self, _input: I) -> [[u8; 32]; VSIZE]
     where
         I: IntoIterator<Item = &'a [u8]>,
     {
