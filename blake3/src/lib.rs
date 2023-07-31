@@ -43,5 +43,4 @@ impl Blake3Hash {
             .try_into()
             .unwrap()
     }
-
 }
