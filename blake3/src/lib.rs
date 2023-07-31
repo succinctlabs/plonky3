@@ -8,28 +8,33 @@ use alloc::vec::Vec;
 
 use blake3::{hash_many_wrapper, MAX_SIMD_DEGREE_OR_2};
 use itertools::Itertools;
-use p3_symmetric::hasher::CryptographicHasher;
 
 /// The BLAKE3 permutation.
 pub struct Blake3Hash;
 
 const VSIZE: usize = MAX_SIMD_DEGREE_OR_2;
 
-impl CryptographicHasher<u8, [[u8; 32]; VSIZE]> for Blake3Hash {
-    fn hash_iter<I>(&self, input: I) -> [[u8; 32]; VSIZE]
+// impl CryptographicHasher<u8, [[u8; 32]; VSIZE]> for Blake3Hash {
+impl Blake3Hash {
+    pub fn hash_iter<I>(&self, input: I, input_len: usize) -> [[u8; 32]; VSIZE]
     where
         I: IntoIterator<Item = u8>,
     {
-        let input_vec = input.into_iter().collect::<Vec<_>>();
-        let chunk_size = input_vec.len() / VSIZE;
-        let input_chunks = input_vec.chunks(chunk_size);
-        let input_chunks_array: [&[u8]; VSIZE] = input_chunks
-            .map(|chunk| chunk.try_into().unwrap())
+        let chunk_size = input_len / VSIZE;
+        let input_vecs_vec: Vec<Vec<u8>> = input
+            .into_iter()
+            .chunks(chunk_size)
+            .into_iter()
+            .map(|chunk| chunk.collect_vec())
+            .collect_vec();
+        let input_slices_array = input_vecs_vec
+            .iter()
+            .map(|vec| vec.as_slice())
             .collect_vec()
             .try_into()
             .unwrap();
 
-        let output = hash_many_wrapper(&input_chunks_array);
+        let output = hash_many_wrapper(&input_slices_array);
         output
             .intern
             .chunks(chunk_size)
@@ -39,10 +44,4 @@ impl CryptographicHasher<u8, [[u8; 32]; VSIZE]> for Blake3Hash {
             .unwrap()
     }
 
-    fn hash_iter_slices<'a, I>(&self, _input: I) -> [[u8; 32]; VSIZE]
-    where
-        I: IntoIterator<Item = &'a [u8]>,
-    {
-        todo!()
-    }
 }
