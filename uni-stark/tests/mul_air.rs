@@ -81,12 +81,12 @@ fn test_prove_baby_bear() -> Result<(), VerificationError> {
     let ldt = FriLdt { config: fri_config };
 
     type Pcs = FriBasedPcs<MyFriConfig, MyMmcs, Dft, Challenger>;
-    type MyConfig = StarkConfigImpl<Val, Domain, Challenge, Pcs, Dft, Challenger>;
+    type MyConfig = StarkConfigImpl<Val, Domain, Challenge, Pcs, Challenger>;
 
     let mut rng = thread_rng();
     let trace = RowMajorMatrix::rand(&mut rng, HEIGHT, TRACE_WIDTH);
     let pcs = Pcs::new(dft, 1, mmcs, ldt);
-    let config = StarkConfigImpl::new(pcs, Dft {});
+    let config = StarkConfigImpl::new(pcs);
     let mut challenger = Challenger::new(perm.clone());
     let proof = prove::<MyConfig, _>(&config, &MulAir, &mut challenger, trace);
 
