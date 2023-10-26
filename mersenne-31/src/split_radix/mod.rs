@@ -247,7 +247,7 @@ mod tests {
         let mut rng = thread_rng();
         let re = rng.gen::<u32>();
         let im = rng.gen::<u32>();
-        Complex::new(re as i64, im as i64)
+        Complex::new(normalise_real(re as i64), normalise_real(im as i64))
     }
 
     fn randvec(n: usize) -> Vec<Complex> {

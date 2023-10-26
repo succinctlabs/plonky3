@@ -108,6 +108,13 @@ fn randcomplex(_: usize) -> Complex {
     Complex::new(re.into(), im.into())
 }
 
+fn randvec(n: usize) -> Vec<Complex> {
+    (0..n)
+        .into_iter()
+        .map(randcomplex)
+        .collect::<Vec<Complex>>()
+}
+
 fn djbfft<const BATCH_SIZE: usize>(c: &mut Criterion)
 where
     Standard: Distribution<i64>,
@@ -115,40 +122,38 @@ where
     let mut group = c.benchmark_group(&format!("djbfft::<{}>", BATCH_SIZE));
     group.sample_size(10);
 
-    let n = 4096;
-    let mut v = (0..n)
-        .into_iter()
-        .map(randcomplex)
-        .collect::<Vec<Complex>>();
-
+    let mut v = randvec(512);
     group.bench_function(BenchmarkId::from_parameter(512), |b| {
         b.iter(|| {
             for _ in 0..BATCH_SIZE {
-                forward_fft::<512>(&mut v[..512]);
+                forward_fft::<512>(&mut v);
             }
         });
     });
 
+    let mut v = randvec(1024);
     group.bench_function(BenchmarkId::from_parameter(1024), |b| {
         b.iter(|| {
             for _ in 0..BATCH_SIZE {
-                forward_fft::<1024>(&mut v[..1024]);
+                forward_fft::<1024>(&mut v);
             }
         });
     });
 
+    let mut v = randvec(2048);
     group.bench_function(BenchmarkId::from_parameter(2048), |b| {
         b.iter(|| {
             for _ in 0..BATCH_SIZE {
-                forward_fft::<2048>(&mut v[..2048]);
+                forward_fft::<2048>(&mut v);
             }
         });
     });
 
+    let mut v = randvec(4096);
     group.bench_function(BenchmarkId::from_parameter(4096), |b| {
         b.iter(|| {
             for _ in 0..BATCH_SIZE {
-                forward_fft::<4096>(&mut v[..4096]);
+                forward_fft::<4096>(&mut v);
             }
         });
     });
