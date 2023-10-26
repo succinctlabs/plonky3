@@ -15,7 +15,7 @@ fn bench_fft(c: &mut Criterion) {
     // for the DFT over the quadratic extension "Mersenne31Complex" a
     // fairer comparison is to use half sizes, which is the log minus 1.
     let log_sizes = &[14, 16, 18];
-    let log_half_sizes = &[13, 15, 17];
+    let log_half_sizes = &[9, 10, 13, 15, 17];
 
     const BATCH_SIZE: usize = 100;
 
@@ -28,10 +28,12 @@ fn bench_fft(c: &mut Criterion) {
     fft::<Mersenne31Complex<Mersenne31>, Radix2Dit, BATCH_SIZE>(c, log_half_sizes);
     fft::<Mersenne31Complex<Mersenne31>, Radix2Bowers, BATCH_SIZE>(c, log_half_sizes);
     fft::<Mersenne31Complex<Mersenne31>, Radix2DitParallel, BATCH_SIZE>(c, log_half_sizes);
-
     fft::<Mersenne31Complex<Mersenne31>, Mersenne31ComplexRadix2Dit, BATCH_SIZE>(c, log_half_sizes);
+
     m31_fft::<Radix2Dit, BATCH_SIZE>(c, log_sizes);
     m31_fft::<Mersenne31ComplexRadix2Dit, BATCH_SIZE>(c, log_sizes);
+
+    djbfft::<BATCH_SIZE>(c);
 
     ifft::<Goldilocks, Radix2Dit, BATCH_SIZE>(c);
 
@@ -93,6 +95,63 @@ where
             });
         });
     }
+}
+
+use p3_mersenne_31::split_radix::{forward_fft, Complex};
+use rand::Rng;
+
+fn randcomplex(_: usize) -> Complex {
+    const P: u32 = (1 << 31) - 1;
+    let mut rng = thread_rng();
+    let re = rng.gen::<u32>() % P;
+    let im = rng.gen::<u32>() % P;
+    Complex::new(re.into(), im.into())
+}
+
+fn djbfft<const BATCH_SIZE: usize>(c: &mut Criterion)
+where
+    Standard: Distribution<i64>,
+{
+    let mut group = c.benchmark_group(&format!("djbfft::<{}>", BATCH_SIZE));
+    group.sample_size(10);
+
+    let n = 4096;
+    let mut v = (0..n)
+        .into_iter()
+        .map(randcomplex)
+        .collect::<Vec<Complex>>();
+
+    group.bench_function(BenchmarkId::from_parameter(512), |b| {
+        b.iter(|| {
+            for _ in 0..BATCH_SIZE {
+                forward_fft::<512>(&mut v[..512]);
+            }
+        });
+    });
+
+    group.bench_function(BenchmarkId::from_parameter(1024), |b| {
+        b.iter(|| {
+            for _ in 0..BATCH_SIZE {
+                forward_fft::<1024>(&mut v[..1024]);
+            }
+        });
+    });
+
+    group.bench_function(BenchmarkId::from_parameter(2048), |b| {
+        b.iter(|| {
+            for _ in 0..BATCH_SIZE {
+                forward_fft::<2048>(&mut v[..2048]);
+            }
+        });
+    });
+
+    group.bench_function(BenchmarkId::from_parameter(4096), |b| {
+        b.iter(|| {
+            for _ in 0..BATCH_SIZE {
+                forward_fft::<4096>(&mut v[..4096]);
+            }
+        });
+    });
 }
 
 fn ifft<F, Dft, const BATCH_SIZE: usize>(c: &mut Criterion)

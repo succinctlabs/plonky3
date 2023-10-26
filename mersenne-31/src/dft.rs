@@ -159,6 +159,11 @@ fn idft_postprocess(input: RowMajorMatrix<Ext>) -> RowMajorMatrix<Base> {
 #[derive(Default, Clone)]
 pub struct Mersenne31Dft;
 
+// TODO: I think I want to do the "fold real vect in half and do
+// half-sized FFT" when only a single FFT is requested, and do the
+// "combine two real vects in one complex vect and do same-size FFT"
+// when we need to do multiple FFTs.
+
 impl Mersenne31Dft {
     /// Compute the DFT of each column of `mat`.
     ///

@@ -8,6 +8,7 @@ mod complex;
 mod dft;
 mod extension;
 mod radix_2_dit;
+pub mod split_radix;
 
 use core::fmt;
 use core::fmt::{Debug, Display, Formatter};
