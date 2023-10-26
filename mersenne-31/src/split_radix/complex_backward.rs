@@ -1,5 +1,5 @@
 use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64};
-use super::{normalise, normalise_all, normalise_i64, Complex, Real};
+use super::{normalise, normalise_all, normalise_real, Complex, Real};
 
 /// SQRTHALF * SQRTHALF = 1/2 (mod P)
 const SQRTHALF: Real = D16[1].re; // == 1 << 15
@@ -22,17 +22,17 @@ fn untransform(
     let mut t4 = a2.re;
     let mut t5 = a3.re;
     t5 *= t6;
-    t5 = normalise_i64(t5);
+    t5 = normalise_real(t5);
     let mut t7 = a3.im;
     t1 += t3;
-    t1 = normalise_i64(t1);
+    t1 = normalise_real(t1);
     t7 *= t8;
     t5 -= t7;
     t3 = t5 + t1;
     t5 -= t1;
     t2 *= t6;
     t6 *= a3.im;
-    t6 = normalise_i64(t6);
+    t6 = normalise_real(t6);
     t4 *= t8;
     t2 -= t4;
     t8 *= a3.re;

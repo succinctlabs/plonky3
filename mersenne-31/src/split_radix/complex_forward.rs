@@ -1,5 +1,5 @@
 use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64};
-use super::{normalise, normalise_all, normalise_i64, Complex, Real};
+use super::{normalise, normalise_all, normalise_real, Complex, Real};
 
 /// SQRTHALF * SQRTHALF = 1/2 (mod P)
 const SQRTHALF: Real = D16[1].re; // == 1 << 15
@@ -10,6 +10,29 @@ const SQRTHALF: Real = D16[1].re; // == 1 << 15
 //       -wim*(a0.im - a2.im) + (a1.re - a3.re)) =
 // a3 = (wre*(a0.re - a2.re) + (a1.im - a3.im),
 //       wim*(a0.im - a2.im) - (a1.re - a3.re))  =
+//
+// Input/output are Complex a0, a1, a2, a3. Assume inputs are
+// "essentially reduced" modulo P (i.e. 0 <= ai.{re,im} <= P).
+//
+// TODO: Root (wre, wim) is also assumed essentially reduced. Should
+// investigate if it's preferable to store instead as
+// -P < w.{re,im} < P
+//
+// NB: sqrthalf = 2^15.
+//
+// Then
+//
+//   0 <= a0.{re,im} <= 2P
+//   0 <= a1.{re,im} <= 2P
+//
+// NB: These inequalities can't all attain a max (resp. min) simultaneously.
+//
+// -(P + P^2) <= a[23].{re,im} <= P + P^2 = 2^62 - (2^32 - 2^31)
+//
+// If we use -P < w.{re,im} < P, then
+//
+// -P^2 <= a[23].{re,im} <= P + P(P-1) = P^2 = 2^62 - (2^32 - 1)
+//
 #[inline]
 fn transform(
     a0: &mut Complex,
@@ -30,9 +53,9 @@ fn transform(
     t3 += a1.im;
     a1.im = t3;
     let mut t5 = wre;
-    t8 = normalise_i64(t8);
+    t8 = normalise_real(t8);
     let mut t7 = t8 * t5;
-    t4 = normalise_i64(t1) * t5;
+    t4 = normalise_real(t1) * t5;
     t8 *= wim;
     let mut t2 = a3.re;
     t3 = a1.re - t2;
@@ -41,7 +64,7 @@ fn transform(
 
     normalise(a1);
 
-    t1 = normalise_i64(t1);
+    t1 = normalise_real(t1);
     t1 *= wim;
     t6 = a2.im;
     t2 = a0.im - t6;
@@ -52,27 +75,27 @@ fn transform(
 
     t6 = t2 + t3;
     t2 -= t3;
-    t6 = normalise_i64(t6);
+    t6 = normalise_real(t6);
     t3 = t6 * wim;
-    t3 = normalise_i64(t3); // BOOOO :(
+    t3 = normalise_real(t3); // BOOOO :(
     t7 -= t3;
     a2.re = t7;
-    t6 = normalise_i64(t6);
+    t6 = normalise_real(t6);
     t6 *= t5;
-    t6 = normalise_i64(t6); // BOOOO :(
+    t6 = normalise_real(t6); // BOOOO :(
     t6 += t8;
     a2.im = t6;
 
     normalise(a2);
 
-    t2 = normalise_i64(t2); // BOOOO :(
+    t2 = normalise_real(t2); // BOOOO :(
     t5 *= t2;
-    t5 = normalise_i64(t5); // BOOOO :(
+    t5 = normalise_real(t5); // BOOOO :(
     t5 -= t1;
     a3.im = t5;
-    t2 = normalise_i64(t2);
+    t2 = normalise_real(t2);
     t2 *= wim;
-    t2 = normalise_i64(t2); // BOOOO :(
+    t2 = normalise_real(t2); // BOOOO :(
     t4 += t2;
     a3.re = t4;
 
@@ -91,6 +114,21 @@ fn transform(
 //          + ((a0.im - a2.im) - (a1.re - a3.re))] * sqrthalf,
 //       [-((a0.re - a2.re) + (a1.im - a3.im))
 //          + ((a0.im - a2.im) - (a1.re - a3.re))] * sqrthalf)
+//
+// Input/output are Complex a0, a1, a2, a3. Assume inputs are
+// "essentially reduced" modulo P (i.e. 0 <= ai.{re,im} <= P).
+//
+// NB: sqrthalf = 2^15.
+//
+// Then
+//
+//   0 <= a0.{re,im} <= 2P
+//   0 <= a1.{re,im} <= 2P
+//
+// NB: These inequalities can't all attain a max (resp. min) simultaneously.
+//
+// -2^17 P <= a[23].{re,im} <= 2^17 P
+//
 #[inline]
 fn transformhalf(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut Complex) {
     let mut t1 = a2.re;
@@ -145,6 +183,17 @@ fn transformhalf(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
 //       (a0.im - a2.im) + (a1.re - a3.re))   = (a0 - a2) + i*(a1 - a3)
 // a3 = ((a0.re - a2.re) + (a1.im - a3.im),
 //       (a0.im - a2.im) - (a1.re - a3.re))   = (a0 - a2) - i*(a1 - a3)
+//
+// Input/output are Complex a0, a1, a2, a3. Assume inputs are
+// "essentially reduced" modulo P (i.e. 0 <= ai.{re,im} <= P).
+//
+// Then
+//
+//   0 <= a0.{re,im} <= 2P
+//   0 <= a1.{re,im} <= 2P
+// -2P <= a2.re, a3.re <= 2P  // NB: These two lines can't attain a max
+// -2P <= a2.im, a3.im <= 2P  // (resp. min) simultaneously.
+//
 #[inline]
 fn transformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut Complex) {
     let mut t5 = a2.re;
@@ -163,25 +212,14 @@ fn transformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     let t3 = a1.re - t7;
     t7 += a1.re;
     a1.re = t7;
-
-    normalise(a1);
-
     t6 = a2.im;
     let mut t2 = a0.im - t6;
     t7 = t2 + t3;
     a2.im = t7;
-
-    normalise(a2);
-
     t2 -= t3;
     a3.im = t2;
-
-    normalise(a3);
-
     t6 += a0.im;
     a0.im = t6;
-
-    normalise(a0);
 }
 
 /// Normal radix-2 butterfly:
@@ -303,7 +341,7 @@ pub(crate) fn c4(a: &mut [Complex]) {
     t6 -= t5;                   // a0.im - a1.im + a2.im - a3.im
     a[1].im = t6;
 
-    normalise_all(a);
+    //normalise_all(a);
 }
 
 pub(crate) fn c8(a: &mut [Complex]) {

@@ -107,7 +107,7 @@ impl Complex {
     }
 
     pub fn conj(&self) -> Self {
-        Self::new(self.re, normalise_i64(-self.im))
+        Self::new(self.re, normalise_real(-self.im))
     }
 }
 
@@ -117,7 +117,7 @@ impl fmt::Debug for Complex {
     }
 }
 
-pub(crate) const fn into<const N: usize>(u: [(i64, i64); N]) -> [Complex; N] {
+pub(crate) const fn into<const N: usize>(u: [(Real, Real); N]) -> [Complex; N] {
     let mut v = [Complex::ZERO; N];
     let mut i = 0;
     loop {
@@ -134,7 +134,7 @@ pub(crate) const fn into<const N: usize>(u: [(i64, i64); N]) -> [Complex; N] {
 // correctness, but should be removed in favour of distributing the
 // reduction logic throughout the code.
 #[inline]
-pub(crate) fn normalise_i64(a: i64) -> i64 {
+pub(crate) fn normalise_real(a: Real) -> Real {
     // if a < 0, then -P < a % P <= 0.
     let amodp = a % P;
     if amodp < 0 {
@@ -146,8 +146,8 @@ pub(crate) fn normalise_i64(a: i64) -> i64 {
 
 #[inline]
 pub(crate) fn normalise(z: &mut Complex) {
-    z.re = normalise_i64(z.re);
-    z.im = normalise_i64(z.im);
+    z.re = normalise_real(z.re);
+    z.im = normalise_real(z.im);
 }
 
 #[inline]
@@ -157,8 +157,8 @@ pub(crate) fn normalise_all(zs: &mut [Complex]) {
 
 impl PartialEq for Complex {
     fn eq(&self, other: &Self) -> bool {
-        normalise_i64(self.re) == normalise_i64(other.re)
-            && normalise_i64(self.im) == normalise_i64(other.im)
+        normalise_real(self.re) == normalise_real(other.re)
+            && normalise_real(self.im) == normalise_real(other.im)
     }
 }
 
@@ -168,7 +168,7 @@ mod tests {
         backward128, backward256, backward32, backward4096, backward64, u16, u4, u8,
     };
     use crate::split_radix::complex_forward::{c128, c16, c256, c32, c4, c4096, c64, c8};
-    use crate::split_radix::{normalise_i64, Complex, Real, P};
+    use crate::split_radix::{normalise_real, Complex, Real, P};
     use rand::{thread_rng, Rng};
 
     use alloc::vec::Vec;
@@ -180,8 +180,8 @@ mod tests {
 
         fn add(self, other: Self) -> Self {
             Self {
-                re: normalise_i64(self.re + other.re),
-                im: normalise_i64(self.im + other.im),
+                re: normalise_real(self.re + other.re),
+                im: normalise_real(self.im + other.im),
             }
         }
     }
@@ -191,10 +191,10 @@ mod tests {
 
         fn mul(self, other: Self) -> Self {
             Self {
-                re: normalise_i64(
+                re: normalise_real(
                     (self.re % P * (other.re % P)) % P - (self.im % P * (other.im % P)) % P,
                 ),
-                im: normalise_i64(
+                im: normalise_real(
                     (self.im % P * (other.re % P)) % P + (self.re % P * (other.im % P)) % P,
                 ),
             }
@@ -206,8 +206,8 @@ mod tests {
 
         fn mul(self, other: Real) -> Self {
             Self {
-                re: normalise_i64(self.re * other),
-                im: normalise_i64(self.im * other),
+                re: normalise_real(self.re * other),
+                im: normalise_real(self.im * other),
             }
         }
     }
