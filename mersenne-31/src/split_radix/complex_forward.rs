@@ -1,5 +1,5 @@
 use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64};
-use super::{normalise, normalise_all, Complex, Real, P};
+use super::{normalise, normalise_all, normalise_u32, Complex, Real, P};
 
 /// SQRTHALF * SQRTHALF = 1/2 (mod P)
 const SQRTHALF: Real = D16[1].re; // == 1 << 15
@@ -52,7 +52,6 @@ fn transform(
     wre: Real,
     wim: Real,
 ) {
-    // FIXME: Remove these!
     debug_assert!(0 <= a0.re, "{}", a0.re);
     debug_assert!(a0.re <= P, "{}", a0.re);
     debug_assert!(0 <= a0.im, "{}", a0.im);
@@ -76,13 +75,13 @@ fn transform(
     let mut t6 = a2.re;       // t6 = a2.re
     let mut t1 = a0.re - t6;  // t1 = a0.re - a2.re
     t6 += a0.re;              // t6 = a0.re + a2.re
-    a0.re = t6;             
+    a0.re = normalise_u32(t6);
     let mut t3 = a3.im;       // t3 = a3.im
     let mut t4 = a1.im - t3;  // t4 = a1.im - a3.im
     let mut t8 = t1 - t4;     // t8 = (a0.re - a2.re) - (a1.im - a3.im)
     t1 += t4;                 // t1 = (a0.re - a2.re) + (a1.im - a3.im)
     t3 += a1.im;              // t3 = a1.im + a3.im
-    a1.im = t3;
+    a1.im = normalise_u32(t3);
     let mut t5 = wre;         // t5 = wre
     let mut t7 = t8 * t5;     // t7 = wre * [(a0.re - a2.re) - (a1.im - a3.im)]
     t4 = t1 * t5;             // t4 = wre * [(a0.re - a2.re) + (a1.im - a3.im)]
@@ -90,17 +89,13 @@ fn transform(
     let mut t2 = a3.re;       // t2 = a3.re
     t3 = a1.re - t2;          // t3 = a1.re - a3.re
     t2 += a1.re;              // t2 = a1.re + a3.re
-    a1.re = t2;
-
-    normalise(a1);
+    a1.re = normalise_u32(t2);
 
     t1 *= wim;                // t1 = wim * [(a0.re - a2.re) + (a1.im - a3.im)]
     t6 = a2.im;               // t6 = a2.im
     t2 = a0.im - t6;          // t2 = a0.im - a2.im
     t6 += a0.im;              // t6 = a0.im + a2.im
-    a0.im = t6;
-
-    normalise(a0);
+    a0.im = normalise_u32(t6);
 
     t6 = t2 + t3;             // t6 = (a0.im - a2.im) + (a1.re - a3.re)
     t2 -= t3;                 // t2 = (a0.im - a2.im) - (a1.re - a3.re)
@@ -159,28 +154,24 @@ fn transformhalf(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     let mut t1 = a2.re;
     let mut t5 = a0.re - t1;
     t1 += a0.re;
-    a0.re = t1;
+    a0.re = normalise_u32(t1);
     let mut t4 = a3.im;
     let mut t8 = a1.im - t4;
     t1 = t5 - t8;
     t5 += t8;
     t4 += a1.im;
-    a1.im = t4;
+    a1.im = normalise_u32(t4);
     let mut t3 = a3.re;
     let mut t7 = a1.re - t3;
     t3 += a1.re;
-    a1.re = t3;
-
-    normalise(a1);
+    a1.re = normalise_u32(t3);
 
     t8 = a2.im;
     let mut t6 = a0.im - t8;
     let mut t2 = t6 + t7;
     t6 -= t7;
     t8 += a0.im;
-    a0.im = t8;
-
-    normalise(a0);
+    a0.im = normalise_u32(t8);
 
     t4 = t6 + t5;
     t3 = SQRTHALF;
@@ -224,7 +215,7 @@ fn transformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     let mut t5 = a2.re;
     let mut t1 = a0.re - t5;
     t5 += a0.re;
-    a0.re = t5;
+    a0.re = normalise_u32(t5);
     let mut t8 = a3.im;
     let t4 = a1.im - t8;
     let mut t7 = a3.re;
@@ -233,12 +224,10 @@ fn transformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     t1 += t4;
     a3.re = t1;
     t8 += a1.im;
-    a1.im = t8;
+    a1.im = normalise_u32(t8);
     let t3 = a1.re - t7;
     t7 += a1.re;
-    a1.re = t7;
-
-    normalise(a1);
+    a1.re = normalise_u32(t7);
 
     t6 = a2.im;
     let mut t2 = a0.im - t6;
@@ -253,9 +242,7 @@ fn transformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     normalise(a3);
 
     t6 += a0.im;
-    a0.im = t6;
-
-    normalise(a0);
+    a0.im = normalise_u32(t6);
 }
 
 /// Normal radix-2 butterfly:
@@ -334,6 +321,7 @@ pub(crate) fn c2(a: &mut [Complex]) {
 // y3 = u1 + i (w z - w^-1 z') = x0 - x2 + iw x1 - iw^-1 x3
 //
 
+// FIXME: Need to either reduce here, or explain why it's not necessary.
 #[inline]
 #[rustfmt::skip]
 pub(crate) fn c4(a: &mut [Complex]) {
@@ -461,6 +449,8 @@ pub(crate) fn c8(a: &mut [Complex]) {
 
     c4(&mut a[..4]);
 
+    // NB: At last check, commenting out this normalisation only saves
+    // about 2--5%.
     normalise_all(&mut a[4..]);
 }
 

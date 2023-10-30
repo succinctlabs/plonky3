@@ -145,6 +145,13 @@ pub(crate) fn normalise_real(a: Real) -> Real {
 }
 
 #[inline]
+pub(crate) fn normalise_u32(a: Real) -> Real {
+    let msb = a & (1 << 31);
+    let msb_reduced = msb >> 31;
+    (a ^ msb) + msb_reduced
+}
+
+#[inline]
 pub(crate) fn normalise(z: &mut Complex) {
     z.re = normalise_real(z.re);
     z.im = normalise_real(z.im);
