@@ -122,6 +122,33 @@ where
     let mut group = c.benchmark_group(&format!("djbfft::<{}>", BATCH_SIZE));
     group.sample_size(10);
 
+    let mut v = randvec(16);
+    group.bench_function(BenchmarkId::from_parameter(16), |b| {
+        b.iter(|| {
+            for _ in 0..BATCH_SIZE {
+                forward_fft::<16>(&mut v);
+            }
+        });
+    });
+
+    let mut v = randvec(32);
+    group.bench_function(BenchmarkId::from_parameter(32), |b| {
+        b.iter(|| {
+            for _ in 0..BATCH_SIZE {
+                forward_fft::<32>(&mut v);
+            }
+        });
+    });
+
+    let mut v = randvec(64);
+    group.bench_function(BenchmarkId::from_parameter(64), |b| {
+        b.iter(|| {
+            for _ in 0..BATCH_SIZE {
+                forward_fft::<64>(&mut v);
+            }
+        });
+    });
+
     let mut v = randvec(512);
     group.bench_function(BenchmarkId::from_parameter(512), |b| {
         b.iter(|| {

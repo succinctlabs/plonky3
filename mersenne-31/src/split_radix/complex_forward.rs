@@ -25,9 +25,8 @@ const SQRTHALF: Real = D16[1].re; // == 1 << 15
 // Input/output are Complex a0, a1, a2, a3. Assume inputs are
 // "essentially reduced" modulo P (i.e. 0 <= ai.{re,im} <= P).
 //
-// TODO: Root (wre, wim) is also assumed essentially reduced. Should
-// investigate if it's preferable to store instead as
-// -P/2 < w.{re,im} < P/2
+// Root (wre, wim) is in "balanced representation", i.e.
+// -(P-1)/2 <= w.{re,im} <= (P-1)/2.
 //
 // Then
 //
@@ -36,11 +35,11 @@ const SQRTHALF: Real = D16[1].re; // == 1 << 15
 //
 // NB: These inequalities can't all attain a max (resp. min) simultaneously.
 //
-// -(P + P^2) <= a[23].{re,im} <= 2 * ((P - 1) * 2P) = 4P^2 - 4P > 2^64
+// |a[23].{re,im}| <= 2 * 2P * (P - 1)/2 = 2P^2 - 2P < 2^63
 //
-// If we use -P/2 < w.{re,im} < P/2, then
+// For reference, if the roots were in reduced form, then the bounds would be:
 //
-// ... <= a[23].{re,im} <= P + P * (P/2 - 1) = P^2 / 2 = 2^61 - (2^31 - 1/2)
+// |a[23].{re,im}| <= 2 * ((P - 1) * 2P) = 4P^2 - 4P > 2^64
 //
 #[inline]
 #[rustfmt::skip]

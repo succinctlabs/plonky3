@@ -73,6 +73,9 @@ pub struct Complex {
 
 pub fn forward_fft<const N: usize>(u: &mut [Complex]) {
     match N {
+        16 => c16(u),
+        32 => c32(u),
+        64 => c64(u),
         512 => c512(u),
         1024 => c1024(u),
         2048 => c2048(u),
@@ -130,25 +133,100 @@ pub(crate) const fn into<const N: usize>(u: [(Real, Real); N]) -> [Complex; N] {
     v
 }
 
-// FIXME: These "normalisation" functions are currently used to get
-// correctness, but should be removed in favour of distributing the
-// reduction logic throughout the code.
 #[inline]
-pub(crate) fn normalise_real(a: Real) -> Real {
-    // if a < 0, then -P < a % P <= 0.
-    let amodp = a % P;
-    if amodp < 0 {
-        amodp + P
-    } else {
-        amodp
-    }
+pub(crate) fn normalise_u32(x: Real) -> Real {
+    debug_assert!(x >= 0 && x <= 2 * P);
+
+    // let msb = x & (1 << 31);
+    // let msb_reduced = msb >> 31;
+    // (x ^ msb) + msb_reduced
+
+    // This method seems to make the FFT bench 5--9% faster than the
+    // one above
+    let x = x as u64;
+    x.min(x.overflowing_sub(P as u64).0) as i64
 }
 
+/*
+/// Given 0 <= x <= P, return x' such that
+/// -(p - 1)/2 <= x' <= (p + 1)/2 and x = x' (mod p).
 #[inline]
-pub(crate) fn normalise_u32(a: Real) -> Real {
-    let msb = a & (1 << 31);
-    let msb_reduced = msb >> 31;
-    (a ^ msb) + msb_reduced
+fn shift(x: i64) -> i64 {
+    debug_assert!(x >= 0 && x <= P);
+
+// As a u32, the top two bits of x are b = 00 or 01. In the first case,
+// x < P/2 and so can be left alone. In the second case x > P/2 and we
+// want to subtract P = 2^31 - 1 to get x - 2^31 + 1. As an i32, -2^31
+// corresponds to the most significant bit, whence the "| (b<<31)", then
+// we add 1.
+
+    let x = x as u64;
+    let b = (x >> 30) as i32;
+    let y = (x as i32 | (b << 31)) + b;
+    y as i64 // sign extend...
+}
+*/
+
+/// Given a Real x in the range |x| <= 2 * P * (P - 1), return
+/// the Real x' in the range 0 <= x' <= P such that x' = x (mod P).
+#[inline]
+pub(crate) fn normalise_real(x: Real) -> Real {
+    const ABSMAX_ELT: i64 = 2 * P * (P - 1);
+    debug_assert!(x <= ABSMAX_ELT && x >= -ABSMAX_ELT);
+
+    const MASK: u64 = (1 << 31) - 1;
+    let y = x as u64; // make unsigned so the right shift doesn't sign extend
+    let (lo, hi) = ((y & MASK) as i64, ((y >> 31) & MASK) as i64);
+
+    // Here we prove the correctness of the line "lo + hi + (x >> 62)".
+    //
+    // FIXME: Note that for one particular value (3 << 62) we "underflow"
+    // and pass -1 to `normalise_u32()`. This is bug.
+    //
+    // The input x is an i64. If we label its bits from b[0] to b[63]
+    // and use the relation 2^31 = 1 (mod p), then
+    //
+    //   x = -b[63] * 2^63 + \sum_{i=0}^62 b[i] * 2^i  // 2's compl repr
+    //     = -b[63] * 2^63 + b[62] * 2^62
+    //          + \sum_{i=0}^30 b[i] * 2^i + \sum_{i=31}^61 b[i] * 2^{i-31}
+    //     = -2 * b[63] + b[62] + b[0..=30] + b[31..=61]
+    //     = -2 * b[63] + b[62] + lo + hi
+    //
+    // Note:
+    //  1) 0 <= lo, hi <= 2^31 - 1 == P
+    //  2) The possible values of -2 * b[63] + b[62] are:
+    //        0 if b[63] = b[62] = 0
+    //        1 if b[63] = 0 and b[62] = 1
+    //       -2 if b[63] = 1 and b[62] = 0
+    //       -1 if b[63] = b[62] = 1
+    //     This is the signed 2-bit number in 2's complement, so can be
+    //     obtained as the arithmetic right shift of the top two bits,
+    //     whence (x >> 62) = -2 * b[63] + b[62].
+    //  3) Regarding overflow and underflow, consider each possible value
+    //     of -2 * b[63] + b[62]:
+    //       a.  0 ==> Then the result is lo + hi which is fine.
+    //       b.  1 ==> Would be > 2P if lo = hi = P, however that corresponds
+    //              to the bit pattern b[63] = 0 and b[i] = 1 for 0 <= i < 63
+    //              which is 2^63 - 1 > 2 * P * (P - 1), hence can't happen.
+    //       c. -2 ==> Would be < 0 if lo + hi = 0 or 1. These possibilites
+    //              correspond to x being:
+    //                 0x8000_0000_0000_0000   lo = hi = 0
+    //                 0x8000_0000_0000_0001   lo = 1, hi = 0
+    //                 0x8000_0000_8000_0000   lo = 0, hi = 1
+    //              all of which are < -2 * P * (P - 1), hence can't happen.
+    //       d. -1 ==> Will be < 0 if lo = hi = 0. This corresponds to
+    //              x = 0xC000_0000_0000_0000 > -2 * P * (P - 1), which
+    //              is a valid input (specifically it is = -1 (mod p)).
+    //              *** HENCE THIS IS A BUG!! ***
+    //
+    // x must be signed for the SAR here
+    let fold = (lo + hi) + (x >> 62);
+    // 0 <= fold <= 2P
+
+    let x_mod_p = normalise_u32(fold);
+    // 0 <= x_mod_p <= P
+
+    x_mod_p
 }
 
 #[inline]
