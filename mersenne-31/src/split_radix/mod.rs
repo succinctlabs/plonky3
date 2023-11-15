@@ -50,8 +50,10 @@
 // `4c1.c`, and then brief specialisations for sizes 1024, 2048, 4096
 // and 8192 in the files `4c2.c`...`4c5.c` respectively.
 
-use crate::split_radix::{complex_backward::*, complex_forward::*};
 use core::fmt;
+
+use crate::split_radix::complex_backward::*;
+use crate::split_radix::complex_forward::*;
 
 // TODO: These are only pub for benches at the moment...
 pub mod complex_backward;
@@ -108,10 +110,6 @@ impl Complex {
     pub const fn from_pair((re, im): (Real, Real)) -> Self {
         Self::new(re, im)
     }
-
-    pub fn conj(&self) -> Self {
-        Self::new(self.re, normalise_real(-self.im))
-    }
 }
 
 impl fmt::Debug for Complex {
@@ -135,7 +133,7 @@ pub(crate) const fn into<const N: usize>(u: [(Real, Real); N]) -> [Complex; N] {
 
 #[inline]
 pub(crate) fn normalise_u32(x: Real) -> Real {
-    debug_assert!(x >= 0 && x <= 2 * P);
+    debug_assert!(x >= 0 && x <= 2 * P, "x = {} out of range", x);
 
     // let msb = x & (1 << 31);
     // let msb_reduced = msb >> 31;
@@ -167,11 +165,15 @@ fn shift(x: i64) -> i64 {
 }
 */
 
-/// Given a Real x in the range |x| <= 2 * P * (P - 1), return
-/// the Real x' in the range 0 <= x' <= P such that x' = x (mod P).
+/// Given a Real x in the range |x| <= 2 * (P^2 - 1), return
+/// a Real x' in the range -1 <= x' <= P such that x' = x (mod P).
+///
+/// NB: 0 (mod P) is represented by the values 0 or P, and -1 (mod P)
+/// is represented by -1 or P-1. All other values are represented
+/// uniquely by themselves.
 #[inline]
 pub(crate) fn normalise_real(x: Real) -> Real {
-    const ABSMAX_ELT: i64 = 2 * P * (P - 1);
+    const ABSMAX_ELT: i64 = 2 * (P * P - 1);
     debug_assert!(x <= ABSMAX_ELT && x >= -ABSMAX_ELT);
 
     const MASK: u64 = (1 << 31) - 1;
@@ -181,7 +183,7 @@ pub(crate) fn normalise_real(x: Real) -> Real {
     // Here we prove the correctness of the line "lo + hi + (x >> 62)".
     //
     // FIXME: Note that for one particular value (3 << 62) we "underflow"
-    // and pass -1 to `normalise_u32()`. This is bug.
+    // and pass -1 to `normalise_u32()`. This is a bug.
     //
     // The input x is an i64. If we label its bits from b[0] to b[63]
     // and use the relation 2^31 = 1 (mod p), then
@@ -199,7 +201,7 @@ pub(crate) fn normalise_real(x: Real) -> Real {
     //        1 if b[63] = 0 and b[62] = 1
     //       -2 if b[63] = 1 and b[62] = 0
     //       -1 if b[63] = b[62] = 1
-    //     This is the signed 2-bit number in 2's complement, so can be
+    //     This is a signed 2-bit number in 2's complement, so can be
     //     obtained as the arithmetic right shift of the top two bits,
     //     whence (x >> 62) = -2 * b[63] + b[62].
     //  3) Regarding overflow and underflow, consider each possible value
@@ -209,7 +211,7 @@ pub(crate) fn normalise_real(x: Real) -> Real {
     //              to the bit pattern b[63] = 0 and b[i] = 1 for 0 <= i < 63
     //              which is 2^63 - 1 > 2 * P * (P - 1), hence can't happen.
     //       c. -2 ==> Would be < 0 if lo + hi = 0 or 1. These possibilites
-    //              correspond to x being:
+    //              correspond to the input x being:
     //                 0x8000_0000_0000_0000   lo = hi = 0
     //                 0x8000_0000_0000_0001   lo = 1, hi = 0
     //                 0x8000_0000_8000_0000   lo = 0, hi = 1
@@ -219,12 +221,14 @@ pub(crate) fn normalise_real(x: Real) -> Real {
     //              is a valid input (specifically it is = -1 (mod p)).
     //              *** HENCE THIS IS A BUG!! ***
     //
-    // x must be signed for the SAR here
-    let fold = (lo + hi) + (x >> 62);
-    // 0 <= fold <= 2P
 
-    let x_mod_p = normalise_u32(fold);
-    // 0 <= x_mod_p <= P
+    // 0 <= lo + hi <= 2P
+    let fold = normalise_u32(lo + hi);
+    // 0 <= fold < P (or == P if lo + hi = 2P)
+
+    // x must be signed for the SAR here
+    let x_mod_p = fold + (x >> 62);
+    // -1 <= x_mod_p <= P
 
     x_mod_p
 }
@@ -249,16 +253,17 @@ impl PartialEq for Complex {
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec::Vec;
+    use core::iter::repeat_with;
+    use core::ops::{Add, Mul};
+
+    use rand::{thread_rng, Rng};
+
     use crate::split_radix::complex_backward::{
         backward128, backward256, backward32, backward4096, backward64, u16, u4, u8,
     };
     use crate::split_radix::complex_forward::{c128, c16, c256, c32, c4, c4096, c64, c8};
     use crate::split_radix::{normalise_real, Complex, Real, P};
-    use rand::{thread_rng, Rng};
-
-    use alloc::vec::Vec;
-    use core::iter::repeat_with;
-    use core::ops::{Add, Mul};
 
     impl Add for Complex {
         type Output = Self;
@@ -542,4 +547,23 @@ mod tests {
 
         assert!(conv.iter().zip(pt_prods).all(|(&c, p)| p == c * N as i64));
     }
+
+    /*
+    #[test]
+    fn bad_reduc() {
+        // In particular -906276279 + 967747991 i is a 32nd root of
+        // unity and
+        // Re[(-906276279 + 967747991 i)*(1355777538 + 3495721022 i)] = -2^62.
+
+        // These satisfy the ranges as 906276279 < 967747991 <
+        // 1073741823 = (P - 1)/2 and 1355777538 < 3495721022 <
+        // 4294967294 = 2P.
+
+        let a = Complex::new(-906276279, 967747991); // 32nd root of 1
+        let b = Complex::new(1355777538, 3495721022);
+        let ab_re = a.re * b.re - a.im * b.im;
+        assert_eq!(ab_re, -1 << 62);
+        assert_eq!(normalise_real(ab_re), P - 1);
+    }
+    */
 }

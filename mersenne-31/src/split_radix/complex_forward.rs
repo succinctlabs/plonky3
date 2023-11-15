@@ -448,9 +448,10 @@ pub(crate) fn c8(a: &mut [Complex]) {
 
     c4(&mut a[..4]);
 
-    // NB: At last check, commenting out this normalisation only saves
-    // about 2--5%.
-    normalise_all(&mut a[4..]);
+    normalise(&mut a[4]);
+    normalise(&mut a[5]);
+    normalise(&mut a[6]);
+    normalise(&mut a[7]);
 }
 
 pub(crate) fn c16(a: &mut [Complex]) {
