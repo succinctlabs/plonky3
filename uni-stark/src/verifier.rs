@@ -4,6 +4,7 @@ use alloc::vec::Vec;
 use p3_air::{Air, TwoRowMatrixView};
 use p3_challenger::{CanObserve, FieldChallenger};
 use p3_commit::UnivariatePcs;
+use p3_dft::reverse_slice_index_bits;
 use p3_field::{AbstractExtensionField, AbstractField, Field, TwoAdicField};
 
 use crate::{Proof, StarkConfig, VerifierConstraintFolder};
@@ -20,7 +21,7 @@ where
 {
     let degree_bits = 6; // TODO
     let log_quotient_degree = 1; // TODO
-    let g_subgroup = SC::Domain::two_adic_generator(degree_bits);
+    let g_subgroup = SC::Val::two_adic_generator(degree_bits);
 
     let Proof {
         commitments,
@@ -56,7 +57,7 @@ where
     // Derive the opening of the quotient polynomial, which was split into degree n chunks, then
     // flattened into D base field polynomials. We first undo the flattening.
     let challenge_ext_degree = <SC::Challenge as AbstractExtensionField<SC::Val>>::D;
-    let quotient_parts: Vec<SC::Challenge> = opened_values
+    let mut quotient_parts: Vec<SC::Challenge> = opened_values
         .quotient_chunks
         .chunks(challenge_ext_degree)
         .map(|chunk| {
@@ -68,15 +69,15 @@ where
         })
         .collect();
     // Then we reconstruct the larger quotient polynomial from its degree-n parts.
-    let g_quotient_parts = SC::Domain::two_adic_generator(log_quotient_degree);
-    let quotient: SC::Challenge = g_quotient_parts
+    reverse_slice_index_bits(&mut quotient_parts);
+    let quotient: SC::Challenge = zeta
         .powers()
         .zip(quotient_parts)
         .map(|(weight, part)| part * weight)
         .sum();
 
-    let z_h = zeta.exp_power_of_2(degree_bits) - SC::Challenge::ONE;
-    let is_first_row = z_h / (zeta - SC::Val::ONE);
+    let z_h = zeta.exp_power_of_2(degree_bits) - SC::Challenge::one();
+    let is_first_row = z_h / (zeta - SC::Val::one());
     let is_last_row = z_h / (zeta - g_subgroup.inverse());
     let is_transition = zeta - g_subgroup.inverse();
     let mut folder = VerifierConstraintFolder {
@@ -88,7 +89,7 @@ where
         is_last_row,
         is_transition,
         alpha,
-        accumulator: SC::Challenge::ZERO,
+        accumulator: SC::Challenge::zero(),
     };
     air.eval(&mut folder);
     let folded_constraints = folder.accumulator;
@@ -96,8 +97,7 @@ where
     // Finally, check that
     //     folded_constraints(zeta) = Z_H(zeta) * quotient(zeta)
     if folded_constraints != z_h * quotient {
-        // TODO: Re-enable when it's passing.
-        // return Err(VerificationError::OodEvaluationMismatch);
+        return Err(VerificationError::OodEvaluationMismatch);
     }
 
     Ok(())

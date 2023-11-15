@@ -8,8 +8,7 @@ use p3_field::{AbstractField, Field, PackedField};
 use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::{Matrix, MatrixRowSlices};
 use p3_maybe_rayon::{IndexedParallelIterator, MaybeParChunksMut, ParallelIterator};
-use p3_symmetric::compression::PseudoCompressionFunction;
-use p3_symmetric::hasher::CryptographicHasher;
+use p3_symmetric::{CryptographicHasher, PseudoCompressionFunction};
 use tracing::instrument;
 
 /// A binary Merkle tree for field data. It has leaves of type `F` and digests of type
@@ -108,7 +107,7 @@ where
     let max_height = tallest_matrices[0].height();
     let max_height_padded = max_height.next_power_of_two();
 
-    let default_digest = [P::Scalar::ZERO; DIGEST_ELEMS];
+    let default_digest = [P::Scalar::zero(); DIGEST_ELEMS];
     let mut digests = vec![default_digest; max_height_padded];
 
     digests[0..max_height]
@@ -161,7 +160,7 @@ where
     let next_len = matrices_to_inject[0].height();
     let next_len_padded = prev_layer.len() / 2;
 
-    let default_digest = [P::Scalar::ZERO; DIGEST_ELEMS];
+    let default_digest = [P::Scalar::zero(); DIGEST_ELEMS];
     let mut next_digests = vec![default_digest; next_len_padded];
 
     next_digests[0..next_len]
@@ -220,7 +219,7 @@ where
     let width = P::WIDTH;
     let next_len = prev_layer.len() / 2;
 
-    let default_digest = [P::Scalar::ZERO; DIGEST_ELEMS];
+    let default_digest = [P::Scalar::zero(); DIGEST_ELEMS];
     let mut next_digests = vec![default_digest; next_len];
 
     next_digests[0..next_len]

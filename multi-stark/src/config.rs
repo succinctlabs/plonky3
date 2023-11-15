@@ -18,7 +18,6 @@ pub trait StarkConfig {
     /// The PCS used to commit to trace polynomials.
     type Pcs: for<'a> MultivariatePcs<
         Self::Val,
-        Self::Val,
         Self::Challenge,
         RowMajorMatrixView<'a, Self::Val>,
         Self::Challenger,
@@ -31,10 +30,7 @@ pub trait StarkConfig {
 
 pub struct StarkConfigImpl<Val, Challenge, PackedChallenge, Pcs, Challenger> {
     pcs: Pcs,
-    _phantom_val: PhantomData<Val>,
-    _phantom_challenge: PhantomData<Challenge>,
-    _phantom_packed_challenge: PhantomData<PackedChallenge>,
-    _phantom_chal: PhantomData<Challenger>,
+    _phantom: PhantomData<(Val, Challenge, PackedChallenge, Challenger)>,
 }
 
 impl<Val, Challenge, PackedChallenge, Pcs, Challenger>
@@ -43,10 +39,7 @@ impl<Val, Challenge, PackedChallenge, Pcs, Challenger>
     pub fn new(pcs: Pcs) -> Self {
         Self {
             pcs,
-            _phantom_val: PhantomData,
-            _phantom_challenge: PhantomData,
-            _phantom_packed_challenge: PhantomData,
-            _phantom_chal: PhantomData,
+            _phantom: PhantomData,
         }
     }
 }
@@ -57,7 +50,7 @@ where
     Val: Field,
     Challenge: ExtensionField<Val>,
     PackedChallenge: PackedField<Scalar = Challenge> + AbstractExtensionField<Val::Packing>,
-    Pcs: for<'a> MultivariatePcs<Val, Val, Challenge, RowMajorMatrixView<'a, Val>, Challenger>,
+    Pcs: for<'a> MultivariatePcs<Val, Challenge, RowMajorMatrixView<'a, Val>, Challenger>,
     Challenger: FieldChallenger<Val>,
 {
     type Val = Val;

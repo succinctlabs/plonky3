@@ -2,92 +2,67 @@ use core::marker::PhantomData;
 
 use p3_challenger::{CanObserve, FieldChallenger};
 use p3_commit::{Pcs, UnivariatePcsWithLde};
-use p3_dft::TwoAdicSubgroupDft;
-use p3_field::{AbstractExtensionField, ExtensionField, Field, PackedField, TwoAdicField};
+use p3_field::{AbstractExtensionField, ExtensionField, PackedField, TwoAdicField};
 use p3_matrix::dense::RowMajorMatrix;
 
 pub trait StarkConfig {
     /// The field over which trace data is encoded.
-    type Val: Field;
-
-    /// The domain over which trace polynomials are defined.
-    type Domain: ExtensionField<Self::Val> + TwoAdicField;
-    type PackedDomain: PackedField<Scalar = Self::Domain>;
+    type Val: TwoAdicField;
+    type PackedVal: PackedField<Scalar = Self::Val>;
 
     /// The field from which most random challenges are drawn.
-    type Challenge: ExtensionField<Self::Val> + ExtensionField<Self::Domain> + TwoAdicField;
-    type PackedChallenge: PackedField<Scalar = Self::Challenge>
-        + AbstractExtensionField<Self::PackedDomain>;
+    type Challenge: ExtensionField<Self::Val> + TwoAdicField;
+    type PackedChallenge: AbstractExtensionField<Self::PackedVal, F = Self::Challenge>;
 
     /// The PCS used to commit to trace polynomials.
     type Pcs: UnivariatePcsWithLde<
         Self::Val,
-        Self::Domain,
         Self::Challenge,
         RowMajorMatrix<Self::Val>,
         Self::Challenger,
     >;
 
-    type Dft: TwoAdicSubgroupDft<Self::Domain> + TwoAdicSubgroupDft<Self::Challenge>;
-
+    /// The challenger (Fiat-Shamir) implementation used.
     type Challenger: FieldChallenger<Self::Val>
         + CanObserve<<Self::Pcs as Pcs<Self::Val, RowMajorMatrix<Self::Val>>>::Commitment>;
 
     fn pcs(&self) -> &Self::Pcs;
-
-    fn dft(&self) -> &Self::Dft;
 }
 
-pub struct StarkConfigImpl<Val, Domain, Challenge, Pcs, Dft, Challenger> {
+pub struct StarkConfigImpl<Val, Challenge, PackedChallenge, Pcs, Challenger> {
     pcs: Pcs,
-    dft: Dft,
-    _phantom_val: PhantomData<Val>,
-    _phantom_domain: PhantomData<Domain>,
-    _phantom_challenge: PhantomData<Challenge>,
-    _phantom_chal: PhantomData<Challenger>,
+    _phantom: PhantomData<(Val, Challenge, PackedChallenge, Challenger)>,
 }
 
-impl<Val, Domain, Challenge, Pcs, Dft, Challenger>
-    StarkConfigImpl<Val, Domain, Challenge, Pcs, Dft, Challenger>
+impl<Val, Challenge, PackedChallenge, Pcs, Challenger>
+    StarkConfigImpl<Val, Challenge, PackedChallenge, Pcs, Challenger>
 {
-    pub fn new(pcs: Pcs, dft: Dft) -> Self {
+    pub fn new(pcs: Pcs) -> Self {
         Self {
             pcs,
-            dft,
-            _phantom_val: PhantomData,
-            _phantom_domain: PhantomData,
-            _phantom_challenge: PhantomData,
-            _phantom_chal: PhantomData,
+            _phantom: PhantomData,
         }
     }
 }
 
-impl<Val, Domain, Challenge, Pcs, Dft, Challenger> StarkConfig
-    for StarkConfigImpl<Val, Domain, Challenge, Pcs, Dft, Challenger>
+impl<Val, Challenge, PackedChallenge, Pcs, Challenger> StarkConfig
+    for StarkConfigImpl<Val, Challenge, PackedChallenge, Pcs, Challenger>
 where
-    Val: Field,
-    Domain: ExtensionField<Val> + TwoAdicField,
-    Challenge: ExtensionField<Val> + ExtensionField<Domain> + TwoAdicField,
-    Challenge::Packing: AbstractExtensionField<Domain::Packing>,
-    Pcs: UnivariatePcsWithLde<Val, Domain, Challenge, RowMajorMatrix<Val>, Challenger>,
-    Dft: TwoAdicSubgroupDft<Domain> + TwoAdicSubgroupDft<Challenge>,
+    Val: TwoAdicField,
+    Challenge: ExtensionField<Val> + TwoAdicField,
+    PackedChallenge: AbstractExtensionField<Val::Packing, F = Challenge>,
+    Pcs: UnivariatePcsWithLde<Val, Challenge, RowMajorMatrix<Val>, Challenger>,
     Challenger: FieldChallenger<Val>
         + CanObserve<<Pcs as p3_commit::Pcs<Val, RowMajorMatrix<Val>>>::Commitment>,
 {
     type Val = Val;
-    type Domain = Domain;
-    type PackedDomain = Domain::Packing;
+    type PackedVal = Val::Packing;
     type Challenge = Challenge;
-    type PackedChallenge = Challenge::Packing;
+    type PackedChallenge = PackedChallenge;
     type Pcs = Pcs;
-    type Dft = Dft;
     type Challenger = Challenger;
 
     fn pcs(&self) -> &Self::Pcs {
         &self.pcs
-    }
-
-    fn dft(&self) -> &Self::Dft {
-        &self.dft
     }
 }

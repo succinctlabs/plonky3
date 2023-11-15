@@ -53,7 +53,7 @@ impl<T> RowMajorMatrix<T> {
         self.values.chunks_exact_mut(self.width)
     }
 
-    pub fn row_chunks_mut(
+    pub fn par_row_chunks_mut(
         &mut self,
         chunk_rows: usize,
     ) -> impl IndexedParallelIterator<Item = RowMajorMatrixViewMut<T>>
@@ -98,6 +98,20 @@ impl<T> RowMajorMatrix<T> {
             values: self.values.iter().map(|v| f(v.clone())).collect(),
             width: self.width,
         }
+    }
+
+    /// Flatten a matrix of extension field elements into a matrix of base field elements.
+    pub fn flatten_to_base<F: Field>(&self) -> RowMajorMatrix<F>
+    where
+        T: ExtensionField<F>,
+    {
+        let width = self.width * T::D;
+        let values = self
+            .values
+            .iter()
+            .flat_map(|x| x.as_base_slice().iter().copied())
+            .collect();
+        RowMajorMatrix { values, width }
     }
 
     pub fn to_ext<EF: ExtensionField<T>>(&self) -> RowMajorMatrix<EF>
@@ -293,11 +307,21 @@ impl<'a, T> RowMajorMatrixViewMut<'a, T> {
         self.values.chunks_exact_mut(self.width)
     }
 
-    pub fn par_rows_mut(&mut self) -> impl ParallelIterator<Item = &mut [T]>
+    pub fn par_rows_mut(&mut self) -> impl IndexedParallelIterator<Item = &mut [T]>
     where
         T: Send,
     {
         self.values.par_chunks_exact_mut(self.width)
+    }
+
+    pub fn par_row_chunks_mut(
+        &mut self,
+        size: usize,
+    ) -> impl IndexedParallelIterator<Item = &mut [T]>
+    where
+        T: Send,
+    {
+        self.values.par_chunks_exact_mut(size * self.width)
     }
 
     pub fn rows(&self) -> impl Iterator<Item = &[T]> {

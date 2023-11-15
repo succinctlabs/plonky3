@@ -12,11 +12,10 @@ use p3_mds::integrated_coset_mds::IntegratedCosetMds;
 use p3_merkle_tree::FieldMerkleTreeMmcs;
 use p3_poseidon2::{DiffusionMatrixBabybear, Poseidon2};
 use p3_rescue::{BasicSboxLayer, Rescue};
-use p3_symmetric::compression::{
-    CompressionFunctionFromHasher, PseudoCompressionFunction, TruncatedPermutation,
+use p3_symmetric::{
+    CompressionFunctionFromHasher, CryptographicHasher, PaddingFreeSponge,
+    PseudoCompressionFunction, SerializingHasher32, TruncatedPermutation,
 };
-use p3_symmetric::hasher::{CryptographicHasher, SerializingHasher32};
-use p3_symmetric::sponge::PaddingFreeSponge;
 use rand::distributions::{Distribution, Standard};
 use rand::thread_rng;
 
@@ -67,7 +66,7 @@ fn bench_bb_rescue(criterion: &mut Criterion) {
 fn bench_bb_blake3(criterion: &mut Criterion) {
     type F = BabyBear;
 
-    type H = SerializingHasher32<F, Blake3>;
+    type H = SerializingHasher32<Blake3>;
     let h = H::new(Blake3 {});
 
     type C = CompressionFunctionFromHasher<F, H, 2, 8>;
@@ -79,7 +78,7 @@ fn bench_bb_blake3(criterion: &mut Criterion) {
 fn bench_bb_keccak(criterion: &mut Criterion) {
     type F = BabyBear;
 
-    type H = SerializingHasher32<F, Keccak256Hash>;
+    type H = SerializingHasher32<Keccak256Hash>;
     let h = H::new(Keccak256Hash {});
 
     type C = CompressionFunctionFromHasher<F, H, 2, 8>;

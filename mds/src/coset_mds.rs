@@ -1,6 +1,8 @@
+use alloc::vec::Vec;
+
 use p3_dft::reverse_slice_index_bits;
 use p3_field::{AbstractField, TwoAdicField};
-use p3_symmetric::permutation::Permutation;
+use p3_symmetric::Permutation;
 use p3_util::log2_strict_usize;
 
 use crate::butterflies::{dif_butterfly, dit_butterfly, twiddle_free_butterfly};
@@ -63,7 +65,7 @@ where
 
         // Multiply by powers of the coset shift (see default coset LDE impl for an explanation)
         for (value, weight) in values.iter_mut().zip(self.weights) {
-            *value = value.clone() * weight;
+            *value = value.clone() * AF::from_f(weight);
         }
 
         // DFT, assuming bit-reversed input.
@@ -155,7 +157,7 @@ mod tests {
     use p3_baby_bear::BabyBear;
     use p3_dft::{NaiveDft, TwoAdicSubgroupDft};
     use p3_field::AbstractField;
-    use p3_symmetric::permutation::Permutation;
+    use p3_symmetric::Permutation;
     use rand::{thread_rng, Rng};
 
     use crate::coset_mds::CosetMds;
