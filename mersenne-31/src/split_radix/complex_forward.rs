@@ -1,5 +1,5 @@
 use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64};
-use super::{normalise, normalise_all, normalise_u32, Complex, Real, P};
+use super::{reduce_2p, reduce_4p, reduce_complex, Complex, Real, P};
 
 /// SQRTHALF * SQRTHALF = 1/2 (mod P)
 const SQRTHALF: Real = D16[1].re; // == 1 << 15
@@ -74,13 +74,13 @@ fn transform(
     let mut t6 = a2.re;       // t6 = a2.re
     let mut t1 = a0.re - t6;  // t1 = a0.re - a2.re
     t6 += a0.re;              // t6 = a0.re + a2.re
-    a0.re = normalise_u32(t6);
+    a0.re = reduce_2p(t6);
     let mut t3 = a3.im;       // t3 = a3.im
     let mut t4 = a1.im - t3;  // t4 = a1.im - a3.im
     let mut t8 = t1 - t4;     // t8 = (a0.re - a2.re) - (a1.im - a3.im)
     t1 += t4;                 // t1 = (a0.re - a2.re) + (a1.im - a3.im)
     t3 += a1.im;              // t3 = a1.im + a3.im
-    a1.im = normalise_u32(t3);
+    a1.im = reduce_2p(t3);
     let mut t5 = wre;         // t5 = wre
     let mut t7 = t8 * t5;     // t7 = wre * [(a0.re - a2.re) - (a1.im - a3.im)]
     t4 = t1 * t5;             // t4 = wre * [(a0.re - a2.re) + (a1.im - a3.im)]
@@ -88,13 +88,13 @@ fn transform(
     let mut t2 = a3.re;       // t2 = a3.re
     t3 = a1.re - t2;          // t3 = a1.re - a3.re
     t2 += a1.re;              // t2 = a1.re + a3.re
-    a1.re = normalise_u32(t2);
+    a1.re = reduce_2p(t2);
 
     t1 *= wim;                // t1 = wim * [(a0.re - a2.re) + (a1.im - a3.im)]
     t6 = a2.im;               // t6 = a2.im
     t2 = a0.im - t6;          // t2 = a0.im - a2.im
     t6 += a0.im;              // t6 = a0.im + a2.im
-    a0.im = normalise_u32(t6);
+    a0.im = reduce_2p(t6);
 
     t6 = t2 + t3;             // t6 = (a0.im - a2.im) + (a1.re - a3.re)
     t2 -= t3;                 // t2 = (a0.im - a2.im) - (a1.re - a3.re)
@@ -107,7 +107,7 @@ fn transform(
                               //     + wim * [(a0.re - a2.re) - (a1.im - a3.im)]
     a2.im = t6;
 
-    normalise(a2);
+    reduce_complex(a2);
 
     t5 *= t2;                 // t5 = wre * [(a0.im - a2.im) - (a1.re - a3.re)]
     t5 -= t1;                 // t5 = wre * [(a0.im - a2.im) - (a1.re - a3.re)]
@@ -118,7 +118,7 @@ fn transform(
                               //     + wim * [(a0.im - a2.im) - (a1.re - a3.re)]
     a3.re = t4;
 
-    normalise(a3);
+    reduce_complex(a3);
 }
 
 // Appears to be related to applying the radix-8 butterfly
@@ -153,24 +153,24 @@ fn transformhalf(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     let mut t1 = a2.re;
     let mut t5 = a0.re - t1;
     t1 += a0.re;
-    a0.re = normalise_u32(t1);
+    a0.re = reduce_2p(t1);
     let mut t4 = a3.im;
     let mut t8 = a1.im - t4;
     t1 = t5 - t8;
     t5 += t8;
     t4 += a1.im;
-    a1.im = normalise_u32(t4);
+    a1.im = reduce_2p(t4);
     let mut t3 = a3.re;
     let mut t7 = a1.re - t3;
     t3 += a1.re;
-    a1.re = normalise_u32(t3);
+    a1.re = reduce_2p(t3);
 
     t8 = a2.im;
     let mut t6 = a0.im - t8;
     let mut t2 = t6 + t7;
     t6 -= t7;
     t8 += a0.im;
-    a0.im = normalise_u32(t8);
+    a0.im = reduce_2p(t8);
 
     t4 = t6 + t5;
     t3 = SQRTHALF;
@@ -180,7 +180,7 @@ fn transformhalf(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     t6 *= t3;
     a3.im = t6;
 
-    normalise(a3);
+    reduce_complex(a3);
 
     t7 = t1 - t2;
     t7 *= t3;
@@ -189,7 +189,7 @@ fn transformhalf(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     t2 *= t3;
     a2.im = t2;
 
-    normalise(a2);
+    reduce_complex(a2);
 }
 
 // a0 = (a0.re + a2.re, a0.im + a2.im)        = a0 + a2
@@ -214,7 +214,7 @@ fn transformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     let mut t5 = a2.re;
     let mut t1 = a0.re - t5;
     t5 += a0.re;
-    a0.re = normalise_u32(t5);
+    a0.re = reduce_2p(t5);
     let mut t8 = a3.im;
     let t4 = a1.im - t8;
     let mut t7 = a3.re;
@@ -223,25 +223,25 @@ fn transformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     t1 += t4;
     a3.re = t1;
     t8 += a1.im;
-    a1.im = normalise_u32(t8);
+    a1.im = reduce_2p(t8);
     let t3 = a1.re - t7;
     t7 += a1.re;
-    a1.re = normalise_u32(t7);
+    a1.re = reduce_2p(t7);
 
     t6 = a2.im;
     let mut t2 = a0.im - t6;
     t7 = t2 + t3;
     a2.im = t7;
 
-    normalise(a2);
+    reduce_complex(a2);
 
     t2 -= t3;
     a3.im = t2;
 
-    normalise(a3);
+    reduce_complex(a3);
 
     t6 += a0.im;
-    a0.im = normalise_u32(t6);
+    a0.im = reduce_2p(t6);
 }
 
 /// Normal radix-2 butterfly:
@@ -320,12 +320,14 @@ pub(crate) fn c2(a: &mut [Complex]) {
 // y3 = u1 + i (w z - w^-1 z') = x0 - x2 + iw x1 - iw^-1 x3
 //
 
-// FIXME: Need to either reduce here, or explain why it's not necessary.
-#[inline]
+#[inline(always)]
 #[rustfmt::skip]
 pub(crate) fn c4(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 4);
+    assert_eq!(a.len(), 4);
 
+    // TODO: We know that the outputs are in the range -3P <= out <= 4P,
+    // so we can possibly use a faster reduction algo.
+    
     // This is the conjugate transpose of the matrix for u4.
     //
     // [ 1  1  1  1 ]
@@ -338,6 +340,18 @@ pub(crate) fn c4(a: &mut [Complex]) {
     // b2 = (a0.re - a1.im - a2.re + a3.im) + i (a0.im + a1.re - a2.im - a3.re)
     // b3 = (a0.re + a1.im - a2.re - a3.im) + i (a0.im - a1.re - a2.im + a3.re)
 
+    /*
+    let b0 = Complex::new(a[0].re + a[1].re + a[2].re + a[3].re, a[0].im + a[1].im + a[2].im + a[3].im);
+    let b1 = Complex::new(a[0].re - a[1].re + a[2].re - a[3].re, a[0].im - a[1].im + a[2].im - a[3].im);
+    let b2 = Complex::new(a[0].re - a[1].im - a[2].re + a[3].im, a[0].im + a[1].re - a[2].im - a[3].re);
+    let b3 = Complex::new(a[0].re + a[1].im - a[2].re - a[3].im, a[0].im - a[1].re - a[2].im + a[3].re);
+
+    a[0] = b0;
+    a[1] = b1;
+    a[2] = b2;
+    a[3] = b3;
+    */
+    
     let mut t5 = a[2].re;       // a2.re
     let mut t1 = a[0].re - t5;  // a0.re - a2.re
     let mut t7 = a[3].re;       // a3.re
@@ -364,11 +378,16 @@ pub(crate) fn c4(a: &mut [Complex]) {
     t6 -= t5;                   // a0.im - a1.im + a2.im - a3.im
     a[1].im = t6;
 
-    //normalise_all(a);
+    // reduce_4p(&mut a[0]);
+    // reduce_4p(&mut a[1]);
+    // reduce_4p(&mut a[2]);
+    // reduce_4p(&mut a[3]);
 }
 
+// FIXME: I need to reduce before and/or after passing to c4
+#[inline(always)]
 pub(crate) fn c8(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 8);
+    assert_eq!(a.len(), 8);
 
     let mut t7 = a[4].im;
     let mut t4 = a[0].im - t7;
@@ -448,65 +467,60 @@ pub(crate) fn c8(a: &mut [Complex]) {
 
     c4(&mut a[..4]);
 
-    normalise(&mut a[4]);
-    normalise(&mut a[5]);
-    normalise(&mut a[6]);
-    normalise(&mut a[7]);
+    // TODO: SQRTHALF is known to be smaller than a generic element,
+    // so we could specialise to a simpler reduction than normalise_real.
+    reduce_complex(&mut a[4]);
+    reduce_complex(&mut a[5]);
+    reduce_complex(&mut a[6]);
+    reduce_complex(&mut a[7]);
 }
 
+/// Copied from Rust nightly sources
+unsafe fn from_raw_parts_mut<'a, T>(data: *mut T, len: usize) -> &'a mut [T] {
+    unsafe { &mut *core::ptr::slice_from_raw_parts_mut(data, len) }
+}
+
+/// Copied from Rust nightly sources
+unsafe fn split_at_mut_unchecked<T>(v: &mut [T], mid: usize) -> (&mut [T], &mut [T]) {
+    let len = v.len();
+    let ptr = v.as_mut_ptr();
+
+    // SAFETY: Caller has to check that `0 <= mid <= self.len()`.
+    //
+    // `[ptr; mid]` and `[mid; len]` are not overlapping, so returning
+    // a mutable reference is fine.
+    unsafe {
+        (
+            from_raw_parts_mut(ptr, mid),
+            from_raw_parts_mut(ptr.add(mid), len - mid),
+        )
+    }
+}
+
+#[inline]
 pub(crate) fn c16(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 16);
+    assert_eq!(a.len(), 16);
 
-    // TODO: This is some fugly shit...
-    let mut a0 = a[0];
-    let mut a1 = a[4];
-    let mut a2 = a[8];
-    let mut a3 = a[12];
+    let (a0, a1) = unsafe { split_at_mut_unchecked(a, 4) };
+    let (a1, a2) = unsafe { split_at_mut_unchecked(a1, 4) };
+    let (a2, a3) = unsafe { split_at_mut_unchecked(a2, 4) };
 
-    //transformzero(&mut a[0], &mut a[4], &mut a[8], &mut a[12]);
-    transformzero(&mut a0, &mut a1, &mut a2, &mut a3);
-    a[0] = a0;
-    a[4] = a1;
-    a[8] = a2;
-    a[12] = a3;
-
-    a0 = a[1];
-    a1 = a[5];
-    a2 = a[9];
-    a3 = a[13];
-    //transform(&mut a[1], &mut a[5], &mut a[9], &mut a[13], D16[0].re, D16[0].im,);
-    transform(&mut a0, &mut a1, &mut a2, &mut a3, D16[0].re, D16[0].im);
-    a[1] = a0;
-    a[5] = a1;
-    a[9] = a2;
-    a[13] = a3;
-
-    a0 = a[2];
-    a1 = a[6];
-    a2 = a[10];
-    a3 = a[14];
-    //transformhalf(&mut a[2], &mut a[6], &mut a[10], &mut a[14]);
-    transformhalf(&mut a0, &mut a1, &mut a2, &mut a3);
-    a[2] = a0;
-    a[6] = a1;
-    a[10] = a2;
-    a[14] = a3;
-
-    a0 = a[3];
-    a1 = a[7];
-    a2 = a[11];
-    a3 = a[15];
-    //transform(&mut a[3], &mut a[7], &mut a[11], &mut a[15], D16[0].im, D16[0].re,);
-    transform(&mut a0, &mut a1, &mut a2, &mut a3, D16[0].im, D16[0].re);
-    a[3] = a0;
-    a[7] = a1;
-    a[11] = a2;
-    a[15] = a3;
+    transformzero(&mut a0[0], &mut a1[0], &mut a2[0], &mut a3[0]);
+    transform(
+        &mut a0[1], &mut a1[1], &mut a2[1], &mut a3[1], D16[0].re, D16[0].im,
+    );
+    transformhalf(&mut a0[2], &mut a1[2], &mut a2[2], &mut a3[2]);
+    transform(
+        &mut a0[3], &mut a1[3], &mut a2[3], &mut a3[3], D16[0].im, D16[0].re,
+    );
 
     c4(&mut a[8..12]);
-    c4(&mut a[12..]);
-
+    c4(&mut a[12..16]);
     c8(&mut a[..8]);
+}
+
+pub fn c16_array(a: &mut [Complex; 16]) {
+    c16(a);
 }
 
 // a[0...8n-1], w[0...2n-2]; n >= 2
@@ -523,11 +537,12 @@ fn cpass(a: &mut [Complex], w: &[Complex]) {
     debug_assert_eq!(w.len(), 2 * n - 1);
 
     // Split a into four chunks of size 2*n.
-    let (a, a1) = a.split_at_mut(2 * n);
-    let (a1, a2) = a1.split_at_mut(2 * n);
-    let (a2, a3) = a2.split_at_mut(2 * n);
 
-    transformzero(&mut a[0], &mut a1[0], &mut a2[0], &mut a3[0]);
+    let (a0, a1) = unsafe { split_at_mut_unchecked(a, 2 * n) };
+    let (a1, a2) = unsafe { split_at_mut_unchecked(a1, 2 * n) };
+    let (a2, a3) = unsafe { split_at_mut_unchecked(a2, 2 * n) };
+
+    transformzero(&mut a0[0], &mut a1[0], &mut a2[0], &mut a3[0]);
 
     // TODO: Can I not use transformhalf here for some i?
 
@@ -536,7 +551,7 @@ fn cpass(a: &mut [Complex], w: &[Complex]) {
     // that actually improves things here.
     for i in 1..2 * n {
         transform(
-            &mut a[i],
+            &mut a0[i],
             &mut a1[i],
             &mut a2[i],
             &mut a3[i],
@@ -547,7 +562,7 @@ fn cpass(a: &mut [Complex], w: &[Complex]) {
 }
 
 pub(crate) fn c32(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 32);
+    assert_eq!(a.len(), 32);
 
     cpass(a, &D32); // n = 4
 
@@ -558,7 +573,7 @@ pub(crate) fn c32(a: &mut [Complex]) {
 }
 
 pub(crate) fn c64(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 64);
+    assert_eq!(a.len(), 64);
 
     cpass(a, &D64); // n = 8
     c16(&mut a[32..48]);
@@ -567,7 +582,7 @@ pub(crate) fn c64(a: &mut [Complex]) {
 }
 
 pub(crate) fn c128(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 128);
+    assert_eq!(a.len(), 128);
 
     cpass(a, &D128); // n = 16
     c32(&mut a[64..96]);
@@ -576,7 +591,7 @@ pub(crate) fn c128(a: &mut [Complex]) {
 }
 
 pub(crate) fn c256(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 256);
+    assert_eq!(a.len(), 256);
 
     cpass(a, &D256); // n = 32
     c64(&mut a[128..192]);
@@ -585,7 +600,7 @@ pub(crate) fn c256(a: &mut [Complex]) {
 }
 
 pub(crate) fn c512(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 512);
+    assert_eq!(a.len(), 512);
 
     cpass(a, &D512); // n = 64
     c128(&mut a[384..512]);
@@ -594,7 +609,7 @@ pub(crate) fn c512(a: &mut [Complex]) {
 }
 
 pub(crate) fn c1024(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 1024);
+    assert_eq!(a.len(), 1024);
 
     cpass(a, &D1024); // n = 128
     c256(&mut a[768..1024]);
@@ -603,7 +618,7 @@ pub(crate) fn c1024(a: &mut [Complex]) {
 }
 
 pub(crate) fn c2048(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 2048);
+    assert_eq!(a.len(), 2048);
 
     cpass(a, &D2048); // n = 256
     c512(&mut a[1536..2048]);
@@ -612,7 +627,7 @@ pub(crate) fn c2048(a: &mut [Complex]) {
 }
 
 pub(crate) fn c4096(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 4096);
+    assert_eq!(a.len(), 4096);
 
     cpass(a, &D4096); // n = 512
     c1024(&mut a[3072..4096]);

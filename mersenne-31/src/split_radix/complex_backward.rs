@@ -1,5 +1,5 @@
 use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64};
-use super::{normalise, normalise_all, normalise_real, Complex, Real};
+use super::{reduce_2p_sqr, reduce_all, reduce_complex, Complex, Real};
 
 /// SQRTHALF * SQRTHALF = 1/2 (mod P)
 const SQRTHALF: Real = D16[1].re; // == 1 << 15
@@ -22,17 +22,17 @@ fn untransform(
     let mut t4 = a2.re;
     let mut t5 = a3.re;
     t5 *= t6;
-    t5 = normalise_real(t5);
+    t5 = reduce_2p_sqr(t5);
     let mut t7 = a3.im;
     t1 += t3;
-    t1 = normalise_real(t1);
+    t1 = reduce_2p_sqr(t1);
     t7 *= t8;
     t5 -= t7;
     t3 = t5 + t1;
     t5 -= t1;
     t2 *= t6;
     t6 *= a3.im;
-    t6 = normalise_real(t6);
+    t6 = reduce_2p_sqr(t6);
     t4 *= t8;
     t2 -= t4;
     t8 *= a3.re;
@@ -56,10 +56,10 @@ fn untransform(
     a3.re = t8;
     a2.im = t2;
 
-    normalise(a0);
-    normalise(a1);
-    normalise(a2);
-    normalise(a3);
+    reduce_complex(a0);
+    reduce_complex(a1);
+    reduce_complex(a2);
+    reduce_complex(a3);
 }
 
 fn untransformhalf(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut Complex) {
@@ -95,10 +95,10 @@ fn untransformhalf(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mu
     t2 += a0.im;
     a0.im = t2;
 
-    normalise(a0);
-    normalise(a1);
-    normalise(a2);
-    normalise(a3);
+    reduce_complex(a0);
+    reduce_complex(a1);
+    reduce_complex(a2);
+    reduce_complex(a3);
 }
 
 fn untransformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut Complex) {
@@ -125,10 +125,10 @@ fn untransformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mu
     t4 += a1.im;
     a1.im = t4;
 
-    normalise(a0);
-    normalise(a1);
-    normalise(a2);
-    normalise(a3);
+    reduce_complex(a0);
+    reduce_complex(a1);
+    reduce_complex(a2);
+    reduce_complex(a3);
 }
 
 #[inline]
@@ -181,7 +181,7 @@ pub(crate) fn u4(a: &mut [Complex]) {
     t2 -= t5;
     a[2].im = t2;
 
-    normalise_all(a);
+    reduce_all(a);
 }
 
 pub(crate) fn u8(a: &mut [Complex]) {
@@ -266,7 +266,7 @@ pub(crate) fn u8(a: &mut [Complex]) {
     t2 += a[1].im;
     a[1].im = t2;
 
-    normalise_all(a);
+    reduce_all(a);
 }
 
 pub(crate) fn u16(a: &mut [Complex]) {

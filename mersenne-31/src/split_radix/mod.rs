@@ -75,7 +75,7 @@ pub struct Complex {
 
 pub fn forward_fft<const N: usize>(u: &mut [Complex]) {
     match N {
-        16 => c16(u),
+        //16 => c16(u),
         32 => c32(u),
         64 => c64(u),
         512 => c512(u),
@@ -99,7 +99,7 @@ pub fn backward_fft<const N: usize>(v: &mut [Complex]) {
 const P: Real = (1 << 31) - 1;
 
 impl Complex {
-    const ZERO: Self = Self::new(0i64, 0i64);
+    pub const ZERO: Self = Self::new(0i64, 0i64);
     //const ONE: Self = Self::new(1i64, 0i64);
     //const J: Self = Self::new(0i64, 1i64);
 
@@ -131,8 +131,8 @@ pub(crate) const fn into<const N: usize>(u: [(Real, Real); N]) -> [Complex; N] {
     v
 }
 
-#[inline]
-pub(crate) fn normalise_u32(x: Real) -> Real {
+#[inline(always)]
+pub(crate) fn reduce_2p(x: Real) -> Real {
     debug_assert!(x >= 0 && x <= 2 * P, "x = {} out of range", x);
 
     // let msb = x & (1 << 31);
@@ -165,14 +165,25 @@ fn shift(x: i64) -> i64 {
 }
 */
 
+#[inline(always)]
+pub(crate) fn reduce_4p_real(x: Real) -> Real {
+    debug_assert!(x >= -3 * P && x <= 4 * P);
+    const MASK: u64 = (1 << 31) - 1;
+    let y = (x + 3 * P) as u64; // make unsigned so the right shift doesn't sign extend
+    let (lo, hi) = ((y & MASK) as i64, ((y >> 31) & MASK) as i64);
+    lo + hi
+}
+
+#[inline(always)]
+pub(crate) fn reduce_4p(z: &mut Complex) {
+    z.re = reduce_4p_real(z.re);
+    z.im = reduce_4p_real(z.im);
+}
+
 /// Given a Real x in the range |x| <= 2 * (P^2 - 1), return
-/// a Real x' in the range -1 <= x' <= P such that x' = x (mod P).
-///
-/// NB: 0 (mod P) is represented by the values 0 or P, and -1 (mod P)
-/// is represented by -1 or P-1. All other values are represented
-/// uniquely by themselves.
-#[inline]
-pub(crate) fn normalise_real(x: Real) -> Real {
+/// a Real x' in the range 0 <= x' <= P such that x' = x (mod P).
+#[inline(always)]
+pub(crate) fn reduce_2p_sqr(x: Real) -> Real {
     const ABSMAX_ELT: i64 = 2 * (P * P - 1);
     debug_assert!(x <= ABSMAX_ELT && x >= -ABSMAX_ELT);
 
@@ -223,31 +234,40 @@ pub(crate) fn normalise_real(x: Real) -> Real {
     //
 
     // 0 <= lo + hi <= 2P
-    let fold = normalise_u32(lo + hi);
+    let fold = reduce_2p(lo + hi);
     // 0 <= fold < P (or == P if lo + hi = 2P)
 
     // x must be signed for the SAR here
     let x_mod_p = fold + (x >> 62);
     // -1 <= x_mod_p <= P
 
-    x_mod_p
+    // TODO: Work out whether it's okay to allow the bigger range and
+    // avoid the second u32 reduction. One problem is that a0 and a1
+    // in transform(...) could be -2 on output, so we'd need an
+    // alternative to normalise_u32.
+
+    //x_mod_p
+
+    // P - 1 <= x_mod_p <= 2P
+    reduce_2p(x_mod_p + P)
+    // 0 <= x_mod_p <= P
+}
+
+#[inline(always)]
+pub(crate) fn reduce_complex(z: &mut Complex) {
+    z.re = reduce_2p_sqr(z.re);
+    z.im = reduce_2p_sqr(z.im);
 }
 
 #[inline]
-pub(crate) fn normalise(z: &mut Complex) {
-    z.re = normalise_real(z.re);
-    z.im = normalise_real(z.im);
-}
-
-#[inline]
-pub(crate) fn normalise_all(zs: &mut [Complex]) {
-    zs.iter_mut().for_each(normalise);
+pub(crate) fn reduce_all(zs: &mut [Complex]) {
+    zs.iter_mut().for_each(reduce_complex);
 }
 
 impl PartialEq for Complex {
     fn eq(&self, other: &Self) -> bool {
-        normalise_real(self.re) == normalise_real(other.re)
-            && normalise_real(self.im) == normalise_real(other.im)
+        reduce_2p_sqr(self.re) == reduce_2p_sqr(other.re)
+            && reduce_2p_sqr(self.im) == reduce_2p_sqr(other.im)
     }
 }
 
@@ -263,15 +283,15 @@ mod tests {
         backward128, backward256, backward32, backward4096, backward64, u16, u4, u8,
     };
     use crate::split_radix::complex_forward::{c128, c16, c256, c32, c4, c4096, c64, c8};
-    use crate::split_radix::{normalise_real, Complex, Real, P};
+    use crate::split_radix::{reduce_2p_sqr, Complex, Real, P};
 
     impl Add for Complex {
         type Output = Self;
 
         fn add(self, other: Self) -> Self {
             Self {
-                re: normalise_real(self.re + other.re),
-                im: normalise_real(self.im + other.im),
+                re: reduce_2p_sqr(self.re + other.re),
+                im: reduce_2p_sqr(self.im + other.im),
             }
         }
     }
@@ -281,10 +301,10 @@ mod tests {
 
         fn mul(self, other: Self) -> Self {
             Self {
-                re: normalise_real(
+                re: reduce_2p_sqr(
                     (self.re % P * (other.re % P)) % P - (self.im % P * (other.im % P)) % P,
                 ),
-                im: normalise_real(
+                im: reduce_2p_sqr(
                     (self.im % P * (other.re % P)) % P + (self.re % P * (other.im % P)) % P,
                 ),
             }
@@ -296,8 +316,8 @@ mod tests {
 
         fn mul(self, other: Real) -> Self {
             Self {
-                re: normalise_real(self.re * other),
-                im: normalise_real(self.im * other),
+                re: reduce_2p_sqr(self.re * other),
+                im: reduce_2p_sqr(self.im * other),
             }
         }
     }
@@ -337,7 +357,7 @@ mod tests {
         let mut rng = thread_rng();
         let re = rng.gen::<u32>();
         let im = rng.gen::<u32>();
-        Complex::new(normalise_real(re as i64), normalise_real(im as i64))
+        Complex::new(reduce_2p_sqr(re as i64), reduce_2p_sqr(im as i64))
     }
 
     fn randvec(n: usize) -> Vec<Complex> {
