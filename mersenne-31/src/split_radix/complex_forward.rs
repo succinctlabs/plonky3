@@ -180,6 +180,8 @@ fn transformhalf(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     t6 *= t3;
     a3.im = t6;
 
+    // TODO: These reductions mightn't be necessary, as removing them
+    // doesn't trigger overflow in the tests.
     reduce_complex(a3);
 
     t7 = t1 - t2;
@@ -233,38 +235,20 @@ fn transformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
     t7 = t2 + t3;
     a2.im = t7;
 
+    // TODO: Find a cheaper reduction since we know
+    // -2P <= a2.{re,im} <= 2P
     reduce_complex(a2);
 
     t2 -= t3;
     a3.im = t2;
 
+    // TODO: Find a cheaper reduction since we know
+    // -2P <= a2.{re,im} <= 2P
     reduce_complex(a3);
 
     t6 += a0.im;
     a0.im = reduce_2p(t6);
 }
-
-/// Normal radix-2 butterfly:
-///
-///   b[0] <-- a[0] + a[1]
-///   b[1] <-- a[0] - a[1]
-/*
-// Not actually used...
-#[inline]
-pub(crate) fn c2(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 2);
-
-    let t1 = a[1].re;
-    a[1].re = a[0].re - t1;
-    a[0].re += t1;
-
-    let t1 = a[1].im;
-    a[1].im = a[0].im - t1;
-    a[0].im += t1;
-
-    normalise_all(a);
-}
-*/
 
 // Conjugate pair radix-4 butterfly with twiddle = w = -i (note that
 // w^-1 = \bar{w} (the conjugate) when w has unit length):
@@ -378,13 +362,15 @@ pub(crate) fn c4(a: &mut [Complex]) {
     t6 -= t5;                   // a0.im - a1.im + a2.im - a3.im
     a[1].im = t6;
 
+    // TODO: Not reducing here produces the right answers, but the
+    // result still needs to be reduced at the end.
+    //
     // reduce_4p(&mut a[0]);
     // reduce_4p(&mut a[1]);
     // reduce_4p(&mut a[2]);
     // reduce_4p(&mut a[3]);
 }
 
-// FIXME: I need to reduce before and/or after passing to c4
 #[inline(always)]
 pub(crate) fn c8(a: &mut [Complex]) {
     assert_eq!(a.len(), 8);
@@ -523,6 +509,49 @@ pub fn c16_array(a: &mut [Complex; 16]) {
     c16(a);
 }
 
+#[inline]
+pub(crate) fn c32(a: &mut [Complex]) {
+    assert_eq!(a.len(), 32);
+
+    let (a0, a1) = unsafe { split_at_mut_unchecked(a, 8) };
+    let (a1, a2) = unsafe { split_at_mut_unchecked(a1, 8) };
+    let (a2, a3) = unsafe { split_at_mut_unchecked(a2, 8) };
+
+    transformzero(&mut a0[0], &mut a1[0], &mut a2[0], &mut a3[0]);
+
+    transform(
+        &mut a0[1], &mut a1[1], &mut a2[1], &mut a3[1], D32[0].re, D32[0].im,
+    );
+
+    transform(
+        &mut a0[2], &mut a1[2], &mut a2[2], &mut a3[2], D32[1].re, D32[1].im,
+    );
+
+    transform(
+        &mut a0[3], &mut a1[3], &mut a2[3], &mut a3[3], D32[2].re, D32[2].im,
+    );
+
+    transformhalf(&mut a0[4], &mut a1[4], &mut a2[4], &mut a3[4]);
+
+    transform(
+        &mut a0[5], &mut a1[5], &mut a2[5], &mut a3[5], D32[2].im, D32[2].re,
+    );
+    transform(
+        &mut a0[6], &mut a1[6], &mut a2[6], &mut a3[6], D32[1].im, D32[1].re,
+    );
+    transform(
+        &mut a0[7], &mut a1[7], &mut a2[7], &mut a3[7], D32[0].im, D32[0].re,
+    );
+
+    c8(&mut a[16..24]);
+    c8(&mut a[24..32]);
+    c16(&mut a[..16]);
+}
+
+pub fn c32_array(a: &mut [Complex; 32]) {
+    c32(a);
+}
+
 // a[0...8n-1], w[0...2n-2]; n >= 2
 //
 // TODO: Original comment is as above, but note that w should have
@@ -544,11 +573,9 @@ fn cpass(a: &mut [Complex], w: &[Complex]) {
 
     transformzero(&mut a0[0], &mut a1[0], &mut a2[0], &mut a3[0]);
 
-    // TODO: Can I not use transformhalf here for some i?
-
-    // TODO: The original version pulled the first iteration out of
-    // the loop and unrolled the loop two iterations; check whether
-    // that actually improves things here.
+    // NB: The original version pulled the first iteration out of the
+    // loop and unrolled the loop two iterations. When I did that all
+    // the larger (>32) FFTs slowed down, most by about 25-35%!
     for i in 1..2 * n {
         transform(
             &mut a0[i],
@@ -561,17 +588,9 @@ fn cpass(a: &mut [Complex], w: &[Complex]) {
     }
 }
 
-pub(crate) fn c32(a: &mut [Complex]) {
-    assert_eq!(a.len(), 32);
-
-    cpass(a, &D32); // n = 4
-
-    // TODO: Use split_at_mut?
-    c8(&mut a[16..24]);
-    c8(&mut a[24..32]);
-    c16(&mut a[..16]);
-}
-
+// Unrolling this as for c32 had some minor gains for N <= 128, but
+// minor slow-downs for bigger sizes.
+#[inline]
 pub(crate) fn c64(a: &mut [Complex]) {
     assert_eq!(a.len(), 64);
 
@@ -579,6 +598,10 @@ pub(crate) fn c64(a: &mut [Complex]) {
     c16(&mut a[32..48]);
     c16(&mut a[48..64]);
     c32(&mut a[..32]);
+}
+
+pub fn c64_array(a: &mut [Complex; 64]) {
+    c64(a);
 }
 
 pub(crate) fn c128(a: &mut [Complex]) {
@@ -611,7 +634,7 @@ pub(crate) fn c512(a: &mut [Complex]) {
 pub(crate) fn c1024(a: &mut [Complex]) {
     assert_eq!(a.len(), 1024);
 
-    cpass(a, &D1024); // n = 128
+    cpassbig(a, &D1024); // n = 128
     c256(&mut a[768..1024]);
     c256(&mut a[512..768]);
     c512(&mut a[..512]);
@@ -620,7 +643,7 @@ pub(crate) fn c1024(a: &mut [Complex]) {
 pub(crate) fn c2048(a: &mut [Complex]) {
     assert_eq!(a.len(), 2048);
 
-    cpass(a, &D2048); // n = 256
+    cpassbig(a, &D2048); // n = 256
     c512(&mut a[1536..2048]);
     c512(&mut a[1024..1536]);
     c1024(&mut a[..1024]);
@@ -629,10 +652,50 @@ pub(crate) fn c2048(a: &mut [Complex]) {
 pub(crate) fn c4096(a: &mut [Complex]) {
     assert_eq!(a.len(), 4096);
 
-    cpass(a, &D4096); // n = 512
+    cpassbig(a, &D4096); // n = 512
     c1024(&mut a[3072..4096]);
     c1024(&mut a[2048..3072]);
     c2048(&mut a[..2048]);
+}
+
+fn cpassbig(a: &mut [Complex], w: &[Complex]) {
+    debug_assert_eq!(a.len() % 8, 0);
+
+    let n = a.len() / 8;
+
+    debug_assert!(n >= 2);
+    debug_assert_eq!(w.len(), 2 * n - 1);
+
+    // Split a into four chunks of size 2*n.
+
+    let (a0, a1) = unsafe { split_at_mut_unchecked(a, 2 * n) };
+    let (a1, a2) = unsafe { split_at_mut_unchecked(a1, 2 * n) };
+    let (a2, a3) = unsafe { split_at_mut_unchecked(a2, 2 * n) };
+
+    transformzero(&mut a0[0], &mut a1[0], &mut a2[0], &mut a3[0]);
+    for i in 1..n {
+        transform(
+            &mut a0[i],
+            &mut a1[i],
+            &mut a2[i],
+            &mut a3[i],
+            w[i - 1].re,
+            w[i - 1].im,
+        );
+    }
+
+    transformhalf(&mut a0[n], &mut a1[n], &mut a2[n], &mut a3[n]);
+
+    for i in (n + 1)..(2 * n) {
+        transform(
+            &mut a0[i],
+            &mut a1[i],
+            &mut a2[i],
+            &mut a3[i],
+            w[2 * n - i - 1].im,
+            w[2 * n - i - 1].re,
+        );
+    }
 }
 
 /*

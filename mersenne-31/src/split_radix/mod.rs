@@ -75,9 +75,11 @@ pub struct Complex {
 
 pub fn forward_fft<const N: usize>(u: &mut [Complex]) {
     match N {
-        //16 => c16(u),
+        16 => c16(u),
         32 => c32(u),
         64 => c64(u),
+        128 => c128(u),
+        256 => c256(u),
         512 => c512(u),
         1024 => c1024(u),
         2048 => c2048(u),

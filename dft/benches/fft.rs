@@ -98,7 +98,10 @@ where
     }
 }
 
-use p3_mersenne_31::split_radix::{complex_forward::c16_array, forward_fft, Complex};
+use p3_mersenne_31::split_radix::{
+    complex_forward::{c16_array, c32_array, c64_array},
+    forward_fft, Complex,
+};
 use rand::Rng;
 
 fn randcomplex(_: usize) -> Complex {
@@ -123,8 +126,7 @@ where
     let mut group = c.benchmark_group("djbfft");
     group.sample_size(10);
 
-    let mut v = [Complex::ZERO; 16];
-
+    let mut v = core::array::from_fn(|i| randcomplex(i));
     group.bench_function(BenchmarkId::from_parameter(16), |b| {
         b.iter(|| {
             //forward_fft::<16>(&mut v);
@@ -132,15 +134,22 @@ where
         });
     });
 
-    let mut v = randvec(32);
+    let mut v = core::array::from_fn(|i| randcomplex(i));
     group.bench_function(BenchmarkId::from_parameter(32), |b| {
         b.iter(|| {
-            forward_fft::<32>(&mut v);
+            c32_array(&mut v);
+        });
+    });
+
+    let mut v = core::array::from_fn(|i| randcomplex(i));
+    group.bench_function(BenchmarkId::from_parameter(64), |b| {
+        b.iter(|| {
+            c64_array(&mut v);
         });
     });
 
     let mut v = randvec(64);
-    group.bench_function(BenchmarkId::from_parameter(64), |b| {
+    group.bench_function(BenchmarkId::from_parameter(64777), |b| {
         b.iter(|| {
             forward_fft::<64>(&mut v);
         });
