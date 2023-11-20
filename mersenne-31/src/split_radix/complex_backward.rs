@@ -1,4 +1,4 @@
-use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64};
+use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64, D8192};
 use super::{reduce_2p_sqr, reduce_all, reduce_complex, Complex, Real};
 
 /// SQRTHALF * SQRTHALF = 1/2 (mod P)
@@ -132,7 +132,7 @@ fn untransformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mu
 }
 
 #[inline]
-pub(crate) fn u4(a: &mut [Complex]) {
+pub(crate) fn complex_backward_4(a: &mut [Complex]) {
     // This is the usual matrix with the middle columns reversed
     // because of the use of w^-1 in place of w^3k.
     //
@@ -184,8 +184,8 @@ pub(crate) fn u4(a: &mut [Complex]) {
     reduce_all(a);
 }
 
-pub(crate) fn u8(a: &mut [Complex]) {
-    u4(&mut a[..4]);
+pub(crate) fn complex_backward_8(a: &mut [Complex]) {
+    complex_backward_4(&mut a[..4]);
 
     let mut t1 = a[5].re;
     a[5].re = a[4].re - t1;
@@ -269,10 +269,10 @@ pub(crate) fn u8(a: &mut [Complex]) {
     reduce_all(a);
 }
 
-pub(crate) fn u16(a: &mut [Complex]) {
-    u8(&mut a[..8]);
-    u4(&mut a[8..12]);
-    u4(&mut a[12..]);
+pub(crate) fn complex_backward_16(a: &mut [Complex]) {
+    complex_backward_8(&mut a[..8]);
+    complex_backward_4(&mut a[8..12]);
+    complex_backward_4(&mut a[12..]);
 
     // untransformzero(a[0], a[4], a[8], a[12]);
     // untransformhalf(a[2], a[6], a[10], a[14]);
@@ -327,7 +327,7 @@ pub(crate) fn u16(a: &mut [Complex]) {
 }
 
 /* a[0...8n-1], w[0...2n-2] */
-fn upass(a: &mut [Complex], w: &[Complex]) {
+fn complex_backward_pass(a: &mut [Complex], w: &[Complex]) {
     debug_assert_eq!(a.len() % 8, 0);
 
     let n = a.len() / 8;
@@ -359,74 +359,83 @@ fn upass(a: &mut [Complex], w: &[Complex]) {
     }
 }
 
-pub(crate) fn backward32(a: &mut [Complex]) {
+pub(crate) fn complex_backward_32(a: &mut [Complex]) {
     debug_assert_eq!(a.len(), 32);
 
-    u16(&mut a[..16]);
-    u8(&mut a[16..24]);
-    u8(&mut a[24..32]);
-    upass(a, &D32);
+    complex_backward_16(&mut a[..16]);
+    complex_backward_8(&mut a[16..24]);
+    complex_backward_8(&mut a[24..32]);
+    complex_backward_pass(a, &D32);
 }
 
-pub(crate) fn backward64(a: &mut [Complex]) {
+pub(crate) fn complex_backward_64(a: &mut [Complex]) {
     debug_assert_eq!(a.len(), 64);
 
-    backward32(&mut a[..32]);
-    u16(&mut a[32..48]);
-    u16(&mut a[48..64]);
-    upass(a, &D64);
+    complex_backward_32(&mut a[..32]);
+    complex_backward_16(&mut a[32..48]);
+    complex_backward_16(&mut a[48..64]);
+    complex_backward_pass(a, &D64);
 }
 
-pub(crate) fn backward128(a: &mut [Complex]) {
+pub(crate) fn complex_backward_128(a: &mut [Complex]) {
     debug_assert_eq!(a.len(), 128);
 
-    backward64(&mut a[..64]);
-    backward32(&mut a[64..96]);
-    backward32(&mut a[96..128]);
-    upass(a, &D128);
+    complex_backward_64(&mut a[..64]);
+    complex_backward_32(&mut a[64..96]);
+    complex_backward_32(&mut a[96..128]);
+    complex_backward_pass(a, &D128);
 }
 
-pub(crate) fn backward256(a: &mut [Complex]) {
+pub(crate) fn complex_backward_256(a: &mut [Complex]) {
     debug_assert_eq!(a.len(), 256);
 
-    backward128(&mut a[..128]);
-    backward64(&mut a[128..192]);
-    backward64(&mut a[192..256]);
-    upass(a, &D256);
+    complex_backward_128(&mut a[..128]);
+    complex_backward_64(&mut a[128..192]);
+    complex_backward_64(&mut a[192..256]);
+    complex_backward_pass(a, &D256);
 }
 
-pub(crate) fn backward512(a: &mut [Complex]) {
+pub(crate) fn complex_backward_512(a: &mut [Complex]) {
     debug_assert_eq!(a.len(), 512);
 
-    backward256(&mut a[..256]);
-    backward128(&mut a[256..384]);
-    backward128(&mut a[384..512]);
-    upass(a, &D512);
+    complex_backward_256(&mut a[..256]);
+    complex_backward_128(&mut a[256..384]);
+    complex_backward_128(&mut a[384..512]);
+    complex_backward_pass(a, &D512);
 }
 
-pub(crate) fn backward1024(a: &mut [Complex]) {
+pub(crate) fn complex_backward_1024(a: &mut [Complex]) {
     debug_assert_eq!(a.len(), 1024);
 
-    backward512(&mut a[..512]);
-    backward256(&mut a[512..768]);
-    backward256(&mut a[768..1024]);
-    upass(a, &D1024);
+    complex_backward_512(&mut a[..512]);
+    complex_backward_256(&mut a[512..768]);
+    complex_backward_256(&mut a[768..1024]);
+    complex_backward_pass(a, &D1024);
 }
 
-pub(crate) fn backward2048(a: &mut [Complex]) {
+pub(crate) fn complex_backward_2048(a: &mut [Complex]) {
     debug_assert_eq!(a.len(), 2048);
 
-    backward1024(&mut a[..1024]);
-    backward512(&mut a[1024..1536]);
-    backward512(&mut a[1536..2048]);
-    upass(a, &D2048);
+    complex_backward_1024(&mut a[..1024]);
+    complex_backward_512(&mut a[1024..1536]);
+    complex_backward_512(&mut a[1536..2048]);
+    complex_backward_pass(a, &D2048);
 }
 
-pub(crate) fn backward4096(a: &mut [Complex]) {
+pub(crate) fn complex_backward_4096(a: &mut [Complex]) {
     debug_assert_eq!(a.len(), 4096);
 
-    backward2048(&mut a[..2048]);
-    backward1024(&mut a[2048..3072]);
-    backward1024(&mut a[3072..4096]);
-    upass(a, &D4096);
+    complex_backward_2048(&mut a[..2048]);
+    complex_backward_1024(&mut a[2048..3072]);
+    complex_backward_1024(&mut a[3072..4096]);
+    complex_backward_pass(a, &D4096);
+}
+
+pub(crate) fn complex_backward_8192(a: &mut [Complex]) {
+    debug_assert_eq!(a.len(), 8192);
+
+    complex_backward_4096(&mut a[..4096]);
+    complex_backward_2048(&mut a[4096..6144]);
+    complex_backward_2048(&mut a[6144..8192]);
+    complex_backward_pass(a, &D8192);
 }

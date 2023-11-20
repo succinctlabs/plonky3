@@ -75,25 +75,34 @@ pub struct Complex {
 
 pub fn forward_fft<const N: usize>(u: &mut [Complex]) {
     match N {
-        16 => c16(u),
-        32 => c32(u),
-        64 => c64(u),
-        128 => c128(u),
-        256 => c256(u),
-        512 => c512(u),
-        1024 => c1024(u),
-        2048 => c2048(u),
-        4096 => c4096(u),
+        8 => complex_forward_8(u),
+        16 => complex_forward_16(u),
+        32 => complex_forward_32(u),
+        64 => complex_forward_64(u),
+        128 => complex_forward_128(u),
+        256 => complex_forward_256(u),
+        512 => complex_forward_512(u),
+        1024 => complex_forward_1024(u),
+        2048 => complex_forward_2048(u),
+        4096 => complex_forward_4096(u),
+        8192 => complex_forward_8192(u),
         _ => panic!("unsupported size"),
     }
 }
 
 pub fn backward_fft<const N: usize>(v: &mut [Complex]) {
     match N {
-        512 => backward512(v),
-        1024 => backward1024(v),
-        2048 => backward2048(v),
-        4096 => backward4096(v),
+        8 => complex_backward_8(v),
+        16 => complex_backward_16(v),
+        32 => complex_backward_32(v),
+        64 => complex_backward_64(v),
+        128 => complex_backward_128(v),
+        256 => complex_backward_256(v),
+        512 => complex_backward_512(v),
+        1024 => complex_backward_1024(v),
+        2048 => complex_backward_2048(v),
+        4096 => complex_backward_4096(v),
+        8192 => complex_backward_8192(v),
         _ => panic!("unsupported size"),
     }
 }
@@ -167,8 +176,9 @@ fn shift(x: i64) -> i64 {
 }
 */
 
+/*
 #[inline(always)]
-pub(crate) fn reduce_4p_real(x: Real) -> Real {
+fn reduce_4p_real(x: Real) -> Real {
     debug_assert!(x >= -3 * P && x <= 4 * P);
     const MASK: u64 = (1 << 31) - 1;
     let y = (x + 3 * P) as u64; // make unsigned so the right shift doesn't sign extend
@@ -181,6 +191,7 @@ pub(crate) fn reduce_4p(z: &mut Complex) {
     z.re = reduce_4p_real(z.re);
     z.im = reduce_4p_real(z.im);
 }
+*/
 
 /// Given a Real x in the range |x| <= 2 * (P^2 - 1), return
 /// a Real x' in the range 0 <= x' <= P such that x' = x (mod P).
@@ -282,9 +293,13 @@ mod tests {
     use rand::{thread_rng, Rng};
 
     use crate::split_radix::complex_backward::{
-        backward128, backward256, backward32, backward4096, backward64, u16, u4, u8,
+        complex_backward_128, complex_backward_16, complex_backward_256, complex_backward_32,
+        complex_backward_4, complex_backward_4096, complex_backward_64, complex_backward_8,
     };
-    use crate::split_radix::complex_forward::{c128, c16, c256, c32, c4, c4096, c64, c8};
+    use crate::split_radix::complex_forward::{
+        complex_forward_128, complex_forward_16, complex_forward_256, complex_forward_32,
+        complex_forward_4, complex_forward_4096, complex_forward_64, complex_forward_8,
+    };
     use crate::split_radix::{reduce_2p_sqr, Complex, Real, P};
 
     impl Add for Complex {
@@ -372,10 +387,10 @@ mod tests {
 
         let us = randvec(N);
         let mut vs = us.clone();
-        c4(&mut vs);
+        complex_forward_4(&mut vs);
 
         let mut ws = vs.clone();
-        u4(&mut ws);
+        complex_backward_4(&mut ws);
 
         assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
     }
@@ -387,10 +402,10 @@ mod tests {
 
             let us = randvec(N);
             let mut vs = us.clone();
-            c8(&mut vs);
+            complex_forward_8(&mut vs);
 
             let mut ws = vs.clone();
-            u8(&mut ws);
+            complex_backward_8(&mut ws);
 
             assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
         }
@@ -403,10 +418,10 @@ mod tests {
 
             let us = randvec(N);
             let mut vs = us.clone();
-            c16(&mut vs);
+            complex_forward_16(&mut vs);
 
             let mut ws = vs.clone();
-            u16(&mut ws);
+            complex_backward_16(&mut ws);
 
             assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
         }
@@ -419,10 +434,10 @@ mod tests {
 
             let us = randvec(N);
             let mut vs = us.clone();
-            c32(&mut vs);
+            complex_forward_32(&mut vs);
 
             let mut ws = vs.clone();
-            backward32(&mut ws);
+            complex_backward_32(&mut ws);
 
             assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
         }
@@ -435,10 +450,10 @@ mod tests {
 
             let us = randvec(N);
             let mut vs = us.clone();
-            c64(&mut vs);
+            complex_forward_64(&mut vs);
 
             let mut ws = vs.clone();
-            backward64(&mut ws);
+            complex_backward_64(&mut ws);
 
             assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
         }
@@ -451,10 +466,10 @@ mod tests {
 
             let us = randvec(N);
             let mut vs = us.clone();
-            c128(&mut vs);
+            complex_forward_128(&mut vs);
 
             let mut ws = vs.clone();
-            backward128(&mut ws);
+            complex_backward_128(&mut ws);
 
             assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
         }
@@ -467,10 +482,10 @@ mod tests {
 
             let us = randvec(N);
             let mut vs = us.clone();
-            c256(&mut vs);
+            complex_forward_256(&mut vs);
 
             let mut ws = vs.clone();
-            backward256(&mut ws);
+            complex_backward_256(&mut ws);
 
             assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
         }
@@ -483,10 +498,10 @@ mod tests {
 
             let us = randvec(N);
             let mut vs = us.clone();
-            c4096(&mut vs);
+            complex_forward_4096(&mut vs);
 
             let mut ws = vs.clone();
-            backward4096(&mut ws);
+            complex_backward_4096(&mut ws);
 
             assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
         }
@@ -500,10 +515,10 @@ mod tests {
         let vs = randvec(N);
 
         let mut fft_us = us.clone();
-        c16(&mut fft_us);
+        complex_forward_16(&mut fft_us);
 
         let mut fft_vs = vs.clone();
-        c16(&mut fft_vs);
+        complex_forward_16(&mut fft_vs);
 
         let mut pt_prods = fft_us
             .iter()
@@ -511,7 +526,7 @@ mod tests {
             .map(|(&u, v)| u * v)
             .collect::<Vec<_>>();
 
-        u16(&mut pt_prods);
+        complex_backward_16(&mut pt_prods);
 
         let conv = naive_convolve(&us, &vs);
 
@@ -526,10 +541,10 @@ mod tests {
         let vs = randvec(N);
 
         let mut fft_us = us.clone();
-        c32(&mut fft_us);
+        complex_forward_32(&mut fft_us);
 
         let mut fft_vs = vs.clone();
-        c32(&mut fft_vs);
+        complex_forward_32(&mut fft_vs);
 
         let mut pt_prods = fft_us
             .iter()
@@ -537,7 +552,7 @@ mod tests {
             .map(|(&u, v)| u * v)
             .collect::<Vec<_>>();
 
-        backward32(&mut pt_prods);
+        complex_backward_32(&mut pt_prods);
 
         let conv = naive_convolve(&us, &vs);
 
@@ -552,10 +567,10 @@ mod tests {
         let vs = randvec(N);
 
         let mut fft_us = us.clone();
-        c4096(&mut fft_us);
+        complex_forward_4096(&mut fft_us);
 
         let mut fft_vs = vs.clone();
-        c4096(&mut fft_vs);
+        complex_forward_4096(&mut fft_vs);
 
         let mut pt_prods = fft_us
             .iter()
@@ -563,7 +578,7 @@ mod tests {
             .map(|(&u, v)| u * v)
             .collect::<Vec<_>>();
 
-        backward4096(&mut pt_prods);
+        complex_backward_4096(&mut pt_prods);
 
         let conv = naive_convolve(&us, &vs);
 

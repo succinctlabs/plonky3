@@ -99,7 +99,10 @@ where
 }
 
 use p3_mersenne_31::split_radix::{
-    complex_forward::{c16_array, c32_array, c64_array},
+    complex_forward::{
+        complex_forward_16_array, complex_forward_32_array, complex_forward_64_array,
+        complex_forward_8_array,
+    },
     forward_fft, Complex,
 };
 use rand::Rng;
@@ -127,24 +130,31 @@ where
     group.sample_size(10);
 
     let mut v = core::array::from_fn(|i| randcomplex(i));
+    group.bench_function(BenchmarkId::from_parameter(8), |b| {
+        b.iter(|| {
+            complex_forward_8_array(&mut v);
+        });
+    });
+
+    let mut v = core::array::from_fn(|i| randcomplex(i));
     group.bench_function(BenchmarkId::from_parameter(16), |b| {
         b.iter(|| {
             //forward_fft::<16>(&mut v);
-            c16_array(&mut v);
+            complex_forward_16_array(&mut v);
         });
     });
 
     let mut v = core::array::from_fn(|i| randcomplex(i));
     group.bench_function(BenchmarkId::from_parameter(32), |b| {
         b.iter(|| {
-            c32_array(&mut v);
+            complex_forward_32_array(&mut v);
         });
     });
 
     let mut v = core::array::from_fn(|i| randcomplex(i));
     group.bench_function(BenchmarkId::from_parameter(64), |b| {
         b.iter(|| {
-            c64_array(&mut v);
+            complex_forward_64_array(&mut v);
         });
     });
 

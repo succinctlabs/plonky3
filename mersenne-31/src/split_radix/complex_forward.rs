@@ -1,5 +1,5 @@
-use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64};
-use super::{reduce_2p, reduce_4p, reduce_complex, Complex, Real, P};
+use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64, D8192};
+use super::{reduce_2p, reduce_complex, Complex, Real, P};
 
 /// SQRTHALF * SQRTHALF = 1/2 (mod P)
 const SQRTHALF: Real = D16[1].re; // == 1 << 15
@@ -306,7 +306,7 @@ fn transformzero(a0: &mut Complex, a1: &mut Complex, a2: &mut Complex, a3: &mut 
 
 #[inline(always)]
 #[rustfmt::skip]
-pub(crate) fn c4(a: &mut [Complex]) {
+pub(crate) fn complex_forward_4(a: &mut [Complex]) {
     assert_eq!(a.len(), 4);
 
     // TODO: We know that the outputs are in the range -3P <= out <= 4P,
@@ -372,7 +372,7 @@ pub(crate) fn c4(a: &mut [Complex]) {
 }
 
 #[inline(always)]
-pub(crate) fn c8(a: &mut [Complex]) {
+pub(crate) fn complex_forward_8(a: &mut [Complex]) {
     assert_eq!(a.len(), 8);
 
     let mut t7 = a[4].im;
@@ -451,7 +451,7 @@ pub(crate) fn c8(a: &mut [Complex]) {
     t5 += a[6].im;
     a[6].im = t5;
 
-    c4(&mut a[..4]);
+    complex_forward_4(&mut a[..4]);
 
     // TODO: SQRTHALF is known to be smaller than a generic element,
     // so we could specialise to a simpler reduction than normalise_real.
@@ -459,6 +459,10 @@ pub(crate) fn c8(a: &mut [Complex]) {
     reduce_complex(&mut a[5]);
     reduce_complex(&mut a[6]);
     reduce_complex(&mut a[7]);
+}
+
+pub fn complex_forward_8_array(a: &mut [Complex; 8]) {
+    complex_forward_8(a);
 }
 
 /// Copied from Rust nightly sources
@@ -484,7 +488,7 @@ unsafe fn split_at_mut_unchecked<T>(v: &mut [T], mid: usize) -> (&mut [T], &mut 
 }
 
 #[inline]
-pub(crate) fn c16(a: &mut [Complex]) {
+pub(crate) fn complex_forward_16(a: &mut [Complex]) {
     assert_eq!(a.len(), 16);
 
     let (a0, a1) = unsafe { split_at_mut_unchecked(a, 4) };
@@ -500,17 +504,17 @@ pub(crate) fn c16(a: &mut [Complex]) {
         &mut a0[3], &mut a1[3], &mut a2[3], &mut a3[3], D16[0].im, D16[0].re,
     );
 
-    c4(&mut a[8..12]);
-    c4(&mut a[12..16]);
-    c8(&mut a[..8]);
+    complex_forward_4(&mut a[8..12]);
+    complex_forward_4(&mut a[12..16]);
+    complex_forward_8(&mut a[..8]);
 }
 
-pub fn c16_array(a: &mut [Complex; 16]) {
-    c16(a);
+pub fn complex_forward_16_array(a: &mut [Complex; 16]) {
+    complex_forward_16(a);
 }
 
 #[inline]
-pub(crate) fn c32(a: &mut [Complex]) {
+pub(crate) fn complex_forward_32(a: &mut [Complex]) {
     assert_eq!(a.len(), 32);
 
     let (a0, a1) = unsafe { split_at_mut_unchecked(a, 8) };
@@ -543,13 +547,13 @@ pub(crate) fn c32(a: &mut [Complex]) {
         &mut a0[7], &mut a1[7], &mut a2[7], &mut a3[7], D32[0].im, D32[0].re,
     );
 
-    c8(&mut a[16..24]);
-    c8(&mut a[24..32]);
-    c16(&mut a[..16]);
+    complex_forward_8(&mut a[16..24]);
+    complex_forward_8(&mut a[24..32]);
+    complex_forward_16(&mut a[..16]);
 }
 
-pub fn c32_array(a: &mut [Complex; 32]) {
-    c32(a);
+pub fn complex_forward_32_array(a: &mut [Complex; 32]) {
+    complex_forward_32(a);
 }
 
 // a[0...8n-1], w[0...2n-2]; n >= 2
@@ -557,7 +561,7 @@ pub fn c32_array(a: &mut [Complex; 32]) {
 // TODO: Original comment is as above, but note that w should have
 // length 2n-1, as is obvious from the original code, which addresses
 // an odd number of elements of w.
-fn cpass(a: &mut [Complex], w: &[Complex]) {
+fn complex_forward_pass(a: &mut [Complex], w: &[Complex]) {
     debug_assert_eq!(a.len() % 8, 0);
 
     let n = a.len() / 8;
@@ -588,77 +592,7 @@ fn cpass(a: &mut [Complex], w: &[Complex]) {
     }
 }
 
-// Unrolling this as for c32 had some minor gains for N <= 128, but
-// minor slow-downs for bigger sizes.
-#[inline]
-pub(crate) fn c64(a: &mut [Complex]) {
-    assert_eq!(a.len(), 64);
-
-    cpass(a, &D64); // n = 8
-    c16(&mut a[32..48]);
-    c16(&mut a[48..64]);
-    c32(&mut a[..32]);
-}
-
-pub fn c64_array(a: &mut [Complex; 64]) {
-    c64(a);
-}
-
-pub(crate) fn c128(a: &mut [Complex]) {
-    assert_eq!(a.len(), 128);
-
-    cpass(a, &D128); // n = 16
-    c32(&mut a[64..96]);
-    c32(&mut a[96..128]);
-    c64(&mut a[..64]);
-}
-
-pub(crate) fn c256(a: &mut [Complex]) {
-    assert_eq!(a.len(), 256);
-
-    cpass(a, &D256); // n = 32
-    c64(&mut a[128..192]);
-    c64(&mut a[192..256]);
-    c128(&mut a[..128]);
-}
-
-pub(crate) fn c512(a: &mut [Complex]) {
-    assert_eq!(a.len(), 512);
-
-    cpass(a, &D512); // n = 64
-    c128(&mut a[384..512]);
-    c128(&mut a[256..384]);
-    c256(&mut a[..256]);
-}
-
-pub(crate) fn c1024(a: &mut [Complex]) {
-    assert_eq!(a.len(), 1024);
-
-    cpassbig(a, &D1024); // n = 128
-    c256(&mut a[768..1024]);
-    c256(&mut a[512..768]);
-    c512(&mut a[..512]);
-}
-
-pub(crate) fn c2048(a: &mut [Complex]) {
-    assert_eq!(a.len(), 2048);
-
-    cpassbig(a, &D2048); // n = 256
-    c512(&mut a[1536..2048]);
-    c512(&mut a[1024..1536]);
-    c1024(&mut a[..1024]);
-}
-
-pub(crate) fn c4096(a: &mut [Complex]) {
-    assert_eq!(a.len(), 4096);
-
-    cpassbig(a, &D4096); // n = 512
-    c1024(&mut a[3072..4096]);
-    c1024(&mut a[2048..3072]);
-    c2048(&mut a[..2048]);
-}
-
-fn cpassbig(a: &mut [Complex], w: &[Complex]) {
+fn complex_forward_pass_big(a: &mut [Complex], w: &[Complex]) {
     debug_assert_eq!(a.len() % 8, 0);
 
     let n = a.len() / 8;
@@ -698,62 +632,81 @@ fn cpassbig(a: &mut [Complex], w: &[Complex]) {
     }
 }
 
-/*
-// a[0...8n-1], w[0...n-2]; n even, n >= 4
-void cpassbig(register complex *a,register const complex *w,register unsigned int n)
-{
-  register real t1, t2, t3, t4, t5, t6, t7, t8;
-  register complex *a1;
-  register complex *a2;
-  register complex *a3;
-  register unsigned int k;
+// Unrolling this as for c32 had some minor gains for N <= 128, but
+// minor slow-downs for bigger sizes.
+#[inline]
+pub(crate) fn complex_forward_64(a: &mut [Complex]) {
+    assert_eq!(a.len(), 64);
 
-  a2 = a + 4 * n;
-  a1 = a + 2 * n;
-  a3 = a2 + 2 * n;
-  k = n - 2;
-
-  TRANSFORMZERO(a[0],a1[0],a2[0],a3[0]);
-  TRANSFORM(a[1],a1[1],a2[1],a3[1],w[0].re,w[0].im);
-  a += 2;
-  a1 += 2;
-  a2 += 2;
-  a3 += 2;
-
-  do {
-    TRANSFORM(a[0],a1[0],a2[0],a3[0],w[1].re,w[1].im);
-    TRANSFORM(a[1],a1[1],a2[1],a3[1],w[2].re,w[2].im);
-    a += 2;
-    a1 += 2;
-    a2 += 2;
-    a3 += 2;
-    w += 2;
-  } while (k -= 2);
-
-  TRANSFORMHALF(a[0],a1[0],a2[0],a3[0]);
-  TRANSFORM(a[1],a1[1],a2[1],a3[1],w[0].im,w[0].re);
-  a += 2;
-  a1 += 2;
-  a2 += 2;
-  a3 += 2;
-
-  k = n - 2;
-  do {
-    TRANSFORM(a[0],a1[0],a2[0],a3[0],w[-1].im,w[-1].re);
-    TRANSFORM(a[1],a1[1],a2[1],a3[1],w[-2].im,w[-2].re);
-    a += 2;
-    a1 += 2;
-    a2 += 2;
-    a3 += 2;
-    w -= 2;
-  } while (k -= 2);
+    complex_forward_pass(a, &D64);
+    complex_forward_16(&mut a[32..48]);
+    complex_forward_16(&mut a[48..64]);
+    complex_forward_32(&mut a[..32]);
 }
 
-fn c1024(a: &mut [Complex]) {
-
-    cpassbig(a, d1024); // n = 128
-    c256(a + 768);
-    c256(a + 512);
-    c512(a);
+pub fn complex_forward_64_array(a: &mut [Complex; 64]) {
+    complex_forward_64(a);
 }
-*/
+
+pub(crate) fn complex_forward_128(a: &mut [Complex]) {
+    assert_eq!(a.len(), 128);
+
+    complex_forward_pass(a, &D128);
+    complex_forward_32(&mut a[64..96]);
+    complex_forward_32(&mut a[96..128]);
+    complex_forward_64(&mut a[..64]);
+}
+
+pub(crate) fn complex_forward_256(a: &mut [Complex]) {
+    assert_eq!(a.len(), 256);
+
+    complex_forward_pass(a, &D256);
+    complex_forward_64(&mut a[128..192]);
+    complex_forward_64(&mut a[192..256]);
+    complex_forward_128(&mut a[..128]);
+}
+
+pub(crate) fn complex_forward_512(a: &mut [Complex]) {
+    assert_eq!(a.len(), 512);
+
+    complex_forward_pass(a, &D512);
+    complex_forward_128(&mut a[384..512]);
+    complex_forward_128(&mut a[256..384]);
+    complex_forward_256(&mut a[..256]);
+}
+
+pub(crate) fn complex_forward_1024(a: &mut [Complex]) {
+    assert_eq!(a.len(), 1024);
+
+    complex_forward_pass_big(a, &D1024);
+    complex_forward_256(&mut a[768..1024]);
+    complex_forward_256(&mut a[512..768]);
+    complex_forward_512(&mut a[..512]);
+}
+
+pub(crate) fn complex_forward_2048(a: &mut [Complex]) {
+    assert_eq!(a.len(), 2048);
+
+    complex_forward_pass_big(a, &D2048);
+    complex_forward_512(&mut a[1536..2048]);
+    complex_forward_512(&mut a[1024..1536]);
+    complex_forward_1024(&mut a[..1024]);
+}
+
+pub(crate) fn complex_forward_4096(a: &mut [Complex]) {
+    assert_eq!(a.len(), 4096);
+
+    complex_forward_pass_big(a, &D4096);
+    complex_forward_1024(&mut a[3072..4096]);
+    complex_forward_1024(&mut a[2048..3072]);
+    complex_forward_2048(&mut a[..2048]);
+}
+
+pub(crate) fn complex_forward_8192(a: &mut [Complex]) {
+    assert_eq!(a.len(), 8192);
+
+    complex_forward_pass_big(a, &D8192);
+    complex_forward_2048(&mut a[6144..8192]);
+    complex_forward_2048(&mut a[4096..6144]);
+    complex_forward_4096(&mut a[..4096]);
+}
