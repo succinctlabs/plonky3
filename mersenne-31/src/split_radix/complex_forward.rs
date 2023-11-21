@@ -1,5 +1,5 @@
 use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64, D8192};
-use super::{reduce_2p, reduce_complex, Complex, Real, P};
+use super::{reduce_2p, reduce_complex, split_at_mut_unchecked, Complex, Real, P};
 
 /// SQRTHALF * SQRTHALF = 1/2 (mod P)
 const SQRTHALF: Real = D16[1].re; // == 1 << 15
@@ -465,28 +465,6 @@ pub fn complex_forward_8_array(a: &mut [Complex; 8]) {
     complex_forward_8(a);
 }
 
-/// Copied from Rust nightly sources
-unsafe fn from_raw_parts_mut<'a, T>(data: *mut T, len: usize) -> &'a mut [T] {
-    unsafe { &mut *core::ptr::slice_from_raw_parts_mut(data, len) }
-}
-
-/// Copied from Rust nightly sources
-unsafe fn split_at_mut_unchecked<T>(v: &mut [T], mid: usize) -> (&mut [T], &mut [T]) {
-    let len = v.len();
-    let ptr = v.as_mut_ptr();
-
-    // SAFETY: Caller has to check that `0 <= mid <= self.len()`.
-    //
-    // `[ptr; mid]` and `[mid; len]` are not overlapping, so returning
-    // a mutable reference is fine.
-    unsafe {
-        (
-            from_raw_parts_mut(ptr, mid),
-            from_raw_parts_mut(ptr.add(mid), len - mid),
-        )
-    }
-}
-
 #[inline]
 pub(crate) fn complex_forward_16(a: &mut [Complex]) {
     assert_eq!(a.len(), 16);
@@ -496,10 +474,10 @@ pub(crate) fn complex_forward_16(a: &mut [Complex]) {
     let (a2, a3) = unsafe { split_at_mut_unchecked(a2, 4) };
 
     transformzero(&mut a0[0], &mut a1[0], &mut a2[0], &mut a3[0]);
+    transformhalf(&mut a0[2], &mut a1[2], &mut a2[2], &mut a3[2]);
     transform(
         &mut a0[1], &mut a1[1], &mut a2[1], &mut a3[1], D16[0].re, D16[0].im,
     );
-    transformhalf(&mut a0[2], &mut a1[2], &mut a2[2], &mut a3[2]);
     transform(
         &mut a0[3], &mut a1[3], &mut a2[3], &mut a3[3], D16[0].im, D16[0].re,
     );

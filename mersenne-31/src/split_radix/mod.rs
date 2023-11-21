@@ -73,6 +73,30 @@ pub struct Complex {
     pub im: Real,
 }
 
+/// Copied from Rust nightly sources
+#[inline(always)]
+unsafe fn from_raw_parts_mut<'a, T>(data: *mut T, len: usize) -> &'a mut [T] {
+    unsafe { &mut *core::ptr::slice_from_raw_parts_mut(data, len) }
+}
+
+/// Copied from Rust nightly sources
+#[inline(always)]
+pub(crate) unsafe fn split_at_mut_unchecked<T>(v: &mut [T], mid: usize) -> (&mut [T], &mut [T]) {
+    let len = v.len();
+    let ptr = v.as_mut_ptr();
+
+    // SAFETY: Caller has to check that `0 <= mid <= self.len()`.
+    //
+    // `[ptr; mid]` and `[mid; len]` are not overlapping, so returning
+    // a mutable reference is fine.
+    unsafe {
+        (
+            from_raw_parts_mut(ptr, mid),
+            from_raw_parts_mut(ptr.add(mid), len - mid),
+        )
+    }
+}
+
 pub fn complex_forward_fft(u: &mut [Complex]) {
     match u.len() {
         4 => complex_forward_4(u),

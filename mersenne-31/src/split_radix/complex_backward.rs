@@ -1,5 +1,5 @@
 use super::roots::{D1024, D128, D16, D2048, D256, D32, D4096, D512, D64, D8192};
-use super::{reduce_2p_sqr, reduce_all, reduce_complex, Complex, Real};
+use super::{reduce_2p_sqr, reduce_all, reduce_complex, split_at_mut_unchecked, Complex, Real};
 
 /// SQRTHALF * SQRTHALF = 1/2 (mod P)
 const SQRTHALF: Real = D16[1].re; // == 1 << 15
@@ -274,56 +274,18 @@ pub(crate) fn complex_backward_16(a: &mut [Complex]) {
     complex_backward_4(&mut a[8..12]);
     complex_backward_4(&mut a[12..]);
 
-    // untransformzero(a[0], a[4], a[8], a[12]);
-    // untransformhalf(a[2], a[6], a[10], a[14]);
-    // untransform(a[1], a[5], a[9], a[13], d16[0].re, d16[0].im);
-    // untransform(a[3], a[7], a[11], a[15], d16[0].im, d16[0].re);
+    let (a0, a1) = unsafe { split_at_mut_unchecked(a, 4) };
+    let (a1, a2) = unsafe { split_at_mut_unchecked(a1, 4) };
+    let (a2, a3) = unsafe { split_at_mut_unchecked(a2, 4) };
 
-    // TODO: This is some fugly shit...
-    let mut a0 = a[0];
-    let mut a1 = a[4];
-    let mut a2 = a[8];
-    let mut a3 = a[12];
-
-    //untransformzero(&mut a[0], &mut a[4], &mut a[8], &mut a[12]);
-    untransformzero(&mut a0, &mut a1, &mut a2, &mut a3);
-    a[0] = a0;
-    a[4] = a1;
-    a[8] = a2;
-    a[12] = a3;
-
-    a0 = a[1];
-    a1 = a[5];
-    a2 = a[9];
-    a3 = a[13];
-    //untransform(&mut a[1], &mut a[5], &mut a[9], &mut a[13], D16[0].re, D16[0].im,);
-    untransform(&mut a0, &mut a1, &mut a2, &mut a3, D16[0].re, D16[0].im);
-    a[1] = a0;
-    a[5] = a1;
-    a[9] = a2;
-    a[13] = a3;
-
-    a0 = a[2];
-    a1 = a[6];
-    a2 = a[10];
-    a3 = a[14];
-    //untransformhalf(&mut a[2], &mut a[6], &mut a[10], &mut a[14]);
-    untransformhalf(&mut a0, &mut a1, &mut a2, &mut a3);
-    a[2] = a0;
-    a[6] = a1;
-    a[10] = a2;
-    a[14] = a3;
-
-    a0 = a[3];
-    a1 = a[7];
-    a2 = a[11];
-    a3 = a[15];
-    //untransform(&mut a[3], &mut a[7], &mut a[11], &mut a[15], D16[0].im, D16[0].re,);
-    untransform(&mut a0, &mut a1, &mut a2, &mut a3, D16[0].im, D16[0].re);
-    a[3] = a0;
-    a[7] = a1;
-    a[11] = a2;
-    a[15] = a3;
+    untransformzero(&mut a0[0], &mut a1[0], &mut a2[0], &mut a3[0]);
+    untransformhalf(&mut a0[2], &mut a1[2], &mut a2[2], &mut a3[2]);
+    untransform(
+        &mut a0[1], &mut a1[1], &mut a2[1], &mut a3[1], D16[0].re, D16[0].im,
+    );
+    untransform(
+        &mut a0[3], &mut a1[3], &mut a2[3], &mut a3[3], D16[0].im, D16[0].re,
+    );
 }
 
 /* a[0...8n-1], w[0...2n-2] */
@@ -333,23 +295,18 @@ fn complex_backward_pass(a: &mut [Complex], w: &[Complex]) {
     let n = a.len() / 8;
 
     debug_assert!(n >= 2);
-    debug_assert_eq!(w.len(), 2 * n - 1);
+    assert_eq!(w.len(), 2 * n - 1);
 
     // Split a into four chunks of size 2*n.
-    let (a, a1) = a.split_at_mut(2 * n);
-    let (a1, a2) = a1.split_at_mut(2 * n);
-    let (a2, a3) = a2.split_at_mut(2 * n);
+    let (a0, a1) = unsafe { split_at_mut_unchecked(a, 2 * n) };
+    let (a1, a2) = unsafe { split_at_mut_unchecked(a1, 2 * n) };
+    let (a2, a3) = unsafe { split_at_mut_unchecked(a2, 2 * n) };
 
-    untransformzero(&mut a[0], &mut a1[0], &mut a2[0], &mut a3[0]);
+    untransformzero(&mut a0[0], &mut a1[0], &mut a2[0], &mut a3[0]);
 
-    // TODO: Can I not use transformhalf here for some i?
-
-    // TODO: The original version pulled the first iteration out of
-    // the loop and unrolled the loop two iterations; check whether
-    // that actually improves things here.
     for i in 1..2 * n {
         untransform(
-            &mut a[i],
+            &mut a0[i],
             &mut a1[i],
             &mut a2[i],
             &mut a3[i],
@@ -359,8 +316,47 @@ fn complex_backward_pass(a: &mut [Complex], w: &[Complex]) {
     }
 }
 
+fn complex_backward_pass_big(a: &mut [Complex], w: &[Complex]) {
+    debug_assert_eq!(a.len() % 8, 0);
+
+    let n = a.len() / 8;
+
+    debug_assert!(n >= 2);
+    assert_eq!(w.len(), 2 * n - 1);
+
+    // Split a into four chunks of size 2*n.
+    let (a0, a1) = unsafe { split_at_mut_unchecked(a, 2 * n) };
+    let (a1, a2) = unsafe { split_at_mut_unchecked(a1, 2 * n) };
+    let (a2, a3) = unsafe { split_at_mut_unchecked(a2, 2 * n) };
+
+    untransformzero(&mut a0[0], &mut a1[0], &mut a2[0], &mut a3[0]);
+    for i in 1..n {
+        untransform(
+            &mut a0[i],
+            &mut a1[i],
+            &mut a2[i],
+            &mut a3[i],
+            w[i - 1].re,
+            w[i - 1].im,
+        );
+    }
+
+    untransformhalf(&mut a0[n], &mut a1[n], &mut a2[n], &mut a3[n]);
+
+    for i in (n + 1)..(2 * n) {
+        untransform(
+            &mut a0[i],
+            &mut a1[i],
+            &mut a2[i],
+            &mut a3[i],
+            w[2 * n - i - 1].im,
+            w[2 * n - i - 1].re,
+        );
+    }
+}
+
 pub(crate) fn complex_backward_32(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 32);
+    assert_eq!(a.len(), 32);
 
     complex_backward_16(&mut a[..16]);
     complex_backward_8(&mut a[16..24]);
@@ -369,7 +365,7 @@ pub(crate) fn complex_backward_32(a: &mut [Complex]) {
 }
 
 pub(crate) fn complex_backward_64(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 64);
+    assert_eq!(a.len(), 64);
 
     complex_backward_32(&mut a[..32]);
     complex_backward_16(&mut a[32..48]);
@@ -378,7 +374,7 @@ pub(crate) fn complex_backward_64(a: &mut [Complex]) {
 }
 
 pub(crate) fn complex_backward_128(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 128);
+    assert_eq!(a.len(), 128);
 
     complex_backward_64(&mut a[..64]);
     complex_backward_32(&mut a[64..96]);
@@ -387,7 +383,7 @@ pub(crate) fn complex_backward_128(a: &mut [Complex]) {
 }
 
 pub(crate) fn complex_backward_256(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 256);
+    assert_eq!(a.len(), 256);
 
     complex_backward_128(&mut a[..128]);
     complex_backward_64(&mut a[128..192]);
@@ -396,7 +392,7 @@ pub(crate) fn complex_backward_256(a: &mut [Complex]) {
 }
 
 pub(crate) fn complex_backward_512(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 512);
+    assert_eq!(a.len(), 512);
 
     complex_backward_256(&mut a[..256]);
     complex_backward_128(&mut a[256..384]);
@@ -405,37 +401,37 @@ pub(crate) fn complex_backward_512(a: &mut [Complex]) {
 }
 
 pub(crate) fn complex_backward_1024(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 1024);
+    assert_eq!(a.len(), 1024);
 
     complex_backward_512(&mut a[..512]);
     complex_backward_256(&mut a[512..768]);
     complex_backward_256(&mut a[768..1024]);
-    complex_backward_pass(a, &D1024);
+    complex_backward_pass_big(a, &D1024);
 }
 
 pub(crate) fn complex_backward_2048(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 2048);
+    assert_eq!(a.len(), 2048);
 
     complex_backward_1024(&mut a[..1024]);
     complex_backward_512(&mut a[1024..1536]);
     complex_backward_512(&mut a[1536..2048]);
-    complex_backward_pass(a, &D2048);
+    complex_backward_pass_big(a, &D2048);
 }
 
 pub(crate) fn complex_backward_4096(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 4096);
+    assert_eq!(a.len(), 4096);
 
     complex_backward_2048(&mut a[..2048]);
     complex_backward_1024(&mut a[2048..3072]);
     complex_backward_1024(&mut a[3072..4096]);
-    complex_backward_pass(a, &D4096);
+    complex_backward_pass_big(a, &D4096);
 }
 
 pub(crate) fn complex_backward_8192(a: &mut [Complex]) {
-    debug_assert_eq!(a.len(), 8192);
+    assert_eq!(a.len(), 8192);
 
     complex_backward_4096(&mut a[..4096]);
     complex_backward_2048(&mut a[4096..6144]);
     complex_backward_2048(&mut a[6144..8192]);
-    complex_backward_pass(a, &D8192);
+    complex_backward_pass_big(a, &D8192);
 }
