@@ -103,7 +103,7 @@ use p3_mersenne_31::split_radix::{
         complex_forward_16_array, complex_forward_32_array, complex_forward_64_array,
         complex_forward_8_array,
     },
-    forward_fft, Complex,
+    complex_forward_fft, Complex,
 };
 use rand::Rng;
 
@@ -161,35 +161,35 @@ where
     let mut v = randvec(64);
     group.bench_function(BenchmarkId::from_parameter(64777), |b| {
         b.iter(|| {
-            forward_fft::<64>(&mut v);
+            complex_forward_fft::<64>(&mut v);
         });
     });
 
     let mut v = randvec(512);
     group.bench_function(BenchmarkId::from_parameter(512), |b| {
         b.iter(|| {
-            forward_fft::<512>(&mut v);
+            complex_forward_fft::<512>(&mut v);
         });
     });
 
     let mut v = randvec(1024);
     group.bench_function(BenchmarkId::from_parameter(1024), |b| {
         b.iter(|| {
-            forward_fft::<1024>(&mut v);
+            complex_forward_fft::<1024>(&mut v);
         });
     });
 
     let mut v = randvec(2048);
     group.bench_function(BenchmarkId::from_parameter(2048), |b| {
         b.iter(|| {
-            forward_fft::<2048>(&mut v);
+            complex_forward_fft::<2048>(&mut v);
         });
     });
 
     let mut v = randvec(4096);
     group.bench_function(BenchmarkId::from_parameter(4096), |b| {
         b.iter(|| {
-            forward_fft::<4096>(&mut v);
+            complex_forward_fft::<4096>(&mut v);
         });
     });
 }

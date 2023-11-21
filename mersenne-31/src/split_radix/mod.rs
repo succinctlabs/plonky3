@@ -73,8 +73,9 @@ pub struct Complex {
     pub im: Real,
 }
 
-pub fn forward_fft<const N: usize>(u: &mut [Complex]) {
-    match N {
+pub fn complex_forward_fft(u: &mut [Complex]) {
+    match u.len() {
+        4 => complex_forward_4(u),
         8 => complex_forward_8(u),
         16 => complex_forward_16(u),
         32 => complex_forward_32(u),
@@ -90,8 +91,9 @@ pub fn forward_fft<const N: usize>(u: &mut [Complex]) {
     }
 }
 
-pub fn backward_fft<const N: usize>(v: &mut [Complex]) {
-    match N {
+pub fn complex_backward_fft(v: &mut [Complex]) {
+    match v.len() {
+        4 => complex_backward_4(v),
         8 => complex_backward_8(v),
         16 => complex_backward_16(v),
         32 => complex_backward_32(v),
@@ -292,14 +294,7 @@ mod tests {
 
     use rand::{thread_rng, Rng};
 
-    use crate::split_radix::complex_backward::{
-        complex_backward_128, complex_backward_16, complex_backward_256, complex_backward_32,
-        complex_backward_4, complex_backward_4096, complex_backward_64, complex_backward_8,
-    };
-    use crate::split_radix::complex_forward::{
-        complex_forward_128, complex_forward_16, complex_forward_256, complex_forward_32,
-        complex_forward_4, complex_forward_4096, complex_forward_64, complex_forward_8,
-    };
+    use super::{complex_backward_fft, complex_forward_fft};
     use crate::split_radix::{reduce_2p_sqr, Complex, Real, P};
 
     impl Add for Complex {
@@ -339,22 +334,6 @@ mod tests {
         }
     }
 
-    /*
-    fn naive_convolve(x: &Vec<Complex>, y: &Vec<Complex>) -> Vec<Complex> {
-        let n = x.len();
-        assert_eq!(n, y.len());
-        let mut z = vec![Complex::ZERO; n];
-        for i in 0..n {
-            for j in 0..n {
-                let mut t = z[(i + j) % n];
-                t = t + x[i] * y[j];
-                z[(i + j) % n] = t;
-            }
-        }
-        z
-    }
-    */
-
     fn naive_convolve(us: &[Complex], vs: &[Complex]) -> Vec<Complex> {
         let n = us.len();
         assert_eq!(n, vs.len());
@@ -382,209 +361,56 @@ mod tests {
     }
 
     #[test]
-    fn forward_backward_is_identity4() {
-        const N: usize = 4;
+    fn forward_backward_is_identity() {
+        const NITERS: usize = 100;
+        let mut len = 4;
+        loop {
+            for _ in 0..NITERS {
+                let us = randvec(len);
+                let mut vs = us.clone();
+                complex_forward_fft(&mut vs);
 
-        let us = randvec(N);
-        let mut vs = us.clone();
-        complex_forward_4(&mut vs);
+                let mut ws = vs.clone();
+                complex_backward_fft(&mut ws);
 
-        let mut ws = vs.clone();
-        complex_backward_4(&mut ws);
-
-        assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
-    }
-
-    #[test]
-    fn forward_backward_is_identity8() {
-        for _ in 0..1000 {
-            const N: usize = 8;
-
-            let us = randvec(N);
-            let mut vs = us.clone();
-            complex_forward_8(&mut vs);
-
-            let mut ws = vs.clone();
-            complex_backward_8(&mut ws);
-
-            assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
+                assert!(us.iter().zip(ws).all(|(&u, w)| w == u * len as i64));
+            }
+            len *= 2;
+            if len > 8192 {
+                break;
+            }
         }
     }
 
     #[test]
-    fn forward_backward_is_identity16() {
-        for _ in 0..1000 {
-            const N: usize = 16;
+    fn convolution() {
+        let mut len = 4;
+        loop {
+            let us = randvec(len);
+            let vs = randvec(len);
 
-            let us = randvec(N);
-            let mut vs = us.clone();
-            complex_forward_16(&mut vs);
+            let mut fft_us = us.clone();
+            complex_forward_fft(&mut fft_us);
 
-            let mut ws = vs.clone();
-            complex_backward_16(&mut ws);
+            let mut fft_vs = vs.clone();
+            complex_forward_fft(&mut fft_vs);
 
-            assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
+            let mut pt_prods = fft_us
+                .iter()
+                .zip(fft_vs)
+                .map(|(&u, v)| u * v)
+                .collect::<Vec<_>>();
+
+            complex_backward_fft(&mut pt_prods);
+
+            let conv = naive_convolve(&us, &vs);
+            assert!(conv.iter().zip(pt_prods).all(|(&c, p)| p == c * len as i64));
+            len *= 2;
+            if len > 8192 {
+                break;
+            }
         }
     }
-
-    #[test]
-    fn forward_backward_is_identity32() {
-        for _ in 0..1000 {
-            const N: usize = 32;
-
-            let us = randvec(N);
-            let mut vs = us.clone();
-            complex_forward_32(&mut vs);
-
-            let mut ws = vs.clone();
-            complex_backward_32(&mut ws);
-
-            assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
-        }
-    }
-
-    #[test]
-    fn forward_backward_is_identity64() {
-        for _ in 0..1000 {
-            const N: usize = 64;
-
-            let us = randvec(N);
-            let mut vs = us.clone();
-            complex_forward_64(&mut vs);
-
-            let mut ws = vs.clone();
-            complex_backward_64(&mut ws);
-
-            assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
-        }
-    }
-
-    #[test]
-    fn forward_backward_is_identity128() {
-        for _ in 0..1000 {
-            const N: usize = 128;
-
-            let us = randvec(N);
-            let mut vs = us.clone();
-            complex_forward_128(&mut vs);
-
-            let mut ws = vs.clone();
-            complex_backward_128(&mut ws);
-
-            assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
-        }
-    }
-
-    #[test]
-    fn forward_backward_is_identity256() {
-        for _ in 0..1000 {
-            const N: usize = 256;
-
-            let us = randvec(N);
-            let mut vs = us.clone();
-            complex_forward_256(&mut vs);
-
-            let mut ws = vs.clone();
-            complex_backward_256(&mut ws);
-
-            assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
-        }
-    }
-
-    #[test]
-    fn forward_backward_is_identity4096() {
-        for _ in 0..100 {
-            const N: usize = 4096;
-
-            let us = randvec(N);
-            let mut vs = us.clone();
-            complex_forward_4096(&mut vs);
-
-            let mut ws = vs.clone();
-            complex_backward_4096(&mut ws);
-
-            assert!(us.iter().zip(ws).all(|(&u, w)| w == u * N as i64));
-        }
-    }
-
-    #[test]
-    fn convolution16() {
-        const N: usize = 16;
-
-        let us = randvec(N);
-        let vs = randvec(N);
-
-        let mut fft_us = us.clone();
-        complex_forward_16(&mut fft_us);
-
-        let mut fft_vs = vs.clone();
-        complex_forward_16(&mut fft_vs);
-
-        let mut pt_prods = fft_us
-            .iter()
-            .zip(fft_vs)
-            .map(|(&u, v)| u * v)
-            .collect::<Vec<_>>();
-
-        complex_backward_16(&mut pt_prods);
-
-        let conv = naive_convolve(&us, &vs);
-
-        assert!(conv.iter().zip(pt_prods).all(|(&c, p)| p == c * N as i64));
-    }
-
-    #[test]
-    fn convolution32() {
-        const N: usize = 32;
-
-        let us = randvec(N);
-        let vs = randvec(N);
-
-        let mut fft_us = us.clone();
-        complex_forward_32(&mut fft_us);
-
-        let mut fft_vs = vs.clone();
-        complex_forward_32(&mut fft_vs);
-
-        let mut pt_prods = fft_us
-            .iter()
-            .zip(fft_vs)
-            .map(|(&u, v)| u * v)
-            .collect::<Vec<_>>();
-
-        complex_backward_32(&mut pt_prods);
-
-        let conv = naive_convolve(&us, &vs);
-
-        assert!(conv.iter().zip(pt_prods).all(|(&c, p)| p == c * N as i64));
-    }
-
-    #[test]
-    fn convolution4096() {
-        const N: usize = 4096;
-
-        let us = randvec(N);
-        let vs = randvec(N);
-
-        let mut fft_us = us.clone();
-        complex_forward_4096(&mut fft_us);
-
-        let mut fft_vs = vs.clone();
-        complex_forward_4096(&mut fft_vs);
-
-        let mut pt_prods = fft_us
-            .iter()
-            .zip(fft_vs)
-            .map(|(&u, v)| u * v)
-            .collect::<Vec<_>>();
-
-        complex_backward_4096(&mut pt_prods);
-
-        let conv = naive_convolve(&us, &vs);
-
-        assert!(conv.iter().zip(pt_prods).all(|(&c, p)| p == c * N as i64));
-    }
-
     /*
     #[test]
     fn bad_reduc() {
