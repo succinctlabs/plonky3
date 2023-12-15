@@ -178,12 +178,15 @@ pub trait PermutationAirBuilder: AirBuilder {
 /// A Builder with the ability to encode the existance of interactions with other AIRs by sending
 /// and receiving messages.
 pub trait MessageBuilder: AirBuilder {
-    /// The type of messages that can be sent and received.
-    type Message;
+    fn send<Iter, Item>(&mut self, values: Iter)
+    where
+        Iter: IntoIterator<Item = Item>,
+        Item: Into<Self::Expr>;
 
-    fn send(&mut self, message: Self::Message);
-
-    fn receive(&mut self, message: Self::Message);
+    fn receive<Iter, Item>(&mut self, values: Iter)
+    where
+        Iter: IntoIterator<Item = Item>,
+        Item: Into<Self::Expr>;
 }
 
 pub trait EmptyMessageBuilder: AirBuilder {}
@@ -236,23 +239,37 @@ impl<'a, AB: AirBuilder> AirBuilder for FilteredAirBuilder<'a, AB> {
 }
 
 impl<'a, AB: MessageBuilder> MessageBuilder for FilteredAirBuilder<'a, AB> {
-    type Message = AB::Message;
-
-    fn send(&mut self, message: Self::Message) {
-        self.inner.send(message);
+    fn send<Iter, Item>(&mut self, values: Iter)
+    where
+        Iter: IntoIterator<Item = Item>,
+        Item: Into<Self::Expr>,
+    {
+        self.inner.send(values);
     }
 
-    fn receive(&mut self, message: Self::Message) {
-        self.inner.receive(message);
+    fn receive<Iter, Item>(&mut self, values: Iter)
+    where
+        Iter: IntoIterator<Item = Item>,
+        Item: Into<Self::Expr>,
+    {
+        self.inner.receive(values);
     }
 }
 
 impl<AB: EmptyMessageBuilder> MessageBuilder for AB {
-    type Message = ();
+    fn send<Iter, Item>(&mut self, _values: Iter)
+    where
+        Iter: IntoIterator<Item = Item>,
+        Item: Into<Self::Expr>,
+    {
+    }
 
-    fn send(&mut self, _message: Self::Message) {}
-
-    fn receive(&mut self, _message: Self::Message) {}
+    fn receive<Iter, Item>(&mut self, _values: Iter)
+    where
+        Iter: IntoIterator<Item = Item>,
+        Item: Into<Self::Expr>,
+    {
+    }
 }
 
 #[cfg(test)]
