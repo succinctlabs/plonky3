@@ -232,7 +232,7 @@ impl<'a, AB: AirBuilder> AirBuilder for FilteredAirBuilder<'a, AB> {
     }
 }
 
-impl<'a, AB: MessageBuilder<M>, M> MessageBuilder<M> for FilteredAirBuilder<'a, AB> {
+impl<'a, AB: AirBuilder + MessageBuilder<M>, M> MessageBuilder<M> for FilteredAirBuilder<'a, AB> {
     fn send(&mut self, message: M) {
         self.inner.send(message);
     }
