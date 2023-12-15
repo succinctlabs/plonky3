@@ -1,3 +1,4 @@
+use core::fmt::{Display, Formatter};
 use core::marker::PhantomData;
 use core::ops::{Add, Mul, Sub};
 
@@ -112,5 +113,15 @@ impl<F: Field> Mul<SymbolicVariable<F>> for SymbolicExpression<F> {
 
     fn mul(self, rhs: SymbolicVariable<F>) -> Self::Output {
         self * Self::from(rhs)
+    }
+}
+
+impl<F: Field> Display for SymbolicVariable<F> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        if self.is_next {
+            write!(f, "Next({})", self.column)
+        } else {
+            write!(f, "Local({})", self.column)
+        }
     }
 }
