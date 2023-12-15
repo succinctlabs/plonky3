@@ -177,7 +177,7 @@ pub trait PermutationAirBuilder: AirBuilder {
 
 /// A Builder with the ability to encode the existance of interactions with other AIRs by sending
 /// and receiving messages.
-pub trait MessageBuilder<M>: AirBuilder {
+pub trait MessageBuilder<M> {
     fn send(&mut self, message: M);
 
     fn receive(&mut self, message: M);
