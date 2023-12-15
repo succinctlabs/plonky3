@@ -1,3 +1,4 @@
+use core::fmt::{Display, Formatter};
 use core::marker::PhantomData;
 use core::ops::{Add, Mul, Sub};
 
@@ -11,6 +12,16 @@ pub struct SymbolicVariable<F: Field> {
     pub is_next: bool,
     pub column: usize,
     pub(crate) _phantom: PhantomData<F>,
+}
+
+impl<F: Field> SymbolicVariable<F> {
+    pub fn new(is_next: bool, column: usize) -> Self {
+        Self {
+            is_next,
+            column,
+            _phantom: PhantomData,
+        }
+    }
 }
 
 impl<F: Field> From<SymbolicVariable<F>> for SymbolicExpression<F> {
@@ -112,5 +123,15 @@ impl<F: Field> Mul<SymbolicVariable<F>> for SymbolicExpression<F> {
 
     fn mul(self, rhs: SymbolicVariable<F>) -> Self::Output {
         self * Self::from(rhs)
+    }
+}
+
+impl<F: Field> Display for SymbolicVariable<F> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        if self.is_next {
+            write!(f, "Next({})", self.column)
+        } else {
+            write!(f, "Local({})", self.column)
+        }
     }
 }
