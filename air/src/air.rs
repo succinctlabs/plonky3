@@ -175,6 +175,19 @@ pub trait PermutationAirBuilder: AirBuilder {
     fn permutation_randomness(&self) -> &[Self::EF];
 }
 
+/// A Builder with the ability to encode the existance of interactions with other AIRs by sending
+/// and receiving messages.
+pub trait MessageBuilder: AirBuilder {
+    /// The type of messages that can be sent and received.
+    type Message;
+
+    fn send(&mut self, message: Self::Message);
+
+    fn receive(&mut self, message: Self::Message);
+}
+
+pub trait EmptyMessageBuilder: AirBuilder {}
+
 pub struct FilteredAirBuilder<'a, AB: AirBuilder> {
     inner: &'a mut AB,
     condition: AB::Expr,
@@ -220,6 +233,26 @@ impl<'a, AB: AirBuilder> AirBuilder for FilteredAirBuilder<'a, AB> {
     fn assert_zero<I: Into<Self::Expr>>(&mut self, x: I) {
         self.inner.assert_zero(self.condition.clone() * x.into());
     }
+}
+
+impl<'a, AB: MessageBuilder> MessageBuilder for FilteredAirBuilder<'a, AB> {
+    type Message = AB::Message;
+
+    fn send(&mut self, message: Self::Message) {
+        self.inner.send(message);
+    }
+
+    fn receive(&mut self, message: Self::Message) {
+        self.inner.receive(message);
+    }
+}
+
+impl<AB: EmptyMessageBuilder> MessageBuilder for AB {
+    type Message = ();
+
+    fn send(&mut self, _message: Self::Message) {}
+
+    fn receive(&mut self, _message: Self::Message) {}
 }
 
 #[cfg(test)]
