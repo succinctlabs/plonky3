@@ -147,7 +147,10 @@ pub trait PairBuilder: AirBuilder {
 pub trait PermutationAirBuilder: AirBuilder {
     type EF: ExtensionField<Self::F>;
 
-    type ExprEF: AbstractExtensionField<Self::Expr, F = Self::EF>;
+    type ExprEF: AbstractExtensionField<Self::Expr, F = Self::EF>
+        + Add<Self::VarEF, Output = Self::ExprEF>
+        + Sub<Self::VarEF, Output = Self::ExprEF>
+        + Mul<Self::VarEF, Output = Self::ExprEF>;
 
     type VarEF: Into<Self::ExprEF>
         + Copy
