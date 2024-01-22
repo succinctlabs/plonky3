@@ -2,6 +2,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::Cloned;
 use core::slice;
+use serde::{Deserialize, Serialize};
 
 use p3_field::{ExtensionField, Field, PackedField};
 use p3_maybe_rayon::{IndexedParallelIterator, MaybeParChunksMut, ParallelIterator};
@@ -14,7 +15,7 @@ use crate::{Matrix, MatrixGet, MatrixRowSlices, MatrixRowSlicesMut, MatrixRows, 
 const TRANSPOSE_BLOCK_SIZE: usize = 64;
 
 /// A dense matrix stored in row-major form.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RowMajorMatrix<T> {
     /// All values, stored in row-major order.
     pub values: Vec<T>,

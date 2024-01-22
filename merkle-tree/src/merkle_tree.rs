@@ -2,6 +2,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::array;
 use core::cmp::Reverse;
+use serde::{Deserialize, Serialize};
 
 use itertools::Itertools;
 use p3_field::{AbstractField, Field, PackedField};
@@ -16,8 +17,13 @@ use tracing::instrument;
 ///
 /// This generally shouldn't be used directly. If you're using a Merkle tree as an MMCS,
 /// see `FieldMerkleTreeMmcs`.
-pub struct FieldMerkleTree<F: Field, const DIGEST_ELEMS: usize> {
+#[derive(Serialize, Deserialize)]
+pub struct FieldMerkleTree<F, const DIGEST_ELEMS: usize> {
     pub(crate) leaves: Vec<RowMajorMatrix<F>>,
+    // Enable serialization for this field whenever the underlying array type supports it (len 1-32).
+    #[serde(bound(serialize = "[F; DIGEST_ELEMS]: Serialize"))]
+    // Enable deserialization for this field whenever the underlying array type supports it (len 1-32).
+    #[serde(bound(deserialize = "[F; DIGEST_ELEMS]: Deserialize<'de>"))]
     pub(crate) digest_layers: Vec<Vec<[F; DIGEST_ELEMS]>>,
 }
 
