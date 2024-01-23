@@ -5,7 +5,7 @@ use core::slice;
 use serde::{Deserialize, Serialize};
 
 use p3_field::{ExtensionField, Field, PackedField};
-use p3_maybe_rayon::{IndexedParallelIterator, MaybeParChunksMut, ParallelIterator};
+use p3_maybe_rayon::prelude::*;
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
 
