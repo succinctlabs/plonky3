@@ -1,6 +1,6 @@
 use alloc::vec;
 use alloc::vec::Vec;
-use core::ops::Mul;
+use core::ops::{Add, Mul};
 
 use p3_field::{AbstractField, Field};
 
@@ -111,11 +111,10 @@ impl<F: Field> VirtualPairCol<F> {
 
     pub fn apply<Expr, Var>(&self, preprocessed: &[Var], main: &[Var]) -> Expr
     where
-        F: Into<Expr>,
-        Expr: AbstractField + Mul<F, Output = Expr>,
+        Expr: AbstractField + Mul<F, Output = Expr> + Add<F, Output = Expr>,
         Var: Into<Expr> + Copy,
     {
-        let mut result = self.constant.into();
+        let mut result = Expr::zero() + self.constant;
         for (column, weight) in &self.column_weights {
             result += column.get(preprocessed, main).into() * *weight;
         }
