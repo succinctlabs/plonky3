@@ -248,6 +248,7 @@ pub trait AbstractExtensionField<Base: AbstractField>:
     + SubAssign<Base>
     + Mul<Base, Output = Self>
     + MulAssign<Base>
+    + From<Base>
 {
     const D: usize;
 
