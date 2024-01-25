@@ -168,6 +168,13 @@ pub trait MessageBuilder<M> {
     fn receive(&mut self, message: M);
 }
 
+impl<AB: EmptyMessageBuilder, M> MessageBuilder<M> for AB {
+    fn send(&mut self, _message: M) {}
+
+    fn receive(&mut self, _message: M) {}
+}
+
+/// A message builder for which sending and receiving messages is a no-op.
 pub trait EmptyMessageBuilder: AirBuilder {}
 
 pub struct FilteredAirBuilder<'a, AB: AirBuilder> {
@@ -225,12 +232,6 @@ impl<'a, AB: AirBuilder + MessageBuilder<M>, M> MessageBuilder<M> for FilteredAi
     fn receive(&mut self, message: M) {
         self.inner.receive(message);
     }
-}
-
-impl<AB: EmptyMessageBuilder, M> MessageBuilder<M> for AB {
-    fn send(&mut self, _message: M) {}
-
-    fn receive(&mut self, _message: M) {}
 }
 
 #[cfg(test)]

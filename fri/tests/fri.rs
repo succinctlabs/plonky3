@@ -36,13 +36,13 @@ fn get_ldt_for_testing<R: Rng>(rng: &mut R) -> (Perm, ValMmcs, FriLdt<MyFriConfi
     let compress = MyCompress::new(perm.clone());
     let val_mmcs = ValMmcs::new(hash, compress);
     let challenge_mmcs = ChallengeMmcs::new(val_mmcs.clone());
-    let fri_config = MyFriConfig::new(1, 10, challenge_mmcs);
+    let fri_config = MyFriConfig::new(1, 10, 8, challenge_mmcs);
     (perm, val_mmcs, FriLdt { config: fri_config })
 }
 
 fn do_test_fri_ldt<R: Rng>(rng: &mut R) {
     let (perm, val_mmcs, ldt) = get_ldt_for_testing(rng);
-    let dft = Radix2Dit;
+    let dft = Radix2Dit::default();
 
     let ldes: Vec<RowMajorMatrix<Val>> = (3..6)
         .map(|deg_bits| {
