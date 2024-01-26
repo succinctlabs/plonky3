@@ -15,7 +15,9 @@ pub use air::*;
 pub use columns::*;
 pub use generation::*;
 
-const NUM_ROUNDS: usize = 24;
+pub use constants::RC;
+
+pub const NUM_ROUNDS: usize = 24;
 const BITS_PER_LIMB: usize = 16;
 const U64_LIMBS: usize = 64 / BITS_PER_LIMB;
 const RATE_BITS: usize = 1088;

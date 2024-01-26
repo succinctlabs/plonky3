@@ -119,7 +119,7 @@ pub fn output_limb(i: usize) -> usize {
     KECCAK_COL_MAP.postimage[y][x][limb_index]
 }
 
-pub const NUM_KECCAK_COLS: usize = size_of::<KeccakCols<u8>>();
+const NUM_KECCAK_COLS: usize = size_of::<KeccakCols<u8>>();
 pub(crate) const KECCAK_COL_MAP: KeccakCols<usize> = make_col_map();
 
 const fn make_col_map() -> KeccakCols<usize> {
