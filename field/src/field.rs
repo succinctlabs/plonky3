@@ -329,6 +329,36 @@ impl<AF: AbstractField> AbstractExtensionField<AF> for AF {
     }
 }
 
+/// The tensor product of two algebras over a field.
+///
+/// For mathemtical details, see https://en.wikipedia.org/wiki/Tensor_product_of_algebras.
+///
+/// ## Compatibility requirements
+///  * The map `from_base_pair` must be compatible with the algebra structure of the tensor product.
+///    i.e. we must have:
+///    - `from_base_pair(a_1, b) + from_base_pair(a_2, b) == from_base_pair(a_1 + a_2, b)`
+///    - `from_base_pair(a, b_1) * from_base_pair(a, b_2) == from_base_pair(a, b_1 * b_2)`
+///    - `from_base_pair(a, b_1) * b_2 == from_base_pair(c, b_1 * b_2)`
+///    - `from_base_pair(a_1, b) * a_2 == from_base_pair(a_1 * a_2, b)`
+///    - `from_base_pair(a, b) * c == from_base_pair(a * c, b) = from_base_pair(a, b * c)` for any
+///        `c` in the base field `F`.
+pub trait TensorProduct<A: AbstractExtensionField<F>, F: Field, B: AbstractExtensionField<F>>:
+    AbstractExtensionField<A> + AbstractField + AbstractExtensionField<B>
+{
+    /// Computes the image of the pair `(a, b)` under the canonical map `(A, B) -> Self`.
+    fn from_base_pair(a: A, b: B) -> Self;
+
+    /// Computes the sum of elements `a_i x b_i`, i.e. `\sum_i Self::from_base_pair(a_i, b_i)`.
+    fn from_base_pair_slice(slice: &[(A, B)]) -> Self;
+
+    /// Computes a coordinate representation of an element of the tensor product.
+    ///
+    /// Note that the result is not unique, and depends on the choice of bases for A and B, and also
+    /// each pair is invariant under the transformation `(a, b) -> (a * c, b /c)`` for any non-zero
+    /// `c` in `F``.
+    fn as_base_pair_slice(&self) -> &[(A, B)];
+}
+
 /// A field which supplies information like the two-adicity of its multiplicative group, and methods
 /// for obtaining two-adic generators.
 pub trait TwoAdicField: Field {
