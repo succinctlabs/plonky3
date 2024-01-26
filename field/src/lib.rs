@@ -11,6 +11,7 @@ pub mod extension;
 mod field;
 mod helpers;
 mod packed;
+mod restriction;
 
 pub use array::*;
 pub use batch_inverse::*;
