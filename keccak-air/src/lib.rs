@@ -15,7 +15,7 @@ pub use air::*;
 pub use columns::*;
 pub use generation::*;
 
-pub use constants::{RC, rc_value_limb};
+pub use constants::RC;
 
 pub const NUM_ROUNDS: usize = 24;
 const BITS_PER_LIMB: usize = 16;

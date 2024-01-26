@@ -158,7 +158,7 @@ const RC_BITS: [[u8; 64]; 24] = [
     ],
 ];
 
-pub const fn rc_value_limb(round: usize, limb: usize) -> u16 {
+pub(crate) const fn rc_value_limb(round: usize, limb: usize) -> u16 {
     (RC[round] >> (limb * BITS_PER_LIMB)) as u16
 }
 
