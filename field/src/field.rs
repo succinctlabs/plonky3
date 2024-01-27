@@ -342,8 +342,9 @@ impl<AF: AbstractField> AbstractExtensionField<AF> for AF {
 ///    - `from_base_pair(a_1, b) * a_2 == from_base_pair(a_1 * a_2, b)`
 ///    - `from_base_pair(a, b) * c == from_base_pair(a * c, b) = from_base_pair(a, b * c)` for any
 ///        `c` in the base field `F`.
+///  * The degrees over `F` must satisfy the relation: `A::D * B::D == Self::D`.
 pub trait TensorProduct<A: AbstractExtensionField<F>, F: Field, B: AbstractExtensionField<F>>:
-    AbstractExtensionField<A> + AbstractField + AbstractExtensionField<B>
+    AbstractExtensionField<A> + AbstractExtensionField<B> + AbstractExtensionField<F>
 {
     /// Computes the image of the pair `(a, b)` under the canonical map `(A, B) -> Self`.
     fn from_base_pair(a: A, b: B) -> Self;
