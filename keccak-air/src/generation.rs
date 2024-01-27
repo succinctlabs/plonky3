@@ -30,7 +30,7 @@ pub fn generate_trace_rows<F: PrimeField64>(inputs: Vec<[u64; 25]>) -> RowMajorM
 }
 
 /// `rows` will normally consist of 24 rows, with an exception for the final row.
-pub fn generate_trace_rows_for_perm<F: PrimeField64>(rows: &mut [KeccakCols<F>], input: [u64; 25]) {
+fn generate_trace_rows_for_perm<F: PrimeField64>(rows: &mut [KeccakCols<F>], input: [u64; 25]) {
     // Populate the preimage for each row.
     for row in rows.iter_mut() {
         for y in 0..5 {
