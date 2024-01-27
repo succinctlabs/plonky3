@@ -9,63 +9,74 @@ use crate::{AbstractExtensionField, AbstractField, ExtensionField, Field};
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Default, Hash)]
 pub struct Res<F, EF>(EF, PhantomData<F>);
 
+impl<F: Field, EF: AbstractExtensionField<F>> Res<F, EF> {
+    /// Returns the underlying field element.
+    pub fn into_inner(self) -> EF {
+        self.0
+    }
+
+    pub const fn from_inner(e: EF) -> Self {
+        Self(e, PhantomData)
+    }
+}
+
 impl<F: Field, EF: AbstractExtensionField<F>> AbstractField for Res<F, EF> {
     type F = F;
 
     fn from_f(f: F) -> Self {
-        EF::from_base(f).into()
+        Self::from_inner(EF::from_base(f))
     }
 
     fn zero() -> Self {
-        EF::zero().into()
+        Self::from_inner(EF::zero())
     }
 
     fn one() -> Self {
-        EF::one().into()
+        Self::from_inner(EF::one())
     }
 
     fn two() -> Self {
-        EF::two().into()
+        Self::from_inner(EF::two())
     }
 
     fn from_bool(b: bool) -> Self {
-        EF::from_bool(b).into()
+        Self::from_inner(EF::from_bool(b))
     }
 
     fn from_canonical_u8(n: u8) -> Self {
-        EF::from_canonical_u8(n).into()
+        Self::from_inner(EF::from_canonical_u8(n))
     }
 
     fn from_canonical_u16(n: u16) -> Self {
-        EF::from_canonical_u16(n).into()
+        Self::from_inner(EF::from_canonical_u16(n))
     }
 
     fn from_canonical_u32(n: u32) -> Self {
-        EF::from_canonical_u32(n).into()
+        Self::from_inner(EF::from_canonical_u32(n).into())
     }
 
     fn from_canonical_u64(n: u64) -> Self {
-        EF::from_canonical_u64(n).into()
+        Self::from_inner(EF::from_canonical_u64(n))
     }
 
     fn from_canonical_usize(n: usize) -> Self {
-        EF::from_canonical_usize(n).into()
+        Self::from_inner(EF::from_canonical_usize(n))
     }
 
     fn from_wrapped_u32(n: u32) -> Self {
-        EF::from_wrapped_u32(n).into()
+        Self::from_inner(EF::from_wrapped_u32(n))
     }
 
     fn from_wrapped_u64(n: u64) -> Self {
-        EF::from_wrapped_u64(n).into()
+        Self::from_inner(EF::from_wrapped_u64(n))
     }
 
     fn neg_one() -> Self {
-        EF::neg_one().into()
+        Self::from_inner(EF::neg_one())
     }
 
     fn generator() -> Self {
-        EF::generator().into()
+        Self::from_inner(EF::generator())
     }
 }
 
@@ -73,15 +84,15 @@ impl<F: Field, EF: AbstractExtensionField<F>> AbstractExtensionField<F> for Res<
     const D: usize = EF::D;
 
     fn from_base(b: F) -> Self {
-        EF::from_base(b).into()
+        Self::from_inner(EF::from_base(b))
     }
 
     fn from_base_fn<Fun: FnMut(usize) -> F>(mut f: Fun) -> Self {
-        EF::from_base_fn(|i| f(i)).into()
+        Self::from_inner(EF::from_base_fn(|i| f(i)))
     }
 
     fn from_base_slice(bs: &[F]) -> Self {
-        EF::from_base_slice(bs).into()
+        Self::from_inner(EF::from_base_slice(bs))
     }
 
     fn as_base_slice(&self) -> &[F] {
@@ -89,9 +100,9 @@ impl<F: Field, EF: AbstractExtensionField<F>> AbstractExtensionField<F> for Res<
     }
 }
 
-impl<F: Field, EF: AbstractExtensionField<F>> From<EF> for Res<F, EF> {
-    fn from(ef: EF) -> Self {
-        Res(ef, PhantomData)
+impl<F: Field, EF: AbstractExtensionField<F>> From<F> for Res<F, EF> {
+    fn from(f: F) -> Self {
+        Res(EF::from_base(f), PhantomData)
     }
 }
 
@@ -99,7 +110,7 @@ impl<F: Field, EF: AbstractExtensionField<F>> Add for Res<F, EF> {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        (self.0 + other.0).into()
+        Self::from_inner(self.0 + other.0)
     }
 }
 
@@ -113,7 +124,7 @@ impl<F: Field, EF: AbstractExtensionField<F>> Mul for Res<F, EF> {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
-        (self.0 * other.0).into()
+        Self::from_inner(self.0 * other.0)
     }
 }
 
@@ -133,7 +144,7 @@ impl<F: Field, EF: AbstractExtensionField<F>> Sub for Res<F, EF> {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
-        (self.0 - other.0).into()
+        Self::from_inner(self.0 - other.0)
     }
 }
 
@@ -141,7 +152,7 @@ impl<F: Field, EF: AbstractExtensionField<F>> Neg for Res<F, EF> {
     type Output = Self;
 
     fn neg(self) -> Self {
-        (-self.0).into()
+        Self::from_inner(-self.0)
     }
 }
 
@@ -155,7 +166,7 @@ impl<F: Field, EF: AbstractExtensionField<F>> Add<F> for Res<F, EF> {
     type Output = Self;
 
     fn add(self, other: F) -> Self {
-        (self.0 + other).into()
+        Self::from_inner(self.0 + other)
     }
 }
 
@@ -169,7 +180,7 @@ impl<F: Field, EF: AbstractExtensionField<F>> Sub<F> for Res<F, EF> {
     type Output = Self;
 
     fn sub(self, other: F) -> Self {
-        (self.0 - other).into()
+        Self::from_inner(self.0 - other)
     }
 }
 
@@ -183,7 +194,7 @@ impl<F: Field, EF: AbstractExtensionField<F>> Mul<F> for Res<F, EF> {
     type Output = Self;
 
     fn mul(self, other: F) -> Self {
-        (self.0 * other).into()
+        Self::from_inner(self.0 * other)
     }
 }
 
@@ -191,7 +202,7 @@ impl<F: Field, EF: ExtensionField<F>> Div for Res<F, EF> {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
-        (self.0 / other.0).into()
+        Self::from_inner(self.0 / other.0)
     }
 }
 
