@@ -23,7 +23,6 @@ pub trait AirBuilder: Sized {
     type F: Field;
 
     type Expr: AbstractField<F = Self::F>
-        + From<Self::F>
         + Add<Self::Var, Output = Self::Expr>
         + Add<Self::F, Output = Self::Expr>
         + Sub<Self::Var, Output = Self::Expr>
