@@ -19,3 +19,4 @@ pub use exponentiation::*;
 pub use field::*;
 pub use helpers::*;
 pub use packed::*;
+pub use restriction::*;
