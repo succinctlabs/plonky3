@@ -7,7 +7,7 @@ use crate::{AbstractExtensionField, AbstractField, ExtensionField, Field};
 
 /// The restriction of scalars from a field `EF` to a subfield `F`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Default, Hash)]
-pub struct Res<F: Field, EF: AbstractExtensionField<F>>(EF, PhantomData<F>);
+pub struct Res<F, EF>(EF, PhantomData<F>);
 
 impl<F: Field, EF: AbstractExtensionField<F>> AbstractField for Res<F, EF> {
     type F = F;
