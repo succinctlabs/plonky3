@@ -22,11 +22,7 @@ use crate::{
 };
 
 #[instrument(skip_all)]
-pub fn prove<
-    SC,
-    #[cfg(debug_assertions)] A: for<'a> Air<crate::check_constraints::DebugConstraintBuilder<'a, SC::Val>>,
-    #[cfg(not(debug_assertions))] A,
->(
+pub fn prove<SC, A: for<'a> Air<crate::check_constraints::DebugConstraintBuilder<'a, SC::Val>>>(
     config: &SC,
     air: &A,
     challenger: &mut SC::Challenger,
@@ -36,7 +32,7 @@ where
     SC: StarkConfig,
     A: Air<SymbolicAirBuilder<SC::Val>> + for<'a> Air<ProverConstraintFolder<'a, SC>>,
 {
-    #[cfg(debug_assertions)]
+    // #[cfg(debug_assertions)]
     crate::check_constraints::check_constraints(air, &trace);
 
     let degree = trace.height();
