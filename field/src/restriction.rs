@@ -9,8 +9,6 @@ use crate::{AbstractExtensionField, AbstractField, ExtensionField, Field};
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Default, Hash)]
 pub struct Res<F: Field, EF: AbstractExtensionField<F>>(EF, PhantomData<F>);
 
-impl<F: Field, EF: AbstractExtensionField<F>> Res<F, EF> {}
-
 impl<F: Field, EF: AbstractExtensionField<F>> AbstractField for Res<F, EF> {
     type F = F;
 
@@ -71,6 +69,27 @@ impl<F: Field, EF: AbstractExtensionField<F>> AbstractField for Res<F, EF> {
     }
 }
 
+impl<F: Field, EF: AbstractExtensionField<F>> AbstractExtensionField<EF> for Res<F, EF> {
+    const D: usize = 1;
+
+    fn from_base(b: EF) -> Self {
+        b.into()
+    }
+
+    fn from_base_fn<Fun: FnMut(usize) -> EF>(mut f: Fun) -> Self {
+        let e = f(0);
+        e.into()
+    }
+
+    fn from_base_slice(bs: &[EF]) -> Self {
+        bs[0].clone().into()
+    }
+
+    fn as_base_slice(&self) -> &[EF] {
+        core::slice::from_ref(&self.0)
+    }
+}
+
 impl<F: Field, EF: AbstractExtensionField<F>> From<EF> for Res<F, EF> {
     fn from(ef: EF) -> Self {
         Res(ef, PhantomData)
@@ -105,6 +124,12 @@ impl<F: Field, EF: AbstractExtensionField<F>> MulAssign for Res<F, EF> {
     }
 }
 
+impl<F: Field, EF: AbstractExtensionField<F>> MulAssign<EF> for Res<F, EF> {
+    fn mul_assign(&mut self, other: EF) {
+        self.0.mul_assign(other);
+    }
+}
+
 impl<F: Field, EF: AbstractExtensionField<F>> Sub for Res<F, EF> {
     type Output = Self;
 
@@ -124,6 +149,42 @@ impl<F: Field, EF: AbstractExtensionField<F>> Neg for Res<F, EF> {
 impl<F: Field, EF: AbstractExtensionField<F>> SubAssign for Res<F, EF> {
     fn sub_assign(&mut self, other: Self) {
         self.0.sub_assign(other.0);
+    }
+}
+
+impl<F: Field, EF: AbstractExtensionField<F>> Add<EF> for Res<F, EF> {
+    type Output = Self;
+
+    fn add(self, other: EF) -> Self {
+        (self.0 + other).into()
+    }
+}
+
+impl<F: Field, EF: AbstractExtensionField<F>> AddAssign<EF> for Res<F, EF> {
+    fn add_assign(&mut self, other: EF) {
+        self.0.add_assign(other);
+    }
+}
+
+impl<F: Field, EF: AbstractExtensionField<F>> Sub<EF> for Res<F, EF> {
+    type Output = Self;
+
+    fn sub(self, other: EF) -> Self {
+        (self.0 - other).into()
+    }
+}
+
+impl<F: Field, EF: AbstractExtensionField<F>> SubAssign<EF> for Res<F, EF> {
+    fn sub_assign(&mut self, other: EF) {
+        self.0.sub_assign(other);
+    }
+}
+
+impl<F: Field, EF: AbstractExtensionField<F>> Mul<EF> for Res<F, EF> {
+    type Output = Self;
+
+    fn mul(self, other: EF) -> Self {
+        (self.0 * other).into()
     }
 }
 
