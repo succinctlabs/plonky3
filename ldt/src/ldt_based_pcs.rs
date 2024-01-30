@@ -73,13 +73,16 @@ where
     fn commit_shifted_batches(
         &self,
         polynomials: Vec<In>,
-        coset_shift: Val,
+        coset_shifts: &[Val],
     ) -> (Self::Commitment, Self::ProverData) {
-        let shift = Val::generator() / coset_shift;
+        // let shift = Val::generator() / coset_shift;
+        assert_eq!(polynomials.len(), coset_shifts.len());
         let ldes = info_span!("compute all coset LDEs").in_scope(|| {
             polynomials
                 .into_iter()
-                .map(|poly| {
+                .zip_eq(coset_shifts.iter())
+                .map(|(poly, coset_shift)| {
+                    let shift = Val::generator() / *coset_shift;
                     let input = poly.to_row_major_matrix();
                     // Commit to the bit-reversed LDE.
                     self.dft
@@ -110,7 +113,10 @@ where
     type Error = L::Error;
 
     fn commit_batches(&self, polynomials: Vec<In>) -> (Self::Commitment, Self::ProverData) {
-        self.commit_shifted_batches(polynomials, Val::one())
+        let shifts = (0..polynomials.len())
+            .map(|_| Val::one())
+            .collect::<Vec<_>>();
+        self.commit_shifted_batches(polynomials, &shifts)
     }
 }
 
