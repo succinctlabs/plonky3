@@ -75,8 +75,6 @@ where
         polynomials: Vec<In>,
         coset_shifts: &[Val],
     ) -> (Self::Commitment, Self::ProverData) {
-        // let shift = Val::generator() / coset_shift;
-        assert_eq!(polynomials.len(), coset_shifts.len());
         let ldes = info_span!("compute all coset LDEs").in_scope(|| {
             polynomials
                 .into_iter()
