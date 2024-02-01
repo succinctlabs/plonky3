@@ -428,5 +428,6 @@ mod tests {
         assert_eq!(F::two().exp_u64(1717986917).exp_const_u64::<5>(), F::two());
     }
 
-    // test_field!(crate::Mersenne31);
+    #[cfg(feature = "rand")]
+    test_field!(crate::Mersenne31);
 }
