@@ -66,6 +66,18 @@ impl<T> RowMajorMatrix<T> {
             .map(|slice| RowMajorMatrixViewMut::new(slice, self.width))
     }
 
+    pub fn par_row_chunks(
+        &self,
+        chunk_rows: usize,
+    ) -> impl IndexedParallelIterator<Item = RowMajorMatrixView<T>>
+    where
+        T: Sync,
+    {
+        self.values
+            .par_chunks_exact(self.width * chunk_rows)
+            .map(|slice| RowMajorMatrixView::new(slice, self.width))
+    }
+
     #[must_use]
     pub fn as_view(&self) -> RowMajorMatrixView<T> {
         RowMajorMatrixView {

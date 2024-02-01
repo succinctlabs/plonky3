@@ -52,7 +52,7 @@ impl<F: Field, EF: AbstractExtensionField<F>> AbstractField for Res<F, EF> {
     }
 
     fn from_canonical_u32(n: u32) -> Self {
-        Self::from_inner(EF::from_canonical_u32(n).into())
+        Self::from_inner(EF::from_canonical_u32(n))
     }
 
     fn from_canonical_u64(n: u64) -> Self {
@@ -87,8 +87,8 @@ impl<F: Field, EF: AbstractExtensionField<F>> AbstractExtensionField<F> for Res<
         Self::from_inner(EF::from_base(b))
     }
 
-    fn from_base_fn<Fun: FnMut(usize) -> F>(mut f: Fun) -> Self {
-        Self::from_inner(EF::from_base_fn(|i| f(i)))
+    fn from_base_fn<Fun: FnMut(usize) -> F>(f: Fun) -> Self {
+        Self::from_inner(EF::from_base_fn(f))
     }
 
     fn from_base_slice(bs: &[F]) -> Self {
