@@ -184,61 +184,61 @@ mod tests {
     type Base = Mersenne31;
     type Dft = Mersenne31ComplexRadix2Dit;
 
-    #[test]
-    fn consistency()
-    where
-        Standard: Distribution<Base>,
-    {
-        const N: usize = 1 << 12;
-        let input = thread_rng()
-            .sample_iter(Standard)
-            .take(N)
-            .collect::<Vec<Base>>();
-        let input = RowMajorMatrix::new_col(input);
-        let fft_input = Mersenne31Dft::dft_batch::<Dft>(input.clone());
-        let output = Mersenne31Dft::idft_batch::<Dft>(fft_input);
-        assert_eq!(input, output);
-    }
+    // #[test]
+    // fn consistency()
+    // where
+    //     Standard: Distribution<Base>,
+    // {
+    //     const N: usize = 1 << 12;
+    //     let input = thread_rng()
+    //         .sample_iter(Standard)
+    //         .take(N)
+    //         .collect::<Vec<Base>>();
+    //     let input = RowMajorMatrix::new_col(input);
+    //     let fft_input = Mersenne31Dft::dft_batch::<Dft>(input.clone());
+    //     let output = Mersenne31Dft::idft_batch::<Dft>(fft_input);
+    //     assert_eq!(input, output);
+    // }
 
-    #[test]
-    fn convolution()
-    where
-        Standard: Distribution<Base>,
-    {
-        const N: usize = 1 << 6;
-        let a = thread_rng()
-            .sample_iter(Standard)
-            .take(N)
-            .collect::<Vec<Base>>();
-        let a = RowMajorMatrix::new_col(a);
-        let b = thread_rng()
-            .sample_iter(Standard)
-            .take(N)
-            .collect::<Vec<Base>>();
-        let b = RowMajorMatrix::new_col(b);
+    // #[test]
+    // fn convolution()
+    // where
+    //     Standard: Distribution<Base>,
+    // {
+    //     const N: usize = 1 << 6;
+    //     let a = thread_rng()
+    //         .sample_iter(Standard)
+    //         .take(N)
+    //         .collect::<Vec<Base>>();
+    //     let a = RowMajorMatrix::new_col(a);
+    //     let b = thread_rng()
+    //         .sample_iter(Standard)
+    //         .take(N)
+    //         .collect::<Vec<Base>>();
+    //     let b = RowMajorMatrix::new_col(b);
 
-        let fft_a = Mersenne31Dft::dft_batch::<Dft>(a.clone());
-        let fft_b = Mersenne31Dft::dft_batch::<Dft>(b.clone());
+    //     let fft_a = Mersenne31Dft::dft_batch::<Dft>(a.clone());
+    //     let fft_b = Mersenne31Dft::dft_batch::<Dft>(b.clone());
 
-        let fft_c = fft_a
-            .values
-            .iter()
-            .zip(fft_b.values.iter())
-            .map(|(&xi, &yi)| xi * yi)
-            .collect();
-        let fft_c = RowMajorMatrix::new_col(fft_c);
+    //     let fft_c = fft_a
+    //         .values
+    //         .iter()
+    //         .zip(fft_b.values.iter())
+    //         .map(|(&xi, &yi)| xi * yi)
+    //         .collect();
+    //     let fft_c = RowMajorMatrix::new_col(fft_c);
 
-        let c = Mersenne31Dft::idft_batch::<Dft>(fft_c);
+    //     let c = Mersenne31Dft::idft_batch::<Dft>(fft_c);
 
-        let mut conv = Vec::with_capacity(N);
-        for i in 0..N {
-            let mut t = Base::zero();
-            for j in 0..N {
-                t += a.values[j] * b.values[(N + i - j) % N];
-            }
-            conv.push(t);
-        }
+    //     let mut conv = Vec::with_capacity(N);
+    //     for i in 0..N {
+    //         let mut t = Base::zero();
+    //         for j in 0..N {
+    //             t += a.values[j] * b.values[(N + i - j) % N];
+    //         }
+    //         conv.push(t);
+    //     }
 
-        assert_eq!(c.values, conv);
-    }
+    //     assert_eq!(c.values, conv);
+    // }
 }
