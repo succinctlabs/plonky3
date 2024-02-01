@@ -6,8 +6,10 @@ use p3_field::{
     exp_1725656503, exp_u64_by_squaring, AbstractField, Field, PrimeField, PrimeField32,
     PrimeField64, TwoAdicField,
 };
-// use rand::distributions::{Distribution, Standard};
-// use rand::Rng;
+#[cfg(feature = "rand")]
+use rand::distributions::{Distribution, Standard};
+#[cfg(feature = "rand")]
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 /// The Baby Bear prime
@@ -76,18 +78,19 @@ impl Debug for BabyBear {
     }
 }
 
-// impl Distribution<BabyBear> for Standard {
-//     #[inline]
-//     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> BabyBear {
-//         loop {
-//             let next_u31 = rng.next_u32() & 0x7ffffff;
-//             let is_canonical = next_u31 < P;
-//             if is_canonical {
-//                 return BabyBear { value: next_u31 };
-//             }
-//         }
-//     }
-// }
+#[cfg(feature = "rand")]
+impl Distribution<BabyBear> for Standard {
+    #[inline]
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> BabyBear {
+        loop {
+            let next_u31 = rng.next_u32() & 0x7ffffff;
+            let is_canonical = next_u31 < P;
+            if is_canonical {
+                return BabyBear { value: next_u31 };
+            }
+        }
+    }
+}
 
 const MONTY_ZERO: u32 = to_monty(0);
 const MONTY_ONE: u32 = to_monty(1);
