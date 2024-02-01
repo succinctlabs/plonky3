@@ -6,8 +6,8 @@ use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use itertools::Itertools;
-use rand::distributions::Standard;
-use rand::prelude::Distribution;
+// use rand::distributions::Standard;
+// use rand::prelude::Distribution;
 use serde::{Deserialize, Serialize};
 
 use super::{HasFrobenius, HasTwoAdicBionmialExtension};
@@ -523,19 +523,19 @@ where
     }
 }
 
-impl<F: BinomiallyExtendable<D>, const D: usize> Distribution<BinomialExtensionField<F, D>>
-    for Standard
-where
-    Standard: Distribution<F>,
-{
-    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> BinomialExtensionField<F, D> {
-        let mut res = [F::zero(); D];
-        for r in res.iter_mut() {
-            *r = Standard.sample(rng);
-        }
-        BinomialExtensionField::<F, D>::from_base_slice(&res)
-    }
-}
+// impl<F: BinomiallyExtendable<D>, const D: usize> Distribution<BinomialExtensionField<F, D>>
+//     for Standard
+// where
+//     Standard: Distribution<F>,
+// {
+//     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> BinomialExtensionField<F, D> {
+//         let mut res = [F::zero(); D];
+//         for r in res.iter_mut() {
+//             *r = Standard.sample(rng);
+//         }
+//         BinomialExtensionField::<F, D>::from_base_slice(&res)
+//     }
+// }
 
 impl<F: Field + HasTwoAdicBionmialExtension<D>, const D: usize> TwoAdicField
     for BinomialExtensionField<F, D>

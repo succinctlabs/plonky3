@@ -8,8 +8,8 @@ use p3_field::{
     exp_1717986917, exp_u64_by_squaring, AbstractField, Field, PrimeField, PrimeField32,
     PrimeField64,
 };
-use rand::distributions::{Distribution, Standard};
-use rand::Rng;
+// use rand::distributions::{Distribution, Standard};
+// use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 /// The prime field `F_p` where `p = 2^31 - 1`.
@@ -68,17 +68,17 @@ impl Debug for Mersenne31 {
     }
 }
 
-impl Distribution<Mersenne31> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Mersenne31 {
-        loop {
-            let next_u31 = rng.next_u32() >> 1;
-            let is_canonical = next_u31 != Mersenne31::ORDER_U32;
-            if is_canonical {
-                return Mersenne31::new(next_u31);
-            }
-        }
-    }
-}
+// impl Distribution<Mersenne31> for Standard {
+//     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Mersenne31 {
+//         loop {
+//             let next_u31 = rng.next_u32() >> 1;
+//             let is_canonical = next_u31 != Mersenne31::ORDER_U32;
+//             if is_canonical {
+//                 return Mersenne31::new(next_u31);
+//             }
+//         }
+//     }
+// }
 
 impl AbstractField for Mersenne31 {
     type F = Self;

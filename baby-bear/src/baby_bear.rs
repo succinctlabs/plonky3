@@ -6,8 +6,8 @@ use p3_field::{
     exp_1725656503, exp_u64_by_squaring, AbstractField, Field, PrimeField, PrimeField32,
     PrimeField64, TwoAdicField,
 };
-use rand::distributions::{Distribution, Standard};
-use rand::Rng;
+// use rand::distributions::{Distribution, Standard};
+// use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 const P: u32 = 0x78000001;
@@ -56,18 +56,18 @@ impl Debug for BabyBear {
     }
 }
 
-impl Distribution<BabyBear> for Standard {
-    #[inline]
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> BabyBear {
-        loop {
-            let next_u31 = rng.next_u32() & 0x7ffffff;
-            let is_canonical = next_u31 < P;
-            if is_canonical {
-                return BabyBear { value: next_u31 };
-            }
-        }
-    }
-}
+// impl Distribution<BabyBear> for Standard {
+//     #[inline]
+//     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> BabyBear {
+//         loop {
+//             let next_u31 = rng.next_u32() & 0x7ffffff;
+//             let is_canonical = next_u31 < P;
+//             if is_canonical {
+//                 return BabyBear { value: next_u31 };
+//             }
+//         }
+//     }
+// }
 
 impl AbstractField for BabyBear {
     type F = Self;
