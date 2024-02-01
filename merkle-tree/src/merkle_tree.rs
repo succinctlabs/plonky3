@@ -2,7 +2,6 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::array;
 use core::cmp::Reverse;
-use serde::{Deserialize, Serialize};
 
 use itertools::Itertools;
 use p3_field::{AbstractField, Field, PackedField};
@@ -10,6 +9,7 @@ use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::{Matrix, MatrixRowSlices};
 use p3_maybe_rayon::prelude::*;
 use p3_symmetric::{CryptographicHasher, PseudoCompressionFunction};
+use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 /// A binary Merkle tree for field data. It has leaves of type `F` and digests of type

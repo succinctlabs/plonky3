@@ -2,12 +2,12 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::Cloned;
 use core::slice;
-use serde::{Deserialize, Serialize};
 
 use p3_field::{ExtensionField, Field, PackedField};
 use p3_maybe_rayon::prelude::*;
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
+use serde::{Deserialize, Serialize};
 
 use crate::{Matrix, MatrixGet, MatrixRowSlices, MatrixRowSlicesMut, MatrixRows, MatrixTranspose};
 

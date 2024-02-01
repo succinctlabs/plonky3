@@ -1,7 +1,5 @@
-use core::{
-    marker::PhantomData,
-    ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign},
-};
+use core::marker::PhantomData;
+use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use crate::{AbstractExtensionField, AbstractField, ExtensionField, Field};
 
