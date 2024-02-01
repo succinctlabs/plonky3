@@ -5,11 +5,14 @@ use core::slice;
 
 use p3_field::{ExtensionField, Field, PackedField};
 use p3_maybe_rayon::prelude::*;
-// use rand::distributions::{Distribution, Standard};
-// use rand::Rng;
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "rand")]
+use rand::distributions::{Distribution, Standard};
+#[cfg(feature = "rand")]
+use rand::Rng;
 
 use crate::{Matrix, MatrixGet, MatrixRowSlices, MatrixRowSlicesMut, MatrixRows, MatrixTranspose};
+
+use serde::{Deserialize, Serialize};
 
 /// A default constant for block size matrix transposition. The value was chosen with 32-byte type, in mind.
 const TRANSPOSE_BLOCK_SIZE: usize = 64;
@@ -155,32 +158,34 @@ impl<T> RowMajorMatrix<T> {
         (0..self.width).map(move |col| P::from_fn(|i| self.get(r + i, col)))
     }
 
-//     pub fn rand<R: Rng>(rng: &mut R, rows: usize, cols: usize) -> Self
-//     where
-//         Standard: Distribution<T>,
-//     {
-//         let values = rng.sample_iter(Standard).take(rows * cols).collect();
-//         Self {
-//             values,
-//             width: cols,
-//         }
-//     }
+    #[cfg(feature = "rand")]    
+    pub fn rand<R: Rng>(rng: &mut R, rows: usize, cols: usize) -> Self
+    where
+        Standard: Distribution<T>,
+    {
+        let values = rng.sample_iter(Standard).take(rows * cols).collect();
+        Self {
+            values,
+            width: cols,
+        }
+    }
 
-//     pub fn rand_nonzero<R: Rng>(rng: &mut R, rows: usize, cols: usize) -> Self
-//     where
-//         T: Field,
-//         Standard: Distribution<T>,
-//     {
-//         let values = rng
-//             .sample_iter(Standard)
-//             .filter(|x| !x.is_zero())
-//             .take(rows * cols)
-//             .collect();
-//         Self {
-//             values,
-//             width: cols,
-//         }
-//     }
+    #[cfg(feature = "rand")]
+    pub fn rand_nonzero<R: Rng>(rng: &mut R, rows: usize, cols: usize) -> Self
+    where
+        T: Field,
+        Standard: Distribution<T>,
+    {
+        let values = rng
+            .sample_iter(Standard)
+            .filter(|x| !x.is_zero())
+            .take(rows * cols)
+            .collect();
+        Self {
+            values,
+            width: cols,
+        }
+    }
 }
 
 impl<T> Matrix<T> for RowMajorMatrix<T> {

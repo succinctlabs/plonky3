@@ -2,8 +2,10 @@ use alloc::vec::Vec;
 use core::iter;
 use core::ops::Range;
 
-// use rand::distributions::{Distribution, Standard};
-// use rand::Rng;
+#[cfg(feature = "rand")]
+use rand::distributions::{Distribution, Standard};
+#[cfg(feature = "rand")]
+use rand::Rng;
 
 use crate::Matrix;
 
@@ -35,25 +37,26 @@ impl<T> CsrMatrix<T> {
         &mut self.nonzero_values[range]
     }
 
-    // pub fn rand_fixed_row_weight<R: Rng>(
-    //     rng: &mut R,
-    //     rows: usize,
-    //     cols: usize,
-    //     row_weight: usize,
-    // ) -> Self
-    // where
-    //     Standard: Distribution<T>,
-    // {
-    //     let nonzero_values = iter::repeat_with(|| (rng.gen_range(0..cols), rng.gen()))
-    //         .take(rows * row_weight)
-    //         .collect();
-    //     let row_indices = (0..=rows).map(|r| r * row_weight).collect();
-    //     Self {
-    //         width: cols,
-    //         nonzero_values,
-    //         row_indices,
-    //     }
-    // }
+    #[cfg(feature = "rand")]
+    pub fn rand_fixed_row_weight<R: Rng>(
+        rng: &mut R,
+        rows: usize,
+        cols: usize,
+        row_weight: usize,
+    ) -> Self
+    where
+        Standard: Distribution<T>,
+    {
+        let nonzero_values = iter::repeat_with(|| (rng.gen_range(0..cols), rng.gen()))
+            .take(rows * row_weight)
+            .collect();
+        let row_indices = (0..=rows).map(|r| r * row_weight).collect();
+        Self {
+            width: cols,
+            nonzero_values,
+            row_indices,
+        }
+    }
 }
 
 impl<T> Matrix<T> for CsrMatrix<T> {
