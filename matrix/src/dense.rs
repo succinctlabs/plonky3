@@ -2,12 +2,12 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::Cloned;
 use core::slice;
-use serde::{Deserialize, Serialize};
 
 use p3_field::{ExtensionField, Field, PackedField};
 use p3_maybe_rayon::prelude::*;
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
+use serde::{Deserialize, Serialize};
 
 use crate::{Matrix, MatrixGet, MatrixRowSlices, MatrixRowSlicesMut, MatrixRows, MatrixTranspose};
 
@@ -64,6 +64,18 @@ impl<T> RowMajorMatrix<T> {
         self.values
             .par_chunks_exact_mut(self.width * chunk_rows)
             .map(|slice| RowMajorMatrixViewMut::new(slice, self.width))
+    }
+
+    pub fn par_row_chunks(
+        &self,
+        chunk_rows: usize,
+    ) -> impl IndexedParallelIterator<Item = RowMajorMatrixView<T>>
+    where
+        T: Sync,
+    {
+        self.values
+            .par_chunks_exact(self.width * chunk_rows)
+            .map(|slice| RowMajorMatrixView::new(slice, self.width))
     }
 
     #[must_use]

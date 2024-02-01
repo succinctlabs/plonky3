@@ -13,8 +13,8 @@ mod round_flags;
 
 pub use air::*;
 pub use columns::*;
-pub use generation::*;
 pub use constants::RC;
+pub use generation::*;
 
 pub const NUM_ROUNDS: usize = 24;
 const BITS_PER_LIMB: usize = 16;
