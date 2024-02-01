@@ -4,13 +4,13 @@
 //! - https://github.com/HorizenLabs/poseidon2/blob/main/plain_implementations/src/poseidon2/poseidon2.rs
 //! - https://eprint.iacr.org/2023/323.pdf
 
-#![no_std]
-
 extern crate alloc;
 
 mod babybear;
 mod diffusion;
 mod goldilocks;
+use std::println;
+
 use alloc::vec::Vec;
 
 pub use babybear::DiffusionMatrixBabybear;
@@ -136,6 +136,7 @@ where
         // The initial linear layer.
         self.external_linear_layer.permute_mut(state);
 
+        println!("cycle-tracker-start: external-round-1");
         // The first half of the external rounds.
         let rounds = self.rounds_f + self.rounds_p;
         let rounds_f_beggining = self.rounds_f / 2;
@@ -144,7 +145,9 @@ where
             self.sbox(state);
             self.external_linear_layer.permute_mut(state);
         }
+        println!("cycle-tracker-end: external-round-1");
 
+        println!("cycle-tracker-start: internal-round");
         // The internal rounds.
         let p_end = rounds_f_beggining + self.rounds_p;
         for r in self.rounds_f..p_end {
@@ -152,13 +155,16 @@ where
             state[0] = self.sbox_p(&state[0]);
             self.internal_linear_layer.permute_mut(state);
         }
+        println!("cycle-tracker-end: internal-round");
 
+        println!("cycle-tracker-start: external-round-2");
         // The second half of the external rounds.
         for r in p_end..rounds {
             self.add_rc(state, &self.constants[r]);
             self.sbox(state);
             self.external_linear_layer.permute_mut(state);
         }
+        println!("cycle-tracker-end: external-round-2");
     }
 }
 
