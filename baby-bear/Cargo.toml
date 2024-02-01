@@ -14,7 +14,7 @@ p3-field-testing = { path = "../field-testing" }
 criterion = "0.5.1"
 
 [features]
-rand = ["rand"]
+rand = ["dep:rand"]
 
 [[bench]]
 name = "inverse"
