@@ -21,9 +21,12 @@ pub use goldilocks::DiffusionMatrixGoldilocks;
 use p3_field::{AbstractField, PrimeField};
 use p3_mds::m4::M4Mds;
 use p3_symmetric::{CryptographicPermutation, Permutation};
-// use rand::distributions::Standard;
-// use rand::prelude::Distribution;
-// use rand::Rng;
+#[cfg(feature = "rand")]
+use rand::distributions::Standard;
+#[cfg(feature = "rand")]
+use rand::prelude::Distribution;
+#[cfg(feature = "rand")]
+use rand::Rng;
 
 const SUPPORTED_WIDTHS: [usize; 8] = [2, 3, 4, 8, 12, 16, 20, 24];
 
@@ -68,30 +71,31 @@ where
     }
 
     /// Create a new Poseidon2 configuration with random parameters.
-    // pub fn new_from_rng<R: Rng>(
-    //     rounds_f: usize,
-    //     rounds_p: usize,
-    //     external_mds: Mds,
-    //     internal_mds: Diffusion,
-    //     rng: &mut R,
-    // ) -> Self
-    // where
-    //     Standard: Distribution<F>,
-    // {
-    //     let mut constants = Vec::new();
-    //     let rounds = rounds_f + rounds_p;
-    //     for _ in 0..rounds {
-    //         constants.push(rng.gen::<[F; WIDTH]>());
-    //     }
+    #[cfg(feature = "rand")]
+    pub fn new_from_rng<R: Rng>(
+        rounds_f: usize,
+        rounds_p: usize,
+        external_mds: Mds,
+        internal_mds: Diffusion,
+        rng: &mut R,
+    ) -> Self
+    where
+        Standard: Distribution<F>,
+    {
+        let mut constants = Vec::new();
+        let rounds = rounds_f + rounds_p;
+        for _ in 0..rounds {
+            constants.push(rng.gen::<[F; WIDTH]>());
+        }
 
-    //     Self {
-    //         rounds_f,
-    //         rounds_p,
-    //         constants,
-    //         external_linear_layer: external_mds,
-    //         internal_linear_layer: internal_mds,
-    //     }
-    // }
+        Self {
+            rounds_f,
+            rounds_p,
+            constants,
+            external_linear_layer: external_mds,
+            internal_linear_layer: internal_mds,
+        }
+    }
 
     #[inline]
     fn add_rc<AF>(&self, state: &mut [AF; WIDTH], rc: &[AF::F; WIDTH])
