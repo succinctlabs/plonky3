@@ -11,7 +11,6 @@ p3-mersenne-31 = { path = "../mersenne-31" }
 p3-field = { path = "../field" }
 p3-mds = { path = "../mds" }
 p3-symmetric = { path = "../symmetric" }
-rand = "0.8.5"
 
 [dev-dependencies]
 criterion = "0.5.1"

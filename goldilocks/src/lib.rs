@@ -15,8 +15,8 @@ use p3_field::{
     TwoAdicField,
 };
 use p3_util::{assume, branch_hint};
-use rand::distributions::{Distribution, Standard};
-use rand::Rng;
+// use rand::distributions::{Distribution, Standard};
+// use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 /// The prime field known as Goldilocks, defined as `F_p` where `p = 2^64 - 2^32 + 1`.
@@ -73,17 +73,17 @@ impl Debug for Goldilocks {
     }
 }
 
-impl Distribution<Goldilocks> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Goldilocks {
-        loop {
-            let next_u64 = rng.next_u64();
-            let is_canonical = next_u64 < Goldilocks::ORDER_U64;
-            if is_canonical {
-                return Goldilocks::new(next_u64);
-            }
-        }
-    }
-}
+// impl Distribution<Goldilocks> for Standard {
+//     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Goldilocks {
+//         loop {
+//             let next_u64 = rng.next_u64();
+//             let is_canonical = next_u64 < Goldilocks::ORDER_U64;
+//             if is_canonical {
+//                 return Goldilocks::new(next_u64);
+//             }
+//         }
+//     }
+// }
 
 impl AbstractField for Goldilocks {
     type F = Self;
