@@ -8,8 +8,8 @@ license = "MIT OR Apache-2.0"
 p3-code = { path = "../code" }
 p3-field = { path = "../field" }
 p3-lde = { path = "../lde" }
-p3-matrix = { path = "../matrix" }
-p3-mersenne-31 = { path = "../mersenne-31" }
+p3-matrix = { path = "../matrix", features = ["rand"] }
+p3-mersenne-31 = { path = "../mersenne-31", features = ["rand"] }
 p3-reed-solomon = { path = "../reed-solomon" }
 rand = "0.8.5"
 rand_chacha = "0.3.1"
