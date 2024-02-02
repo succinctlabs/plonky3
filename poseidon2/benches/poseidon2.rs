@@ -8,14 +8,15 @@ use p3_mds::babybear::MdsMatrixBabyBear;
 use p3_mds::goldilocks::MdsMatrixGoldilocks;
 use p3_mds::MdsPermutation;
 use p3_poseidon2::{
-    DiffusionMatrixBabybear, DiffusionMatrixGoldilocks, DiffusionPermutation, Poseidon2,
+    DiffusionMatrixBabybear, DiffusionMatrixGoldilocks, DiffusionPermutation, ExternalLinearLayer,
+    ExternalMatrixBabybear, Poseidon2,
 };
 use p3_symmetric::Permutation;
 use rand::distributions::{Distribution, Standard};
 use rand::thread_rng;
 
 fn bench_poseidon2(c: &mut Criterion) {
-    poseidon2::<BabyBear, MdsMatrixBabyBear, DiffusionMatrixBabybear, 16, 7>(c);
+    poseidon2::<BabyBear, ExternalMatrixBabybear, DiffusionMatrixBabybear, 16, 7>(c);
     // poseidon2::<BabyBear, MdsMatrixBabyBear, DiffusionMatrixBabybear, 24, 7>(c);
 
     // poseidon2::<Goldilocks, MdsMatrixGoldilocks, DiffusionMatrixGoldilocks, 8, 7>(c);
@@ -27,7 +28,7 @@ fn poseidon2<F, Mds, Diffusion, const WIDTH: usize, const D: u64>(c: &mut Criter
 where
     F: PrimeField64,
     Standard: Distribution<F>,
-    Mds: MdsPermutation<F, WIDTH> + Default,
+    Mds: ExternalLinearLayer<F, WIDTH> + Default,
     Diffusion: DiffusionPermutation<F, WIDTH> + Default,
 {
     let mut rng = thread_rng();

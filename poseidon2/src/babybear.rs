@@ -4,10 +4,12 @@
 
 use p3_baby_bear::BabyBear;
 use p3_field::AbstractField;
+use p3_mds::babybear::MdsMatrixBabyBear;
 use p3_symmetric::Permutation;
 
 use crate::diffusion::matmul_internal;
-use crate::DiffusionPermutation;
+use crate::external::CirculantMD4;
+use crate::{DiffusionPermutation, ExternalLinearLayer};
 
 pub const MATRIX_DIAG_16_BABYBEAR: [u64; 16] = [
     0x0a632d94, 0x6db657b7, 0x56fbdc9e, 0x052b3d8a, 0x33745201, 0x5c03108c, 0x0beba37b, 0x258c2e8b,
@@ -22,6 +24,9 @@ pub const MATRIX_DIAG_24_BABYBEAR: [u64; 24] = [
 
 #[derive(Debug, Clone, Default)]
 pub struct DiffusionMatrixBabybear;
+
+#[derive(Clone, Default)]
+pub struct ExternalMatrixBabybear(CirculantMD4<MdsMatrixBabyBear>);
 
 impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
     fn permute_mut(&self, state: &mut [AF; 16]) {
@@ -38,3 +43,11 @@ impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 24]> for DiffusionMatrixB
 }
 
 impl DiffusionPermutation<BabyBear, 24> for DiffusionMatrixBabybear {}
+
+impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 16]> for ExternalMatrixBabybear {
+    fn permute_mut(&self, input: &mut [AF; 16]) {
+        self.0.permute_mut(input);
+    }
+}
+
+impl<AF: AbstractField<F = BabyBear>> ExternalLinearLayer<AF, 16> for ExternalMatrixBabybear {}
