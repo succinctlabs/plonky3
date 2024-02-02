@@ -9,25 +9,19 @@ use p3_symmetric::Permutation;
 use crate::MdsPermutation;
 
 /// Implements the permutation given by the matrix:
-///
-///     M4 = (5 7 1 3)
-///          (4 6 1 1)
-///          (1 3 5 7)
-///          (1 1 4 6)
-///
+///  ```ignore
+///     M4 = [[5, 7, 1, 3],
+///           [4, 6, 1, 1],
+///           [1, 3, 5, 7],
+///           [1, 1, 4, 6]];
+///   ```
 #[derive(Debug, Clone, Copy, Default)]
 pub struct M4Mds;
 
 impl<AF: AbstractField> Permutation<[AF; 4]> for M4Mds {
-    /// Implements the permutation given by the matrix:
-    ///
-    ///     M4 = (5 7 1 3)
-    ///          (4 6 1 1)
-    ///          (1 3 5 7)
-    ///          (1 1 4 6)
-    ///
-    /// With multiplications unrolled as additions and doublings.
     fn permute_mut(&self, input: &mut [AF; 4]) {
+        // Implements the permutation given by the matrix M4 with multiplications unrolled as
+        // additions and doublings.
         let mut t_0 = input[0].clone();
         t_0 += input[1].clone();
         let mut t_1 = input[2].clone();
