@@ -16,11 +16,11 @@ use rand::thread_rng;
 
 fn bench_poseidon2(c: &mut Criterion) {
     poseidon2::<BabyBear, MdsMatrixBabyBear, DiffusionMatrixBabybear, 16, 7>(c);
-    poseidon2::<BabyBear, MdsMatrixBabyBear, DiffusionMatrixBabybear, 24, 7>(c);
+    // poseidon2::<BabyBear, MdsMatrixBabyBear, DiffusionMatrixBabybear, 24, 7>(c);
 
-    poseidon2::<Goldilocks, MdsMatrixGoldilocks, DiffusionMatrixGoldilocks, 8, 7>(c);
-    poseidon2::<Goldilocks, MdsMatrixGoldilocks, DiffusionMatrixGoldilocks, 12, 7>(c);
-    poseidon2::<Goldilocks, MdsMatrixGoldilocks, DiffusionMatrixGoldilocks, 16, 7>(c);
+    // poseidon2::<Goldilocks, MdsMatrixGoldilocks, DiffusionMatrixGoldilocks, 8, 7>(c);
+    // poseidon2::<Goldilocks, MdsMatrixGoldilocks, DiffusionMatrixGoldilocks, 12, 7>(c);
+    // poseidon2::<Goldilocks, MdsMatrixGoldilocks, DiffusionMatrixGoldilocks, 16, 7>(c);
 }
 
 fn poseidon2<F, Mds, Diffusion, const WIDTH: usize, const D: u64>(c: &mut Criterion)
