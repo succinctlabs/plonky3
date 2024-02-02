@@ -14,11 +14,12 @@ mod external;
 mod goldilocks;
 use alloc::vec::Vec;
 
-pub use babybear::{DiffusionMatrixBabybear, ExternalMatrixBabybear};
+pub use babybear::DiffusionMatrixBabybear;
 pub use diffusion::DiffusionPermutation;
 pub use external::*;
 pub use goldilocks::DiffusionMatrixGoldilocks;
 use p3_field::{AbstractField, PrimeField};
+use p3_mds::m4::M4Mds;
 use p3_symmetric::{CryptographicPermutation, Permutation};
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
@@ -28,7 +29,7 @@ const SUPPORTED_WIDTHS: [usize; 8] = [2, 3, 4, 8, 12, 16, 20, 24];
 
 /// The Poseidon2 permutation.
 #[derive(Clone)]
-pub struct Poseidon2<F, MExt, Diffusion, const WIDTH: usize, const D: u64> {
+pub struct Poseidon2<F, Diffusion, const WIDTH: usize, const D: u64> {
     /// The number of external rounds.
     rounds_f: usize,
 
@@ -38,14 +39,14 @@ pub struct Poseidon2<F, MExt, Diffusion, const WIDTH: usize, const D: u64> {
     /// The round constants.
     constants: Vec<[F; WIDTH]>,
 
-    /// The linear layer used in external rounds.
-    external_linear_layer: MExt,
-
     /// The linear layer used in internal rounds (only needs diffusion property, not MDS).
     internal_linear_layer: Diffusion,
+
+    /// The matrix `M4` used in the external linear layer.
+    m4: M4Mds,
 }
 
-impl<F, MExt, Diffusion, const WIDTH: usize, const D: u64> Poseidon2<F, MExt, Diffusion, WIDTH, D>
+impl<F, Diffusion, const WIDTH: usize, const D: u64> Poseidon2<F, Diffusion, WIDTH, D>
 where
     F: PrimeField,
 {
@@ -54,7 +55,6 @@ where
         rounds_f: usize,
         rounds_p: usize,
         constants: Vec<[F; WIDTH]>,
-        external_linear_layer: MExt,
         internal_linear_layer: Diffusion,
     ) -> Self {
         assert!(SUPPORTED_WIDTHS.contains(&WIDTH));
@@ -62,8 +62,8 @@ where
             rounds_f,
             rounds_p,
             constants,
-            external_linear_layer,
             internal_linear_layer,
+            m4: M4Mds,
         }
     }
 
@@ -71,7 +71,6 @@ where
     pub fn new_from_rng<R: Rng>(
         rounds_f: usize,
         rounds_p: usize,
-        external_mds: MExt,
         internal_mds: Diffusion,
         rng: &mut R,
     ) -> Self
@@ -88,8 +87,8 @@ where
             rounds_f,
             rounds_p,
             constants,
-            external_linear_layer: external_mds,
             internal_linear_layer: internal_mds,
+            m4: M4Mds,
         }
     }
 
@@ -119,19 +118,26 @@ where
     {
         state.iter_mut().for_each(|a| *a = self.sbox_p(a));
     }
+
+    #[inline]
+    fn external_linear_permute_mut<AF>(&self, state: &mut [AF; WIDTH])
+    where
+        AF: AbstractField<F = F>,
+    {
+        matmul_external_mut(state, &self.m4);
+    }
 }
 
-impl<AF, MExt, Diffusion, const WIDTH: usize, const D: u64> Permutation<[AF; WIDTH]>
-    for Poseidon2<AF::F, MExt, Diffusion, WIDTH, D>
+impl<AF, Diffusion, const WIDTH: usize, const D: u64> Permutation<[AF; WIDTH]>
+    for Poseidon2<AF::F, Diffusion, WIDTH, D>
 where
     AF: AbstractField,
     AF::F: PrimeField,
-    MExt: ExternalLinearLayer<AF, WIDTH>,
     Diffusion: DiffusionPermutation<AF, WIDTH>,
 {
     fn permute_mut(&self, state: &mut [AF; WIDTH]) {
         // The initial linear layer.
-        self.external_linear_layer.permute_mut(state);
+        self.external_linear_permute_mut(state);
 
         // The first half of the external rounds.
         let rounds = self.rounds_f + self.rounds_p;
@@ -139,7 +145,7 @@ where
         for r in 0..rounds_f_beggining {
             self.add_rc(state, &self.constants[r]);
             self.sbox(state);
-            self.external_linear_layer.permute_mut(state);
+            self.external_linear_permute_mut(state);
         }
 
         // The internal rounds.
@@ -154,17 +160,16 @@ where
         for r in p_end..rounds {
             self.add_rc(state, &self.constants[r]);
             self.sbox(state);
-            self.external_linear_layer.permute_mut(state);
+            self.external_linear_permute_mut(state);
         }
     }
 }
 
-impl<AF, MExt, Diffusion, const WIDTH: usize, const D: u64> CryptographicPermutation<[AF; WIDTH]>
-    for Poseidon2<AF::F, MExt, Diffusion, WIDTH, D>
+impl<AF, Diffusion, const WIDTH: usize, const D: u64> CryptographicPermutation<[AF; WIDTH]>
+    for Poseidon2<AF::F, Diffusion, WIDTH, D>
 where
     AF: AbstractField,
     AF::F: PrimeField,
-    MExt: ExternalLinearLayer<AF, WIDTH>,
     Diffusion: DiffusionPermutation<AF, WIDTH>,
 {
 }

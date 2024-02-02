@@ -6,7 +6,6 @@
 
 use p3_baby_bear::BabyBear;
 use p3_dft::Radix2Bowers;
-use p3_field::AbstractField;
 use p3_symmetric::Permutation;
 
 use crate::util::{
@@ -19,39 +18,6 @@ use crate::MdsPermutation;
 pub struct MdsMatrixBabyBear;
 
 const FFT_ALGO: Radix2Bowers = Radix2Bowers;
-
-impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 4]> for MdsMatrixBabyBear {
-    fn permute_mut(&self, input: &mut [AF; 4]) {
-        let mut t_0 = input[0].clone();
-        t_0 += input[1].clone();
-        let mut t_1 = input[2].clone();
-        t_1 += input[3].clone();
-        let mut t_2 = input[1].clone();
-        t_2 += t_2.clone();
-        t_2 += t_1.clone();
-        let mut t_3 = input[3].clone();
-        t_3 += t_3.clone();
-        t_3 += t_0.clone();
-        let mut t_4 = t_1.clone();
-        t_4 += t_4.clone();
-        t_4 += t_4.clone();
-        t_4 += t_3.clone();
-        let mut t_5 = t_0.clone();
-        t_5 += t_5.clone();
-        t_5 += t_5.clone();
-        t_5 += t_2.clone();
-        let mut t_6 = t_3.clone();
-        t_6 += t_5.clone();
-        let mut t_7 = t_2.clone();
-        t_7 += t_4.clone();
-        input[0] = t_6;
-        input[1] = t_5;
-        input[2] = t_7;
-        input[3] = t_4;
-    }
-}
-
-impl<AF: AbstractField<F = BabyBear>> MdsPermutation<AF, 4> for MdsMatrixBabyBear {}
 
 impl Permutation<[BabyBear; 8]> for MdsMatrixBabyBear {
     fn permute(&self, input: [BabyBear; 8]) -> [BabyBear; 8] {
