@@ -1,6 +1,5 @@
 use alloc::vec::Vec;
 use core::marker::PhantomData;
-use std::println;
 
 use itertools::Itertools;
 use p3_challenger::FieldChallenger;

@@ -1,7 +1,5 @@
 //! This crate contains a framework for low-degree tests (LDTs).
 
-#![no_std]
-
 mod ldt_based_pcs;
 mod quotient;
 
