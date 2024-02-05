@@ -19,7 +19,7 @@ use crate::FieldMerkleTree;
 /// - `P`: a leaf value TODO
 /// - `H`: the leaf hasher
 /// - `C`: the digest compression function
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub struct FieldMerkleTreeMmcs<P, H, C, const DIGEST_ELEMS: usize> {
     hash: H,
     compress: C,

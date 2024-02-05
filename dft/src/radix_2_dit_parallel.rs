@@ -12,6 +12,8 @@ use crate::butterflies::dit_butterfly;
 use crate::util::bit_reversed_zero_pad;
 use crate::TwoAdicSubgroupDft;
 
+use serde::{Deserialize, Serialize};
+
 /// A parallel FFT algorithm which divides a butterfly network's layers into two halves.
 ///
 /// For the first half, we apply a butterfly network with smaller blocks in earlier layers,
@@ -19,7 +21,7 @@ use crate::TwoAdicSubgroupDft;
 /// the same network but in bit-reversed order. This way we're always working with small blocks,
 /// so within each half, we can have a certain amount of parallelism with no cross-thread
 /// communication.
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 pub struct Radix2DitParallel;
 
 impl<F: TwoAdicField> TwoAdicSubgroupDft<F> for Radix2DitParallel {
