@@ -1,5 +1,6 @@
 use alloc::vec::Vec;
 use core::marker::PhantomData;
+use std::println;
 
 use itertools::Itertools;
 use p3_challenger::FieldChallenger;
@@ -234,8 +235,11 @@ where
     ) -> Result<(), Self::Error> {
         let (commits, points): (Vec<Self::Commitment>, Vec<&[Vec<EF>]>) =
             commits_and_points.iter().cloned().unzip();
+        println!("cycle-tracker-start: coset_shift");
         let coset_shift: Val =
             <Self as UnivariatePcsWithLde<Val, EF, In, Challenger>>::coset_shift(self);
+        println!("cycle-tracker-end: coset_shift");
+        println!("cycle-tracker-start: gathering dims and quotient commitments");
         let (dims, quotient_mmcs): (Vec<_>, Vec<_>) = points
             .into_iter()
             .zip_eq(values)
@@ -276,6 +280,7 @@ where
                 },
             )
             .unzip();
+        println!("cycle-tracker-end: gathering dims and quotient commitments");
         self.ldt
             .verify(&quotient_mmcs, &dims, &commits, proof, challenger)
     }

@@ -34,6 +34,7 @@ pub(crate) fn verify<FC: FriConfig>(
     proof: &FriProof<FC>,
     challenger: &mut FC::Challenger,
 ) -> VerificationResult<FC, ()> {
+    println!("cycle-tracker-start: getting_alpha_beta_challenges");
     let alpha: FC::Challenge = challenger.sample_ext_element();
     let betas: Vec<FC::Challenge> = proof
         .commit_phase_commits
@@ -43,15 +44,18 @@ pub(crate) fn verify<FC: FriConfig>(
             challenger.sample_ext_element()
         })
         .collect();
+    println!("cycle-tracker-end: getting_alpha_beta_challenges");
 
     if proof.query_proofs.len() != config.num_queries() {
         return Err(VerificationError::InvalidProofShape);
     }
 
+    println!("cycle-tracker-start: verify_pow_witness");
     // Check PoW.
     if !challenger.check_witness(config.proof_of_work_bits(), proof.pow_witness) {
         return Err(VerificationError::InvalidPowWitness);
     }
+    println!("cycle-tracker-end: verify_pow_witness");
 
     let log_max_height = proof.commit_phase_commits.len() + config.log_blowup();
 
@@ -68,6 +72,7 @@ pub(crate) fn verify<FC: FriConfig>(
             log_max_height,
         )?;
 
+        println!("cycle-tracker-start: verify_fri_query");
         let folded_eval = verify_query(
             config,
             &proof.commit_phase_commits,
@@ -77,6 +82,7 @@ pub(crate) fn verify<FC: FriConfig>(
             reduced_openings,
             log_max_height,
         )?;
+        println!("cycle-tracker-end: verify_fri_query");
 
         if folded_eval != proof.final_poly {
             return Err(VerificationError::FinalPolyMismatch);
