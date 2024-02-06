@@ -37,7 +37,9 @@ where
         debug_assert!(CHUNK * N <= WIDTH);
         let mut pre = [T::default(); WIDTH];
         for i in 0..N {
+            println!("cycle-tracker-start: compress copy from slice");
             pre[i * CHUNK..(i + 1) * CHUNK].copy_from_slice(&input[i]);
+            println!("cycle-tracker-end: compress copy from slice");
         }
         let post = self.inner_permutation.permute(pre);
         let ret = post[..CHUNK].try_into().unwrap();
