@@ -95,22 +95,18 @@ where
         opened_values: &[Vec<P::Scalar>],
         proof: &Vec<[P::Scalar; DIGEST_ELEMS]>,
     ) -> Result<(), Self::Error> {
-        println!("cycle-tracker-start: verify_batch - getting tallest");
         let mut heights_tallest_first = dimensions
             .iter()
             .enumerate()
             .sorted_by_key(|(_, dims)| Reverse(dims.height))
             .peekable();
-        println!("cycle-tracker-end: verify_batch - getting tallest");
 
-        println!("cycle-tracker-start: verify_batch - getting padded curr_height");
         let mut curr_height_padded = heights_tallest_first
             .peek()
             .unwrap()
             .1
             .height
             .next_power_of_two();
-        println!("cycle-tracker-end: verify_batch - getting padded curr_height");
 
         println!("cycle-tracker-start: verify_batch - getting root");
         let mut root = self.hash.hash_iter_slices(
@@ -121,8 +117,6 @@ where
                 .map(|(i, _)| opened_values[i].as_slice()),
         );
         println!("cycle-tracker-end: verify_batch - getting root");
-
-        println!("proof len is {}", proof.len());
 
         for &sibling in proof.iter() {
             let (left, right) = if index & 1 == 0 {
@@ -142,7 +136,7 @@ where
             if let Some(next_height) = next_height {
                 println!("cycle-tracker-start: verify_batch - getting next_height_openings_digest");
                 let next_height_openings_digest = self.hash.hash_iter_slices(
-                    heights_tallest_first
+                    heights_tallest_first   
                         .peeking_take_while(|(_, dims)| dims.height == next_height)
                         .map(|(i, _)| opened_values[i].as_slice()),
                 );
