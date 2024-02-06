@@ -16,13 +16,9 @@ use p3_matrix::dense::RowMajorMatrixView;
 use p3_matrix::{Dimensions, Matrix, MatrixRows};
 use tracing::{info_span, instrument};
 
-use serde::Deserialize;
-use serde::Serialize;
-
 use crate::quotient::QuotientMmcs;
 use crate::{Ldt, Opening};
 
-#[derive(Serialize, Deserialize)]
 pub struct LdtBasedPcs<Val, EF, Dft, M, L, Challenger> {
     dft: Dft,
     mmcs: M,
