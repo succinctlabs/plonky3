@@ -36,11 +36,11 @@ where
         println!("cycle-tracker-start: compress");
         debug_assert!(CHUNK * N <= WIDTH);
         let mut pre = [T::default(); WIDTH];
+        println!("cycle-tracker-start: compress_copy_from_slice");
         for i in 0..N {
-            println!("cycle-tracker-start: compress copy from slice");
             pre[i * CHUNK..(i + 1) * CHUNK].copy_from_slice(&input[i]);
-            println!("cycle-tracker-end: compress copy from slice");
         }
+        println!("cycle-tracker-end: compress_copy_from_slice");
         let post = self.inner_permutation.permute(pre);
         let ret = post[..CHUNK].try_into().unwrap();
         println!("cycle-tracker-end: compress");
