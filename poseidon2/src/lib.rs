@@ -4,8 +4,6 @@
 //! - https://github.com/HorizenLabs/poseidon2/blob/main/plain_implementations/src/poseidon2/poseidon2.rs
 //! - https://eprint.iacr.org/2023/323.pdf
 
-#![no_std]
-
 extern crate alloc;
 
 mod babybear;
