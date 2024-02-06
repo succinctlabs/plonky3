@@ -136,7 +136,7 @@ where
             if let Some(next_height) = next_height {
                 println!("cycle-tracker-start: verify_batch - getting next_height_openings_digest");
                 let next_height_openings_digest = self.hash.hash_iter_slices(
-                    heights_tallest_first   
+                    heights_tallest_first
                         .peeking_take_while(|(_, dims)| dims.height == next_height)
                         .map(|(i, _)| opened_values[i].as_slice()),
                 );
