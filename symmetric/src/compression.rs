@@ -33,13 +33,16 @@ where
     InnerP: CryptographicPermutation<[T; WIDTH]>,
 {
     fn compress(&self, input: [[T; CHUNK]; N]) -> [T; CHUNK] {
+        println!("cycle-tracker-start: compress");
         debug_assert!(CHUNK * N <= WIDTH);
         let mut pre = [T::default(); WIDTH];
         for i in 0..N {
             pre[i * CHUNK..(i + 1) * CHUNK].copy_from_slice(&input[i]);
         }
         let post = self.inner_permutation.permute(pre);
-        post[..CHUNK].try_into().unwrap()
+        let ret = post[..CHUNK].try_into().unwrap();
+        println!("cycle-tracker-end: compress");
+        ret
     }
 }
 
@@ -73,10 +76,7 @@ where
     H: CryptographicHasher<T, [T; CHUNK]>,
 {
     fn compress(&self, input: [[T; CHUNK]; N]) -> [T; CHUNK] {
-        println!("cycle-tracker-start: compress");
-        let ret = self.hasher.hash_iter(input.into_iter().flatten());
-        println!("cycle-tracker-end: compress");
-        ret
+        self.hasher.hash_iter(input.into_iter().flatten())
     }
 }
 
