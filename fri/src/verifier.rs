@@ -178,7 +178,9 @@ fn verify_query<FC: FriConfig>(
         let mut xs = [x; 2];
         xs[index_sibling % 2] *= FC::Challenge::two_adic_generator(1);
         // interpolate and evaluate at beta
+        println!("cycle-tracker-start: folded_eval");
         folded_eval = evals[0] + (beta - xs[0]) * (evals[1] - evals[0]) / (xs[1] - xs[0]);
+        println!("cycle-tracker-end: folded_eval");
 
         index = index_pair;
         x = x.square();
