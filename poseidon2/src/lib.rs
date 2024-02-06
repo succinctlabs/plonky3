@@ -19,7 +19,6 @@ pub use goldilocks::DiffusionMatrixGoldilocks;
 use p3_field::{AbstractField, PrimeField};
 use p3_mds::m4::M4Mds;
 use p3_symmetric::{CryptographicPermutation, Permutation};
-use serde::{Deserialize, Serialize};
 #[cfg(feature = "rand")]
 use rand::distributions::Standard;
 #[cfg(feature = "rand")]
@@ -39,7 +38,7 @@ pub struct Poseidon2<F, Diffusion, const WIDTH: usize, const D: u64> {
     rounds_p: usize,
 
     /// The round constants.
-    constants: Vec<[F; 16]>,
+    constants: Vec<[F; WIDTH]>,
 
     /// The linear layer used in internal rounds (only needs diffusion property, not MDS).
     internal_linear_layer: Diffusion,
@@ -96,7 +95,7 @@ where
     }
 
     #[inline]
-    fn add_rc<AF>(&self, state: &mut [AF; 16], rc: &[AF::F; 16])
+    fn add_rc<AF>(&self, state: &mut [AF; WIDTH], rc: &[AF::F; WIDTH])
     where
         AF: AbstractField<F = F>,
     {
@@ -115,7 +114,7 @@ where
     }
 
     #[inline]
-    fn sbox<AF>(&self, state: &mut [AF; 16])
+    fn sbox<AF>(&self, state: &mut [AF; WIDTH])
     where
         AF: AbstractField<F = F>,
     {
@@ -138,7 +137,7 @@ where
     AF::F: PrimeField,
     Diffusion: DiffusionPermutation<AF, WIDTH>,
 {
-    fn permute_mut(&self, state: &mut [AF; 16]) {
+    fn permute_mut(&self, state: &mut [AF; WIDTH]) {
         // The initial linear layer.
         self.external_linear_permute_mut(state);
 

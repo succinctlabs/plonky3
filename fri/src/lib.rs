@@ -23,11 +23,6 @@ pub use config::*;
 pub use fold_even_odd::*;
 pub use proof::*;
 
-use serde::Deserialize;
-use serde::Serialize;
-
-
-#[derive(Serialize, Deserialize)]
 pub struct FriLdt<FC: FriConfig> {
     pub config: FC,
 }
