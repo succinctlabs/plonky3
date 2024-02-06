@@ -56,9 +56,7 @@ impl Permutation<[BabyBear; 16]> for MdsMatrixBabyBear {
     }
 
     fn permute_mut(&self, input: &mut [BabyBear; 16]) {
-        println!("cycle-tracker-start: mds matrix permute");
         *input = self.permute(*input);
-        println!("cycle-tracker-end: mds matrix permute");
     }
 }
 impl MdsPermutation<BabyBear, 16> for MdsMatrixBabyBear {}
