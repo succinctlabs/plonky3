@@ -59,6 +59,8 @@ pub(crate) fn verify<FC: FriConfig>(
 
     let log_max_height = proof.commit_phase_commits.len() + config.log_blowup();
 
+    println!("num queries: {}", proof.query_proofs.len());
+
     for query_proof in &proof.query_proofs {
         let index = challenger.sample_bits(log_max_height);
 

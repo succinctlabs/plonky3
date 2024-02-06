@@ -116,6 +116,8 @@ where
                 .map(|(i, _)| opened_values[i].as_slice()),
         );
 
+        println!("proof len is {}", proof.len());
+
         for &sibling in proof.iter() {
             let (left, right) = if index & 1 == 0 {
                 (root, sibling)

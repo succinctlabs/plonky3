@@ -73,7 +73,10 @@ where
     H: CryptographicHasher<T, [T; CHUNK]>,
 {
     fn compress(&self, input: [[T; CHUNK]; N]) -> [T; CHUNK] {
-        self.hasher.hash_iter(input.into_iter().flatten())
+        println!("cycle-tracker-start: compress");
+        let ret = self.hasher.hash_iter(input.into_iter().flatten());
+        println!("cycle-tracker-end: compress");
+        ret
     }
 }
 
