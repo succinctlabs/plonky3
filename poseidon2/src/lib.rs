@@ -4,8 +4,6 @@
 //! - https://github.com/HorizenLabs/poseidon2/blob/main/plain_implementations/src/poseidon2/poseidon2.rs
 //! - https://eprint.iacr.org/2023/323.pdf
 
-#![no_std]
-
 extern crate alloc;
 
 mod babybear;
@@ -13,6 +11,7 @@ mod diffusion;
 mod external;
 mod goldilocks;
 use alloc::vec::Vec;
+use std::println;
 
 pub use babybear::DiffusionMatrixBabybear;
 pub use diffusion::DiffusionPermutation;
@@ -144,6 +143,8 @@ where
         // The initial linear layer.
         self.external_linear_permute_mut(state);
 
+        println!("input to the first round {:#?}", state);
+
         // The first half of the external rounds.
         let rounds = self.rounds_f + self.rounds_p;
         let rounds_f_beggining = self.rounds_f / 2;
@@ -153,6 +154,8 @@ where
             self.external_linear_permute_mut(state);
         }
 
+        println!("output of the first round/input of the second round {:#?}", state);
+
         // The internal rounds.
         let p_end = rounds_f_beggining + self.rounds_p;
         for r in self.rounds_f..p_end {
@@ -161,12 +164,16 @@ where
             self.internal_linear_layer.permute_mut(state);
         }
 
+        println!("output of the second round/input of the third round {:#?}", state);
+
         // The second half of the external rounds.
         for r in p_end..rounds {
             self.add_rc(state, &self.constants[r]);
             self.sbox(state);
             self.external_linear_permute_mut(state);
         }
+
+        println!("output of the third round {:#?}", state);
     }
 }
 
