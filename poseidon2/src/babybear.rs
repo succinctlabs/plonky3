@@ -25,7 +25,9 @@ pub struct DiffusionMatrixBabybear;
 
 impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
     fn permute_mut(&self, state: &mut [AF; 16]) {
+        println!("cycle-tracker-start: permute_mut matmul_internal");
         matmul_internal::<AF, 16>(state, MATRIX_DIAG_16_BABYBEAR);
+        println!("cycle-tracker-end: permute_mut matmul_internal");
     }
 }
 
@@ -33,9 +35,7 @@ impl<AF: AbstractField<F = BabyBear>> DiffusionPermutation<AF, 16> for Diffusion
 
 impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 24]> for DiffusionMatrixBabybear {
     fn permute_mut(&self, state: &mut [AF; 24]) {
-        println!("cycle-tracker-start: permute_mut matmul_internal");
         matmul_internal::<AF, 24>(state, MATRIX_DIAG_24_BABYBEAR);
-        println!("cycle-tracker-end: permute_mut matmul_internal");
     }
 }
 
