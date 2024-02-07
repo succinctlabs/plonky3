@@ -17,8 +17,8 @@ use tracing::{info_span, instrument};
 
 use crate::symbolic_builder::{get_log_quotient_degree, SymbolicAirBuilder};
 use crate::{
-    decompose_and_flatten, Commitments, OpenedValues, Proof, ProverConstraintFolder, StarkConfig,
-    ZerofierOnCoset,
+    decompose_and_flatten, Commitments, OpenedValues, Proof, ProverConstraintFolder,
+    StarkGenericConfig, ZerofierOnCoset,
 };
 
 #[instrument(skip_all)]
@@ -29,7 +29,7 @@ pub fn prove<SC, A: for<'a> Air<crate::check_constraints::DebugConstraintBuilder
     trace: RowMajorMatrix<SC::Val>,
 ) -> Proof<SC>
 where
-    SC: StarkConfig,
+    SC: StarkGenericConfig,
     A: Air<SymbolicAirBuilder<SC::Val>> + for<'a> Air<ProverConstraintFolder<'a, SC>>,
 {
     // #[cfg(debug_assertions)]
@@ -120,7 +120,7 @@ fn quotient_values<SC, A, Mat>(
     alpha: SC::Challenge,
 ) -> Vec<SC::Challenge>
 where
-    SC: StarkConfig,
+    SC: StarkGenericConfig,
     A: for<'a> Air<ProverConstraintFolder<'a, SC>>,
     Mat: MatrixGet<SC::Val> + Sync,
 {
