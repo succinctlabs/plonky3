@@ -15,12 +15,7 @@ use serde::{Deserialize, Serialize};
 use super::{HasFrobenius, HasTwoAdicBionmialExtension};
 use crate::extension::BinomiallyExtendable;
 use crate::field::Field;
-use crate::restriction::Res;
 use crate::{field_to_array, AbstractExtensionField, AbstractField, ExtensionField, TwoAdicField};
-
-/// The algebra F_D[X] / (X^D - W) where F_D is the binomial extension field over `F`.
-pub type BinomialExtensionAlgebra<F, const D: usize> =
-    BinomialExtensionField<Res<F, BinomialExtensionField<F, D>>, D>;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct BinomialExtensionField<AF, const D: usize> {
