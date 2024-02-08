@@ -34,6 +34,7 @@ where
     M: Mmcs<F>,
     Challenger: GrindingChallenger + CanObserve<M::Commitment> + CanSample<F>,
 {
+    println!("cycle-tracker-start: getting_alpha_beta_challenges");
     let betas: Vec<F> = proof
         .commit_phase_commits
         .iter()
