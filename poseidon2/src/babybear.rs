@@ -32,6 +32,7 @@ impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 16]> for DiffusionMatrixB
         matmul_internal::<AF, 16>(state, MATRIX_DIAG_16_BABYBEAR);
         println!("cycle-tracker-end: permute_mut matmul_internal");
         *in_hash = false;
+        drop(in_hash);
     }
 }
 
