@@ -1,6 +1,7 @@
 use core::fmt::{self, Debug, Display, Formatter};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::collections::HashMap;
 
 use p3_field::{
     exp_1725656503, exp_u64_by_squaring, AbstractField, Field, PrimeField, PrimeField32,
@@ -16,9 +17,10 @@ use rand::distributions::{Distribution, Standard};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
-// lazy_static! {
-//     pub static ref IN_HASH: Mutex<bool> = Mutex::new(false);
-// }
+lazy_static! {
+    // pub static ref IN_HASH: Mutex<bool> = Mutex::new(false);
+    pub static ref FUNC_COUNTS: Mutex<HashMap<String, u32>> = Mutex::new(HashMap::new());
+}
 
 /// The Baby Bear prime
 const P: u32 = 0x78000001;
@@ -332,7 +334,10 @@ impl Add for BabyBear {
         // if !*in_hash {
         //     println!("cycle-tracker-start: BabyBear_add");
         // }
-        println!("cycle-tracker-start: BabyBear_add");
+        let mut func_counts = FUNC_COUNTS.lock().unwrap();
+        *func_counts
+        .entry("add".to_string())
+        .or_insert(0) += 1;
         let mut sum = self.value + rhs.value;
         let (corr_sum, over) = sum.overflowing_sub(P);
         if !over {
@@ -342,7 +347,7 @@ impl Add for BabyBear {
         //     println!("cycle-tracker-end: BabyBear_add");
         // }
         // drop(in_hash);
-        println!("cycle-tracker-end: BabyBear_add");
+        drop(func_counts);
         Self { value: sum }
     }
 }
@@ -370,7 +375,10 @@ impl Sub for BabyBear {
         // if !*in_hash {
         //     println!("cycle-tracker-start: BabyBear_sub");
         // }
-        println!("cycle-tracker-start: BabyBear_sub");
+        let mut func_counts = FUNC_COUNTS.lock().unwrap();
+        *func_counts
+        .entry("sub".to_string())
+        .or_insert(0) += 1;
         let (mut diff, over) = self.value.overflowing_sub(rhs.value);
         let corr = if over { P } else { 0 };
         diff = diff.wrapping_add(corr);
@@ -378,7 +386,7 @@ impl Sub for BabyBear {
         //     println!("cycle-tracker-end: BabyBear_sub");
         // }
         // drop(in_hash);
-        println!("cycle-tracker-end: BabyBear_sub");
+        drop(func_counts);
         BabyBear { value: diff }
     }
 }
@@ -408,7 +416,10 @@ impl Mul for BabyBear {
         // if !*in_hash {
         //     println!("cycle-tracker-start: BabyBear_mul");
         // }
-        println!("cycle-tracker-start: BabyBear_mul");
+        let mut func_counts = FUNC_COUNTS.lock().unwrap();
+        *func_counts
+        .entry("mul".to_string())
+        .or_insert(0) += 1;
         let long_prod = self.value as u64 * rhs.value as u64;
         let ret = Self {
             value: monty_reduce(long_prod),
@@ -417,7 +428,7 @@ impl Mul for BabyBear {
         //     println!("cycle-tracker-end: BabyBear_mul");
         // }
         // drop(in_hash);
-        println!("cycle-tracker-end: BabyBear_mul");
+        drop(func_counts);
         ret
     }
 }
