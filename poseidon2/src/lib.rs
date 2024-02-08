@@ -19,6 +19,8 @@ pub use goldilocks::DiffusionMatrixGoldilocks;
 use p3_field::{AbstractField, PrimeField};
 use p3_mds::m4::M4Mds;
 use p3_symmetric::{CryptographicPermutation, Permutation};
+use p3_baby_bear::IN_HASH;
+
 #[cfg(feature = "rand")]
 use rand::distributions::Standard;
 #[cfg(feature = "rand")]
@@ -139,6 +141,10 @@ where
 {
     fn permute_mut(&self, state: &mut [AF; WIDTH]) {
         // The initial linear layer.
+        let mut in_hash = IN_HASH.lock().unwrap();
+        *in_hash = true;
+        drop(in_hash);
+
         println!("cycle-tracker-start: posiedon2_permute_mut");
         self.external_linear_permute_mut(state);
 
@@ -165,6 +171,9 @@ where
             self.sbox(state);
             self.external_linear_permute_mut(state);
         }
+        let mut in_hash = IN_HASH.lock().unwrap();
+        *in_hash = false;
+        drop(in_hash);
         println!("cycle-tracker-end: posiedon2_permute_mut");
     }
 }
