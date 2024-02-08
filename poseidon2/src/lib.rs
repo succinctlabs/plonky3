@@ -145,7 +145,7 @@ where
         // *in_hash = true;
         // drop(in_hash);
 
-        println!("cycle-tracker-start: posiedon2_permute_mut");
+        println!("cycle-tracker-start: posiedon2_external_round");
         self.external_linear_permute_mut(state);
 
         // The first half of the external rounds.
@@ -156,6 +156,7 @@ where
             self.sbox(state);
             self.external_linear_permute_mut(state);
         }
+        println!("cycle-tracker-end: posiedon2_external_round");
 
         // The internal rounds.
         let p_end = rounds_f_beggining + self.rounds_p;
@@ -165,6 +166,7 @@ where
             self.internal_linear_layer.permute_mut(state);
         }
 
+        println!("cycle-tracker-start: posiedon2_external_round");
         // The second half of the external rounds.
         for r in p_end..rounds {
             self.add_rc(state, &self.constants[r]);
@@ -174,7 +176,7 @@ where
         // let mut in_hash = IN_HASH.lock().unwrap();
         // *in_hash = false;
         // drop(in_hash);
-        println!("cycle-tracker-end: posiedon2_permute_mut");
+        println!("cycle-tracker-end: posiedon2_external_round");
     }
 }
 
