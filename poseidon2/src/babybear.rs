@@ -3,7 +3,7 @@
 //! Reference: https://github.com/HorizenLabs/poseidon2/blob/main/plain_implementations/src/poseidon2/poseidon2_instance_babybear.rs
 
 use p3_baby_bear::BabyBear;
-use p3_baby_bear::IN_HASH;
+// use p3_baby_bear::IN_HASH;
 use p3_field::AbstractField;
 use p3_symmetric::Permutation;
 
@@ -26,15 +26,15 @@ pub struct DiffusionMatrixBabybear;
 
 impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
     fn permute_mut(&self, state: &mut [AF; 16]) {
-        let mut in_hash = IN_HASH.lock().unwrap();
-        *in_hash = true;
-        drop(in_hash);
+        // let mut in_hash = IN_HASH.lock().unwrap();
+        // *in_hash = true;
+        // drop(in_hash);
         println!("cycle-tracker-start: permute_mut matmul_internal");
         matmul_internal::<AF, 16>(state, MATRIX_DIAG_16_BABYBEAR);
         println!("cycle-tracker-end: permute_mut matmul_internal");
-        let mut in_hash = IN_HASH.lock().unwrap();
-        *in_hash = false;
-        drop(in_hash);
+        // let mut in_hash = IN_HASH.lock().unwrap();
+        // *in_hash = false;
+        // drop(in_hash);
     }
 }
 
