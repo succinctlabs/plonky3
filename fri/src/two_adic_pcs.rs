@@ -452,7 +452,7 @@ impl<F: Field, EF: ExtensionField<F>> PowersReducer<F, EF> {
     fn new(base: EF, max_width: usize) -> Self {
         let powers: Vec<EF> = base
             .powers()
-            .take(max_width.next_multiple_of(F::Packing::WIDTH))
+            .take(max_width + (max_width % F::Packing::WIDTH))
             .collect();
 
         let transposed_packed: Vec<Vec<F::Packing>> = transpose_vec(
