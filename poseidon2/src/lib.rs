@@ -139,6 +139,7 @@ where
 {
     fn permute_mut(&self, state: &mut [AF; WIDTH]) {
         // The initial linear layer.
+        println!("cycle-tracker-start: posiedon2_permute_mut");
         self.external_linear_permute_mut(state);
 
         // The first half of the external rounds.
@@ -164,6 +165,7 @@ where
             self.sbox(state);
             self.external_linear_permute_mut(state);
         }
+        println!("cycle-tracker-end: posiedon2_permute_mut");
     }
 }
 
