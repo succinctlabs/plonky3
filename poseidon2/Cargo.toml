@@ -12,6 +12,7 @@ p3-field = { path = "../field" }
 p3-mds = { path = "../mds" }
 p3-symmetric = { path = "../symmetric" }
 rand = { version = "0.8.5", optional = true }
+succinct-zkvm = { git="https://github.com/succinctlabs/vm.git", branch="kevjue/recursive_verifier_profiler" }
 
 [features]
 rand = ["dep:rand"]

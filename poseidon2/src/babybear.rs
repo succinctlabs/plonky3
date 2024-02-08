@@ -4,8 +4,10 @@
 
 use p3_baby_bear::BabyBear;
 // use p3_baby_bear::IN_HASH;
-use p3_field::AbstractField;
+use p3_field::{AbstractField, PrimeField32};
 use p3_symmetric::Permutation;
+
+use succinct_zkvm::{io, unconstrained};
 
 use crate::diffusion::matmul_internal;
 use crate::DiffusionPermutation;
@@ -24,13 +26,32 @@ pub const MATRIX_DIAG_24_BABYBEAR: [u64; 24] = [
 #[derive(Debug, Clone, Default)]
 pub struct DiffusionMatrixBabybear;
 
-impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
+impl<AF: PrimeField32> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
     fn permute_mut(&self, state: &mut [AF; 16]) {
         // let mut in_hash = IN_HASH.lock().unwrap();
         // *in_hash = true;
         // drop(in_hash);
         // println!("cycle-tracker-start: permute_mut matmul_internal");
-        matmul_internal::<AF, 16>(state, MATRIX_DIAG_16_BABYBEAR);
+
+        unconstrained! {
+            let mut new_state: [AF;16] = [AF::default(); 16];
+            new_state.copy_from_slice(state);
+            matmul_internal::<AF, 16>(&mut new_state, MATRIX_DIAG_16_BABYBEAR);
+            let bytes = state.map(|x| x.as_canonical_u32().to_le_bytes());
+            let mut flat_bytes = Vec::new();
+            for i in 0..16 {
+                flat_bytes.extend_from_slice(&bytes[i]);
+            }
+            io::hint_slice(&flat_bytes);
+        }
+
+        let mut bytes: [u8; 64] = [0; 64];
+        io::read_slice(&mut bytes);
+        let ret = bytes.chunks(4).map(|chunk| AF::from_canonical_u32(u32::from_le_bytes(chunk.try_into().unwrap()))).collect::<Vec<AF>>();
+        for i in 0..16 {
+            state[i] = ret[i];
+        }
+
         // println!("cycle-tracker-end: permute_mut matmul_internal");
         // let mut in_hash = IN_HASH.lock().unwrap();
         // *in_hash = false;
@@ -38,7 +59,7 @@ impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 16]> for DiffusionMatrixB
     }
 }
 
-impl<AF: AbstractField<F = BabyBear>> DiffusionPermutation<AF, 16> for DiffusionMatrixBabybear {}
+impl<AF: PrimeField32> DiffusionPermutation<AF, 16> for DiffusionMatrixBabybear {}
 
 impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 24]> for DiffusionMatrixBabybear {
     fn permute_mut(&self, state: &mut [AF; 24]) {

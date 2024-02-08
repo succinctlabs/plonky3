@@ -9,6 +9,7 @@ p3-field = { path = "../field" }
 rand = { version = "0.8.5", optional = true }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 lazy_static = "1.4"
+succinct-zkvm = { git="https://github.com/succinctlabs/vm.git", branch="kevjue/recursive_verifier_profiler" }
 
 [dev-dependencies]
 p3-field-testing = { path = "../field-testing" }

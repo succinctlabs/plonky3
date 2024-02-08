@@ -33,17 +33,17 @@ where
     InnerP: CryptographicPermutation<[T; WIDTH]>,
 {
     fn compress(&self, input: [[T; CHUNK]; N]) -> [T; CHUNK] {
-        println!("cycle-tracker-start: compress");
+        // println!("cycle-tracker-start: compress");
         debug_assert!(CHUNK * N <= WIDTH);
         let mut pre = [T::default(); WIDTH];
-        println!("cycle-tracker-start: compress_copy_from_slice");
+        // println!("cycle-tracker-start: compress_copy_from_slice");
         for i in 0..N {
             pre[i * CHUNK..(i + 1) * CHUNK].copy_from_slice(&input[i]);
         }
-        println!("cycle-tracker-end: compress_copy_from_slice");
+        // println!("cycle-tracker-end: compress_copy_from_slice");
         let post = self.inner_permutation.permute(pre);
         let ret = post[..CHUNK].try_into().unwrap();
-        println!("cycle-tracker-end: compress");
+        // println!("cycle-tracker-end: compress");
         ret
     }
 }
