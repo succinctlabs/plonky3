@@ -214,6 +214,8 @@ impl Field for BabyBear {
         if !*in_hash {
             println!("cycle-tracker-start: BabyBear_inv");
         }
+        drop(in_hash);
+
         // From Fermat's little theorem, in a prime field `F_p`, the inverse of `a` is `a^(p-2)`.
         // Here p-2 = 2013265919 = 1110111111111111111111111111111_2.
         // Uses 30 Squares + 7 Multiplications => 37 Operations total.
@@ -235,10 +237,10 @@ impl Field for BabyBear {
         let p1110000111100001111000011110000 = p111000011110000111100001111.exp_power_of_2(4);
         let p1110111111111111111111111111111 =
             p1110000111100001111000011110000 * p111000011110000111100001111;
+        let in_hash = IN_HASH.lock().unwrap();
         if !*in_hash {
             println!("cycle-tracker-end: BabyBear_inv");
         }
-
         drop(in_hash);
 
         Some(p1110111111111111111111111111111)
@@ -435,7 +437,9 @@ impl Div for BabyBear {
         if !*in_hash {        
             println!("cycle-tracker-start: BabyBear_div");
         }
+        drop(in_hash);
         let ret = self * rhs.inverse();
+        let in_hash = IN_HASH.lock().unwrap();
         if !*in_hash {        
             println!("cycle-tracker-end: BabyBear_div");
         }
