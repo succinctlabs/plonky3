@@ -35,7 +35,7 @@ impl<AF: PrimeField32> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
 
         #[cfg(target_os = "zkvm")]
         {
-           unconstrained! {
+        //    unconstrained! {
                 let mut new_state: [AF; 16] = [AF::default(); 16];
                 new_state.copy_from_slice(state);
                 matmul_internal::<AF, 16>(&mut new_state, MATRIX_DIAG_16_BABYBEAR);
@@ -45,7 +45,7 @@ impl<AF: PrimeField32> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
                     flat_bytes.extend_from_slice(&bytes[i]);
                 }
                 io::hint_slice(&flat_bytes);
-            }
+            // }
 
             let mut bytes: [u8; 64] = [0; 64];
             io::read_hint_slice(&mut bytes);
