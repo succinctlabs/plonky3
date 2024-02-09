@@ -558,30 +558,14 @@ impl Div for BabyBear {
         //     println!("cycle-tracker-start: BabyBear_div");
         // }
         // drop(in_hash);
-        
-        #[cfg(target_os = "zkvm")]
-        {
-            unconstrained!
-            {
-                let ret = self * rhs.inverse();
 
-                io::hint_slice(&ret.as_canonical_u32().to_le_bytes());
-            }
-            let mut bytes: [u8; 4] = [0; 4];
-            io::read_hint_slice(&mut bytes);
-            BabyBear::from_canonical_u32(u32::from_le_bytes(bytes))
-        }
+        self * rhs.inverse()
 
         // let in_hash = IN_HASH.lock().unwrap();
         // if !*in_hash {        
         //     println!("cycle-tracker-end: BabyBear_div");
         // }
         // drop(in_hash);
-
-        #[cfg(not(target_os = "zkvm"))]
-        {
-            self * rhs.inverse()
-        }
     }
 }
 
