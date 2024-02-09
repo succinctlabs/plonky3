@@ -342,7 +342,7 @@ impl Add for BabyBear {
         // .or_insert(0) += 1;
         #[cfg(target_os = "zkvm")]
         {
-            unconstrained!
+            // unconstrained!
             {
                 let mut sum = self.value + rhs.value;
                 let (corr_sum, over) = sum.overflowing_sub(P);
@@ -410,7 +410,7 @@ impl Sub for BabyBear {
 
         #[cfg(target_os = "zkvm")]
         {
-            unconstrained!
+            // unconstrained!
             {
                 let (mut diff, over) = self.value.overflowing_sub(rhs.value);
                 let corr = if over { P } else { 0 };
@@ -424,7 +424,7 @@ impl Sub for BabyBear {
 
             let mut bytes: [u8; 4] = [0; 4];
             io::read_hint_slice(&mut bytes);
-            Self {value: diff}
+            Self {value: u32::from_le_bytes(bytes)}
         }
 
         // if !*in_hash {
@@ -476,13 +476,13 @@ impl Mul for BabyBear {
 
         #[cfg(target_os = "zkvm")]
         {
-            unconstrained!
+            // unconstrained!
             {
                 let long_prod = self.value as u64 * rhs.value as u64;
                 let value = monty_reduce(long_prod);
                 // unconstrained!
                 {
-                    io::hint_slice(&value.as_canonical_u32().to_le_bytes());
+                    io::hint_slice(&value.to_le_bytes());
                 }
             }
 
