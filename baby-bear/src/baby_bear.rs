@@ -227,6 +227,7 @@ impl Field for BabyBear {
         #[cfg(target_os = "zkvm")]
         {
         //     // unconstrained!
+            let mut bytes = [0u8; 4];
             {
                 let p1 = *self;
                 let p100000000 = p1.exp_power_of_2(8);
@@ -246,11 +247,13 @@ impl Field for BabyBear {
                 let p1110111111111111111111111111111 =
                     p1110000111100001111000011110000 * p111000011110000111100001111;
 
-                io::hint_slice(&p1110111111111111111111111111111.as_canonical_u32().to_le_bytes());
+                bytes = p1110111111111111111111111111111.as_canonical_u32().to_le_bytes();
+
+                // io::hint_slice(&p1110111111111111111111111111111.as_canonical_u32().to_le_bytes());
             }
 
-            let mut bytes: [u8; 4] = [0; 4];
-            io::read_hint_slice(&mut bytes);
+            // let mut bytes: [u8; 4] = [0; 4];
+            // io::read_hint_slice(&mut bytes);
             let p1110111111111111111111111111111 = u32::from_le_bytes(bytes);
             Some(Self { value: p1110111111111111111111111111111} )
         }
