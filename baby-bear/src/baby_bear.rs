@@ -350,7 +350,7 @@ impl Add for BabyBear {
                     sum = corr_sum;
                 }
 
-                unconstrained!
+                // unconstrained!
                 {
                     io::hint_slice(&sum.to_le_bytes());
                 }
@@ -367,16 +367,16 @@ impl Add for BabyBear {
         // drop(in_hash);
         // drop(func_counts);
 
-        #[cfg(not(target_os = "zkvm"))]
-        {
-            let mut sum = self.value + rhs.value;
-            let (corr_sum, over) = sum.overflowing_sub(P);
-            if !over {
-                sum = corr_sum;
-            }
+        // #[cfg(not(target_os = "zkvm"))]
+        // {
+        //     let mut sum = self.value + rhs.value;
+        //     let (corr_sum, over) = sum.overflowing_sub(P);
+        //     if !over {
+        //         sum = corr_sum;
+        //     }
 
-            Self { value: sum }
-        }
+        //     Self { value: sum }
+        // }
     }
 }
 
@@ -416,7 +416,7 @@ impl Sub for BabyBear {
                 let corr = if over { P } else { 0 };
                 diff = diff.wrapping_add(corr);
 
-                unconstrained!
+                // unconstrained!
                 {
                     io::hint_slice(&diff.to_le_bytes());
                 }
@@ -433,14 +433,14 @@ impl Sub for BabyBear {
         // drop(in_hash);
         // drop(func_counts);
 
-        #[cfg(not(target_os = "zkvm"))]
-        {
-            let (mut diff, over) = self.value.overflowing_sub(rhs.value);
-            let corr = if over { P } else { 0 };
-            diff = diff.wrapping_add(corr);
+        // #[cfg(not(target_os = "zkvm"))]
+        // {
+        //     let (mut diff, over) = self.value.overflowing_sub(rhs.value);
+        //     let corr = if over { P } else { 0 };
+        //     diff = diff.wrapping_add(corr);
 
-            Self { value: diff }
-        }
+        //     Self { value: diff }
+        // }
     }
 }
 
@@ -480,7 +480,7 @@ impl Mul for BabyBear {
             {
                 let long_prod = self.value as u64 * rhs.value as u64;
                 let value = monty_reduce(long_prod);
-                unconstrained!
+                // unconstrained!
                 {
                     io::hint_slice(&value.to_le_bytes());
                 }
@@ -496,14 +496,14 @@ impl Mul for BabyBear {
         // drop(in_hash);
         // drop(func_counts);
 
-        #[cfg(not(target_os = "zkvm"))]
-        {
-            let long_prod = self.value as u64 * rhs.value as u64;
-            let ret = Self {
-                value: monty_reduce(long_prod),
-            };
-            ret
-        }
+        // #[cfg(not(target_os = "zkvm"))]
+        // {
+        //     let long_prod = self.value as u64 * rhs.value as u64;
+        //     let ret = Self {
+        //         value: monty_reduce(long_prod),
+        //     };
+        //     ret
+        // }
     }
 }
 
