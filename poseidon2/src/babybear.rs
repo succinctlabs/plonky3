@@ -34,7 +34,7 @@ impl<AF: PrimeField32> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
         // println!("cycle-tracker-start: permute_mut matmul_internal");
 
         unconstrained! {
-            let mut new_state: [AF;16] = [AF::default(); 16];
+            let mut new_state: [AF; 16] = [AF::default(); 16];
             new_state.copy_from_slice(state);
             matmul_internal::<AF, 16>(&mut new_state, MATRIX_DIAG_16_BABYBEAR);
             let bytes = state.map(|x| x.as_canonical_u32().to_le_bytes());
@@ -42,6 +42,7 @@ impl<AF: PrimeField32> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
             for i in 0..16 {
                 flat_bytes.extend_from_slice(&bytes[i]);
             }
+            println!("flat_bytes len is {:?}", flat_bytes.len());
             io::hint_slice(&flat_bytes);
         }
 
