@@ -253,7 +253,7 @@ impl Field for BabyBear {
 
             // let mut bytes: [u8; 4] = [0; 4];
             // io::read_hint_slice(&mut bytes);
-            let ret = u32::from_le_bytes(bytes);
+            let ret = BabyBear::from_canonical_u32(u32::from_le_bytes(bytes));
             Some(Self { value: ret} )
         }
 
