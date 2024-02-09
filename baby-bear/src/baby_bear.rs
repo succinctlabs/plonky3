@@ -226,7 +226,7 @@ impl Field for BabyBear {
         // Uses 30 Squares + 7 Multiplications => 37 Operations total.
         #[cfg(target_os = "zkvm")]
         {
-            unconstrained!
+            // unconstrained!
             {
                 let p1 = *self;
                 let p100000000 = p1.exp_power_of_2(8);
@@ -375,7 +375,7 @@ impl Add for BabyBear {
         // .or_insert(0) += 1;
         #[cfg(target_os = "zkvm")]
         {
-            unconstrained!
+            // unconstrained!
             {
                 let mut sum = self.value + rhs.value;
                 let (corr_sum, over) = sum.overflowing_sub(P);
@@ -441,7 +441,7 @@ impl Sub for BabyBear {
 
         #[cfg(target_os = "zkvm")]
         {
-            unconstrained!
+            // unconstrained!
             {
                 let (mut diff, over) = self.value.overflowing_sub(rhs.value);
                 let corr = if over { P } else { 0 };
@@ -505,7 +505,7 @@ impl Mul for BabyBear {
 
         #[cfg(target_os = "zkvm")]
         {
-            unconstrained!
+            // unconstrained!
             {
                 let long_prod = self.value as u64 * rhs.value as u64;
                 let ret = Self {
@@ -565,7 +565,7 @@ impl Div for BabyBear {
         
         #[cfg(target_os = "zkvm")]
         {
-            unconstrained!
+            // unconstrained!
             {
                 let ret = self * rhs.inverse();
 
