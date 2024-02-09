@@ -252,7 +252,7 @@ impl Field for BabyBear {
             let mut bytes: [u8; 4] = [0; 4];
             io::read_hint_slice(&mut bytes);
             let p1110111111111111111111111111111 = u32::from_le_bytes(bytes);
-            Some(p1110111111111111111111111111111)
+            Some(baby_bear::BabyBear { value: p1110111111111111111111111111111} )
         }
 
         // let in_hash = IN_HASH.lock().unwrap();
@@ -447,7 +447,7 @@ impl Sub for BabyBear {
                 let corr = if over { P } else { 0 };
                 diff = diff.wrapping_add(corr);
 
-                io::hint_slice(&diff.as_canonical_u32().to_le_bytes());
+                io::hint_slice(&diff.to_le_bytes());
             }
 
             let mut bytes: [u8; 4] = [0; 4];
@@ -517,7 +517,7 @@ impl Mul for BabyBear {
 
             let mut bytes: [u8; 4] = [0; 4];
             io::read_hint_slice(&mut bytes);
-            let ret = u32::from_le_bytes(bytes);
+            let ret = Self {value: u32::from_le_bytes(bytes)};
             ret
         }
         // if !*in_hash {
@@ -573,7 +573,7 @@ impl Div for BabyBear {
             }
             let mut bytes: [u8; 4] = [0; 4];
             io::read_hint_slice(&mut bytes);
-            let ret = u32::from_le_bytes(bytes);
+            let ret = Self {value: u32::from_le_bytes(bytes) };
             ret
         }
 
