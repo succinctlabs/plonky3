@@ -350,7 +350,10 @@ impl Add for BabyBear {
                     sum = corr_sum;
                 }
 
-                io::hint_slice(&sum.to_le_bytes());
+                unconstrained!
+                {
+                    io::hint_slice(&sum.to_le_bytes());
+                }
             }
 
             let mut bytes: [u8; 4] = [0; 4];
