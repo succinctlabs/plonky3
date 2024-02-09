@@ -39,7 +39,7 @@ impl<AF: PrimeField32> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
                 let mut new_state: [AF; 16] = [AF::default(); 16];
                 new_state.copy_from_slice(state);
                 matmul_internal::<AF, 16>(&mut new_state, MATRIX_DIAG_16_BABYBEAR);
-                let bytes = state.map(|x| x.as_canonical_u32().to_le_bytes());
+                let bytes = new_state.map(|x| x.as_canonical_u32().to_le_bytes());
                 let mut flat_bytes = Vec::new();
                 for i in 0..16 {
                     flat_bytes.extend_from_slice(&bytes[i]);
