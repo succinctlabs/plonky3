@@ -47,7 +47,7 @@ impl<AF: PrimeField32> Permutation<[AF; 16]> for DiffusionMatrixBabybear {
         }
 
         let mut bytes: [u8; 64] = [0; 64];
-        io::read_slice(&mut bytes);
+        io::read_hint_slice(&mut bytes);
         let ret = bytes.chunks(4).map(|chunk| AF::from_canonical_u32(u32::from_le_bytes(chunk.try_into().unwrap()))).collect::<Vec<AF>>();
         for i in 0..16 {
             state[i] = ret[i];
