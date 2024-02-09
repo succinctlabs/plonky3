@@ -1,3 +1,6 @@
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize)]
 pub struct FriConfig<M> {
     pub log_blowup: usize,
     pub num_queries: usize,

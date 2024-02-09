@@ -70,6 +70,7 @@ where
     type FriMmcs = FriMmcs;
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct TwoAdicFriPcs<C: TwoAdicFriPcsGenericConfig> {
     fri: FriConfig<C::FriMmcs>,
     dft: C::Dft,

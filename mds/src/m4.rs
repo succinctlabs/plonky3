@@ -5,6 +5,7 @@
 
 use p3_field::AbstractField;
 use p3_symmetric::Permutation;
+use serde::{Deserialize, Serialize};
 
 use crate::MdsPermutation;
 
@@ -15,7 +16,7 @@ use crate::MdsPermutation;
 ///           [1, 3, 5, 7],
 ///           [1, 1, 4, 6]];
 ///   ```
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct M4Mds;
 
 impl<AF: AbstractField> Permutation<[AF; 4]> for M4Mds {

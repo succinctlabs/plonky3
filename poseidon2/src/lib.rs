@@ -24,6 +24,7 @@ use p3_symmetric::{CryptographicPermutation, Permutation};
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 use rand::Rng;
+use serde::{Deserialize, Serialize, Serializer};
 
 const SUPPORTED_WIDTHS: [usize; 8] = [2, 3, 4, 8, 12, 16, 20, 24];
 
