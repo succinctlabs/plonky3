@@ -373,17 +373,41 @@ impl Add for BabyBear {
         // *func_counts
         // .entry("add".to_string())
         // .or_insert(0) += 1;
-        let mut sum = self.value + rhs.value;
-        let (corr_sum, over) = sum.overflowing_sub(P);
-        if !over {
-            sum = corr_sum;
+        #[cfg(target_os = "zkvm")]
+        {
+            unconstrained!
+            {
+                let mut sum = self.value + rhs.value;
+                let (corr_sum, over) = sum.overflowing_sub(P);
+                if !over {
+                    sum = corr_sum;
+                }
+
+                io::hint_slice(&sum.as_canonical_u32().to_le_bytes());
+            }
+
+            let mut bytes: [u8; 4] = [0; 4];
+            io::read_hint_slice(&mut bytes);
+            let sum = u32::from_le_bytes(bytes);
+            Self{ value: sum }
         }
+
         // if !*in_hash {
         //     println!("cycle-tracker-end: BabyBear_add");
         // }
         // drop(in_hash);
         // drop(func_counts);
-        Self { value: sum }
+
+        #[cfg(not(target_os = "zkvm"))]
+        {
+            let mut sum = self.value + rhs.value;
+            let (corr_sum, over) = sum.overflowing_sub(P);
+            if !over {
+                sum = corr_sum;
+            }
+
+            Self { value: sum }
+        }
     }
 }
 
@@ -414,15 +438,38 @@ impl Sub for BabyBear {
         // *func_counts
         // .entry("sub".to_string())
         // .or_insert(0) += 1;
-        let (mut diff, over) = self.value.overflowing_sub(rhs.value);
-        let corr = if over { P } else { 0 };
-        diff = diff.wrapping_add(corr);
+
+        #[cfg(target_os = "zkvm")]
+        {
+            unconstrained!
+            {
+                let (mut diff, over) = self.value.overflowing_sub(rhs.value);
+                let corr = if over { P } else { 0 };
+                diff = diff.wrapping_add(corr);
+
+                io::hint_slice(&diff.as_canonical_u32().to_le_bytes());
+            }
+
+            let mut bytes: [u8; 4] = [0; 4];
+            io::read_hint_slice(&mut bytes);
+            let diff = u32::from_le_bytes(bytes);
+            Self{ value: diff }
+        }
+
         // if !*in_hash {
         //     println!("cycle-tracker-end: BabyBear_sub");
         // }
         // drop(in_hash);
         // drop(func_counts);
-        BabyBear { value: diff }
+
+        #[cfg(not(target_os = "zkvm"))]
+        {
+            let (mut diff, over) = self.value.overflowing_sub(rhs.value);
+            let corr = if over { P } else { 0 };
+            diff = diff.wrapping_add(corr);
+
+            Self { value: diff }
+        }
     }
 }
 
@@ -455,16 +502,38 @@ impl Mul for BabyBear {
         // *func_counts
         // .entry("mul".to_string())
         // .or_insert(0) += 1;
-        let long_prod = self.value as u64 * rhs.value as u64;
-        let ret = Self {
-            value: monty_reduce(long_prod),
-        };
+
+        #[cfg(target_os = "zkvm")]
+        {
+            unconstrained!
+            {
+                let long_prod = self.value as u64 * rhs.value as u64;
+                let ret = Self {
+                    value: monty_reduce(long_prod),
+                };
+
+                io::hint_slice(&ret.as_canonical_u32().to_le_bytes());
+            }
+
+            let mut bytes: [u8; 4] = [0; 4];
+            io::read_hint_slice(&mut bytes);
+            let ret = u32::from_le_bytes(bytes);
+            ret
+        }
         // if !*in_hash {
         //     println!("cycle-tracker-end: BabyBear_mul");
         // }
         // drop(in_hash);
         // drop(func_counts);
-        ret
+
+        #[cfg(not(target_os = "zkvm"))]
+        {
+            let long_prod = self.value as u64 * rhs.value as u64;
+            let ret = Self {
+                value: monty_reduce(long_prod),
+            };
+            ret
+        }
     }
 }
 
@@ -493,13 +562,31 @@ impl Div for BabyBear {
         //     println!("cycle-tracker-start: BabyBear_div");
         // }
         // drop(in_hash);
-        let ret = self * rhs.inverse();
+        
+        #[cfg(target_os = "zkvm")]
+        {
+            unconstrained!
+            {
+                let ret = self * rhs.inverse();
+
+                io::hint_slice(&ret.as_canonical_u32().to_le_bytes());
+            }
+            let mut bytes: [u8; 4] = [0; 4];
+            io::read_hint_slice(&mut bytes);
+            let ret = u32::from_le_bytes(bytes);
+            ret
+        }
+
         // let in_hash = IN_HASH.lock().unwrap();
         // if !*in_hash {        
         //     println!("cycle-tracker-end: BabyBear_div");
         // }
         // drop(in_hash);
-        ret
+
+        #[cfg(not(target_os = "zkvm"))]
+        {
+            self * rhs.inverse()
+        }
     }
 }
 
