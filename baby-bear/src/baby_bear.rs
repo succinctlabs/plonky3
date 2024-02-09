@@ -228,7 +228,6 @@ impl Field for BabyBear {
         {
         //     // unconstrained!
             let mut bytes = [0u8; 4];
-            let mut p1110111111111111111111111111111 = BabyBear::zero();
             {
                 let p1 = *self;
                 let p100000000 = p1.exp_power_of_2(8);
@@ -245,19 +244,17 @@ impl Field for BabyBear {
                 let p111000011110000111100001111 =
                     p100000001000000010000000100 * p11000010110000101100001011;
                 let p1110000111100001111000011110000 = p111000011110000111100001111.exp_power_of_2(4);
-                p1110111111111111111111111111111 =
+                let p1110111111111111111111111111111 =
                     p1110000111100001111000011110000 * p111000011110000111100001111;
 
-                // bytes = p1110111111111111111111111111111.as_canonical_u32().to_le_bytes();
-
+                bytes = p1110111111111111111111111111111.as_canonical_u32().to_le_bytes();
                 // io::hint_slice(&p1110111111111111111111111111111.as_canonical_u32().to_le_bytes());
             }
 
             // let mut bytes: [u8; 4] = [0; 4];
             // io::read_hint_slice(&mut bytes);
-            // let p1110111111111111111111111111111 = u32::from_le_bytes(bytes);
-            // Some(Self { value: p1110111111111111111111111111111} )
-            Some(p1110111111111111111111111111111)
+            let ret = u32::from_le_bytes(bytes);
+            Some(Self { value: ret} )
         }
 
         // let in_hash = IN_HASH.lock().unwrap();
