@@ -252,7 +252,7 @@ impl Field for BabyBear {
             let mut bytes: [u8; 4] = [0; 4];
             io::read_hint_slice(&mut bytes);
             let p1110111111111111111111111111111 = u32::from_le_bytes(bytes);
-            Some(baby_bear::BabyBear { value: p1110111111111111111111111111111} )
+            Some(Self { value: p1110111111111111111111111111111} )
         }
 
         // let in_hash = IN_HASH.lock().unwrap();
@@ -383,7 +383,7 @@ impl Add for BabyBear {
                     sum = corr_sum;
                 }
 
-                io::hint_slice(&sum.as_canonical_u32().to_le_bytes());
+                io::hint_slice(&sum.to_le_bytes());
             }
 
             let mut bytes: [u8; 4] = [0; 4];
