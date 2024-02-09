@@ -224,36 +224,36 @@ impl Field for BabyBear {
         // From Fermat's little theorem, in a prime field `F_p`, the inverse of `a` is `a^(p-2)`.
         // Here p-2 = 2013265919 = 1110111111111111111111111111111_2.
         // Uses 30 Squares + 7 Multiplications => 37 Operations total.
-        #[cfg(target_os = "zkvm")]
-        {
-            // unconstrained!
-            {
-                let p1 = *self;
-                let p100000000 = p1.exp_power_of_2(8);
-                let p100000001 = p100000000 * p1;
-                let p10000000000000000 = p100000000.exp_power_of_2(8);
-                let p10000000100000001 = p10000000000000000 * p100000001;
-                let p10000000100000001000 = p10000000100000001.exp_power_of_2(3);
-                let p1000000010000000100000000 = p10000000100000001000.exp_power_of_2(5);
-                let p1000000010000000100000001 = p1000000010000000100000000 * p1;
-                let p1000010010000100100001001 = p1000000010000000100000001 * p10000000100000001000;
-                let p10000000100000001000000010 = p1000000010000000100000001.square();
-                let p11000010110000101100001011 = p10000000100000001000000010 * p1000010010000100100001001;
-                let p100000001000000010000000100 = p10000000100000001000000010.square();
-                let p111000011110000111100001111 =
-                    p100000001000000010000000100 * p11000010110000101100001011;
-                let p1110000111100001111000011110000 = p111000011110000111100001111.exp_power_of_2(4);
-                let p1110111111111111111111111111111 =
-                    p1110000111100001111000011110000 * p111000011110000111100001111;
+        // #[cfg(target_os = "zkvm")]
+        // {
+        //     // unconstrained!
+        //     {
+        //         let p1 = *self;
+        //         let p100000000 = p1.exp_power_of_2(8);
+        //         let p100000001 = p100000000 * p1;
+        //         let p10000000000000000 = p100000000.exp_power_of_2(8);
+        //         let p10000000100000001 = p10000000000000000 * p100000001;
+        //         let p10000000100000001000 = p10000000100000001.exp_power_of_2(3);
+        //         let p1000000010000000100000000 = p10000000100000001000.exp_power_of_2(5);
+        //         let p1000000010000000100000001 = p1000000010000000100000000 * p1;
+        //         let p1000010010000100100001001 = p1000000010000000100000001 * p10000000100000001000;
+        //         let p10000000100000001000000010 = p1000000010000000100000001.square();
+        //         let p11000010110000101100001011 = p10000000100000001000000010 * p1000010010000100100001001;
+        //         let p100000001000000010000000100 = p10000000100000001000000010.square();
+        //         let p111000011110000111100001111 =
+        //             p100000001000000010000000100 * p11000010110000101100001011;
+        //         let p1110000111100001111000011110000 = p111000011110000111100001111.exp_power_of_2(4);
+        //         let p1110111111111111111111111111111 =
+        //             p1110000111100001111000011110000 * p111000011110000111100001111;
 
-                io::hint_slice(&p1110111111111111111111111111111.as_canonical_u32().to_le_bytes());
-            }
+        //         io::hint_slice(&p1110111111111111111111111111111.as_canonical_u32().to_le_bytes());
+        //     }
 
-            let mut bytes: [u8; 4] = [0; 4];
-            io::read_hint_slice(&mut bytes);
-            let p1110111111111111111111111111111 = u32::from_le_bytes(bytes);
-            Some(Self { value: p1110111111111111111111111111111} )
-        }
+        //     let mut bytes: [u8; 4] = [0; 4];
+        //     io::read_hint_slice(&mut bytes);
+        //     let p1110111111111111111111111111111 = u32::from_le_bytes(bytes);
+        //     Some(Self { value: p1110111111111111111111111111111} )
+        // }
 
         // let in_hash = IN_HASH.lock().unwrap();
         // if !*in_hash {
@@ -262,8 +262,8 @@ impl Field for BabyBear {
         // drop(in_hash);
         // println!("cycle-tracker-end: BabyBear_inv");
 
-        #[cfg(not(target_os = "zkvm"))]
-        {
+        // #[cfg(not(target_os = "zkvm"))]
+        // {
             let p1 = *self;
             let p100000000 = p1.exp_power_of_2(8);
             let p100000001 = p100000000 * p1;
@@ -283,7 +283,7 @@ impl Field for BabyBear {
                 p1110000111100001111000011110000 * p111000011110000111100001111;
 
             Some(p1110111111111111111111111111111)
-        }
+        // }
     }
 }
 
@@ -373,24 +373,24 @@ impl Add for BabyBear {
         // *func_counts
         // .entry("add".to_string())
         // .or_insert(0) += 1;
-        #[cfg(target_os = "zkvm")]
-        {
-            // unconstrained!
-            {
-                let mut sum = self.value + rhs.value;
-                let (corr_sum, over) = sum.overflowing_sub(P);
-                if !over {
-                    sum = corr_sum;
-                }
+        // #[cfg(target_os = "zkvm")]
+        // {
+        //     // unconstrained!
+        //     {
+        //         let mut sum = self.value + rhs.value;
+        //         let (corr_sum, over) = sum.overflowing_sub(P);
+        //         if !over {
+        //             sum = corr_sum;
+        //         }
 
-                io::hint_slice(&sum.to_le_bytes());
-            }
+        //         io::hint_slice(&sum.to_le_bytes());
+        //     }
 
-            let mut bytes: [u8; 4] = [0; 4];
-            io::read_hint_slice(&mut bytes);
-            let sum = u32::from_le_bytes(bytes);
-            Self{ value: sum }
-        }
+        //     let mut bytes: [u8; 4] = [0; 4];
+        //     io::read_hint_slice(&mut bytes);
+        //     let sum = u32::from_le_bytes(bytes);
+        //     Self{ value: sum }
+        // }
 
         // if !*in_hash {
         //     println!("cycle-tracker-end: BabyBear_add");
@@ -398,8 +398,8 @@ impl Add for BabyBear {
         // drop(in_hash);
         // drop(func_counts);
 
-        #[cfg(not(target_os = "zkvm"))]
-        {
+        // #[cfg(not(target_os = "zkvm"))]
+        // {
             let mut sum = self.value + rhs.value;
             let (corr_sum, over) = sum.overflowing_sub(P);
             if !over {
@@ -407,7 +407,7 @@ impl Add for BabyBear {
             }
 
             Self { value: sum }
-        }
+        // }
     }
 }
 
@@ -439,22 +439,22 @@ impl Sub for BabyBear {
         // .entry("sub".to_string())
         // .or_insert(0) += 1;
 
-        #[cfg(target_os = "zkvm")]
-        {
-            // unconstrained!
-            {
-                let (mut diff, over) = self.value.overflowing_sub(rhs.value);
-                let corr = if over { P } else { 0 };
-                diff = diff.wrapping_add(corr);
+        // #[cfg(target_os = "zkvm")]
+        // {
+        //     // unconstrained!
+        //     {
+        //         let (mut diff, over) = self.value.overflowing_sub(rhs.value);
+        //         let corr = if over { P } else { 0 };
+        //         diff = diff.wrapping_add(corr);
 
-                io::hint_slice(&diff.to_le_bytes());
-            }
+        //         io::hint_slice(&diff.to_le_bytes());
+        //     }
 
-            let mut bytes: [u8; 4] = [0; 4];
-            io::read_hint_slice(&mut bytes);
-            let diff = u32::from_le_bytes(bytes);
-            Self{ value: diff }
-        }
+        //     let mut bytes: [u8; 4] = [0; 4];
+        //     io::read_hint_slice(&mut bytes);
+        //     let diff = u32::from_le_bytes(bytes);
+        //     Self{ value: diff }
+        // }
 
         // if !*in_hash {
         //     println!("cycle-tracker-end: BabyBear_sub");
@@ -462,14 +462,14 @@ impl Sub for BabyBear {
         // drop(in_hash);
         // drop(func_counts);
 
-        #[cfg(not(target_os = "zkvm"))]
-        {
+        // #[cfg(not(target_os = "zkvm"))]
+        // {
             let (mut diff, over) = self.value.overflowing_sub(rhs.value);
             let corr = if over { P } else { 0 };
             diff = diff.wrapping_add(corr);
 
             Self { value: diff }
-        }
+        // }
     }
 }
 
@@ -503,37 +503,37 @@ impl Mul for BabyBear {
         // .entry("mul".to_string())
         // .or_insert(0) += 1;
 
-        #[cfg(target_os = "zkvm")]
-        {
-            // unconstrained!
-            {
-                let long_prod = self.value as u64 * rhs.value as u64;
-                let ret = Self {
-                    value: monty_reduce(long_prod),
-                };
+        // #[cfg(target_os = "zkvm")]
+        // {
+        //     // unconstrained!
+        //     {
+        //         let long_prod = self.value as u64 * rhs.value as u64;
+        //         let ret = Self {
+        //             value: monty_reduce(long_prod),
+        //         };
 
-                io::hint_slice(&ret.as_canonical_u32().to_le_bytes());
-            }
+        //         io::hint_slice(&ret.as_canonical_u32().to_le_bytes());
+        //     }
 
-            let mut bytes: [u8; 4] = [0; 4];
-            io::read_hint_slice(&mut bytes);
-            let ret = Self {value: u32::from_le_bytes(bytes)};
-            ret
-        }
+        //     let mut bytes: [u8; 4] = [0; 4];
+        //     io::read_hint_slice(&mut bytes);
+        //     let ret = Self {value: u32::from_le_bytes(bytes)};
+        //     ret
+        // }
         // if !*in_hash {
         //     println!("cycle-tracker-end: BabyBear_mul");
         // }
         // drop(in_hash);
         // drop(func_counts);
 
-        #[cfg(not(target_os = "zkvm"))]
-        {
+        // #[cfg(not(target_os = "zkvm"))]
+        // {
             let long_prod = self.value as u64 * rhs.value as u64;
             let ret = Self {
                 value: monty_reduce(long_prod),
             };
             ret
-        }
+        // }
     }
 }
 
@@ -563,19 +563,19 @@ impl Div for BabyBear {
         // }
         // drop(in_hash);
         
-        #[cfg(target_os = "zkvm")]
-        {
-            // unconstrained!
-            {
-                let ret = self * rhs.inverse();
+        // #[cfg(target_os = "zkvm")]
+        // {
+        //     // unconstrained!
+        //     {
+        //         let ret = self * rhs.inverse();
 
-                io::hint_slice(&ret.as_canonical_u32().to_le_bytes());
-            }
-            let mut bytes: [u8; 4] = [0; 4];
-            io::read_hint_slice(&mut bytes);
-            let ret = Self {value: u32::from_le_bytes(bytes) };
-            ret
-        }
+        //         io::hint_slice(&ret.as_canonical_u32().to_le_bytes());
+        //     }
+        //     let mut bytes: [u8; 4] = [0; 4];
+        //     io::read_hint_slice(&mut bytes);
+        //     let ret = Self {value: u32::from_le_bytes(bytes) };
+        //     ret
+        // }
 
         // let in_hash = IN_HASH.lock().unwrap();
         // if !*in_hash {        
@@ -583,10 +583,10 @@ impl Div for BabyBear {
         // }
         // drop(in_hash);
 
-        #[cfg(not(target_os = "zkvm"))]
-        {
+        // #[cfg(not(target_os = "zkvm"))]
+        // {
             self * rhs.inverse()
-        }
+        // }
     }
 }
 
