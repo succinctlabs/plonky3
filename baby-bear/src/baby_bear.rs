@@ -355,7 +355,7 @@ impl Add for BabyBear {
 
             let mut bytes: [u8; 4] = [0; 4];
             io::read_hint_slice(&mut bytes);
-            Sum { value: u32::from_le_bytes(bytes) }
+            Self { value: u32::from_le_bytes(bytes) }
         }
 
         // if !*in_hash {
