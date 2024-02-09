@@ -340,23 +340,23 @@ impl Add for BabyBear {
         // *func_counts
         // .entry("add".to_string())
         // .or_insert(0) += 1;
-        // #[cfg(target_os = "zkvm")]
-        // {
-        //     // unconstrained!
-        //     {
-        //         let mut sum = self.value + rhs.value;
-        //         let (corr_sum, over) = sum.overflowing_sub(P);
-        //         if !over {
-        //             sum = corr_sum;
-        //         }
+        #[cfg(target_os = "zkvm")]
+        {
+            // unconstrained!
+            {
+                let mut sum = self.value + rhs.value;
+                let (corr_sum, over) = sum.overflowing_sub(P);
+                if !over {
+                    sum = corr_sum;
+                }
 
-        //         io::hint_slice(&sum.to_le_bytes());
-        //     }
+                io::hint_slice(&sum.to_le_bytes());
+            }
 
-        //     let mut bytes: [u8; 4] = [0; 4];
-        //     io::read_hint_slice(&mut bytes);
-        //     BabyBear::from_canonical_u32(u32::from_le_bytes(bytes))
-        // }
+            let mut bytes: [u8; 4] = [0; 4];
+            io::read_hint_slice(&mut bytes);
+            Sum { value: u32::from_le_bytes(bytes) }
+        }
 
         // if !*in_hash {
         //     println!("cycle-tracker-end: BabyBear_add");
@@ -364,8 +364,8 @@ impl Add for BabyBear {
         // drop(in_hash);
         // drop(func_counts);
 
-        // #[cfg(not(target_os = "zkvm"))]
-        // {
+        #[cfg(not(target_os = "zkvm"))]
+        {
             let mut sum = self.value + rhs.value;
             let (corr_sum, over) = sum.overflowing_sub(P);
             if !over {
@@ -373,7 +373,7 @@ impl Add for BabyBear {
             }
 
             Self { value: sum }
-        // }
+        }
     }
 }
 
