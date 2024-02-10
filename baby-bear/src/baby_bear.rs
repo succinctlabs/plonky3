@@ -350,7 +350,7 @@ impl Add for BabyBear {
                     sum = corr_sum;
                 }
 
-                // unconstrained!
+                unconstrained!
                 {
                     io::hint_slice(&sum.to_le_bytes());
                 }
