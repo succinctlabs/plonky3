@@ -342,7 +342,7 @@ impl Add for BabyBear {
         // .or_insert(0) += 1;
         #[cfg(target_os = "zkvm")]
         {
-            // unconstrained!
+            unconstrained!
             {
                 let mut sum = self.value + rhs.value;
                 let (corr_sum, over) = sum.overflowing_sub(P);
@@ -350,7 +350,7 @@ impl Add for BabyBear {
                     sum = corr_sum;
                 }
 
-                unconstrained!
+                // unconstrained!
                 {
                     io::hint_slice(&sum.to_le_bytes());
                 }
