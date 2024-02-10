@@ -34,7 +34,6 @@ where
     M: Mmcs<F>,
     Challenger: GrindingChallenger + CanObserve<M::Commitment> + CanSample<F>,
 {
-    println!("cycle-tracker-start: getting_alpha_beta_challenges");
     let betas: Vec<F> = proof
         .commit_phase_commits
         .iter()
@@ -43,18 +42,15 @@ where
             challenger.sample()
         })
         .collect();
-    println!("cycle-tracker-end: getting_alpha_beta_challenges");
 
     if proof.query_proofs.len() != config.num_queries {
         return Err(FriError::InvalidProofShape);
     }
 
-    println!("cycle-tracker-start: verify_pow_witness");
     // Check PoW.
     if !challenger.check_witness(config.proof_of_work_bits, proof.pow_witness) {
         return Err(FriError::InvalidPowWitness);
     }
-    println!("cycle-tracker-end: verify_pow_witness");
 
     let log_max_height = proof.commit_phase_commits.len() + config.log_blowup;
 
@@ -84,7 +80,6 @@ where
         &proof.query_proofs,
         reduced_openings
     ) {
-        println!("cycle-tracker-start: verify_fri_query");    
         let folded_eval = verify_query(
             config,
             &proof.commit_phase_commits,
@@ -94,7 +89,6 @@ where
             ro,
             log_max_height,
         )?;
-        println!("cycle-tracker-end: verify_fri_query");
 
         if folded_eval != proof.final_poly {
             return Err(FriError::FinalPolyMismatch);
@@ -153,9 +147,7 @@ where
         let mut xs = [x; 2];
         xs[index_sibling % 2] *= F::two_adic_generator(1);
         // interpolate and evaluate at beta
-        println!("cycle-tracker-start: folded_eval");
         folded_eval = evals[0] + (beta - xs[0]) * (evals[1] - evals[0]) / (xs[1] - xs[0]);
-        println!("cycle-tracker-end: folded_eval");
 
         index = index_pair;
         x = x.square();

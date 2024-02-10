@@ -108,7 +108,6 @@ where
             .height
             .next_power_of_two();
 
-        println!("cycle-tracker-start: verify_batch - getting root");
         let mut root = self.hash.hash_iter_slices(
             heights_tallest_first
                 .peeking_take_while(|(_, dims)| {
@@ -116,7 +115,6 @@ where
                 })
                 .map(|(i, _)| opened_values[i].as_slice()),
         );
-        println!("cycle-tracker-end: verify_batch - getting root");
 
         for &sibling in proof.iter() {
             let (left, right) = if index & 1 == 0 {
@@ -134,13 +132,11 @@ where
                 .map(|(_, dims)| dims.height)
                 .filter(|h| h.next_power_of_two() == curr_height_padded);
             if let Some(next_height) = next_height {
-                println!("cycle-tracker-start: verify_batch - getting next_height_openings_digest");
                 let next_height_openings_digest = self.hash.hash_iter_slices(
                     heights_tallest_first
                         .peeking_take_while(|(_, dims)| dims.height == next_height)
                         .map(|(i, _)| opened_values[i].as_slice()),
                 );
-                println!("cycle-tracker-end: verify_batch - getting next_height_openings_digest");
 
                 root = self.compress.compress([root, next_height_openings_digest]);
             }
