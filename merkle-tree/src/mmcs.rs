@@ -65,9 +65,10 @@ where
         let openings = prover_data
             .leaves
             .iter()
-            .map(|matrix| {
+            .enumerate()
+            .map(|(i, matrix)| {
                 let log2_height = log2_ceil_usize(matrix.height());
-                assert_eq!(log2_height, 32);
+                assert_eq!(log2_height, 32, "matrix height is too large for {i}");
                 let bits_reduced = log_max_height - log2_height;
                 let reduced_index = index >> bits_reduced;
                 matrix.row(reduced_index).collect()
