@@ -312,8 +312,6 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
             })
             .collect();
 
-        assert!(false);
-
         (
             all_opened_values,
             TwoAdicFriPcsProof {
