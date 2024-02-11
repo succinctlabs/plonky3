@@ -76,7 +76,7 @@ where
                 let reduced_index = index >> bits_reduced;
                 assert!(
                     reduced_index < matrix.height(),
-                    "index {reduced_index} out of bounds for matrix {i}"
+                    "index {reduced_index} out of bounds for matrix {i} and index {index}"
                 );
                 matrix.row(reduced_index).collect()
             })
