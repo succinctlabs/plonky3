@@ -75,7 +75,7 @@ where
                 let bits_reduced = log_max_height - log2_height;
                 assert_eq!(bits_reduced, 0);
                 let mut reduced_index = index >> bits_reduced;
-                if bits_reduced > 0 {
+                if bits_reduced == 0 {
                     reduced_index = index >> 1;
                 }
                 assert!(
