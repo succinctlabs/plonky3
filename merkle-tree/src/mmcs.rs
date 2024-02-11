@@ -68,9 +68,9 @@ where
             .enumerate()
             .map(|(i, matrix)| {
                 let log2_height = log2_ceil_usize(matrix.height());
-                assert_eq!(
-                    log2_height, log_max_height,
-                    "all matrices must have the same height {i}"
+                assert!(
+                    log2_height <= log_max_height,
+                    "matrix {i} has height greater than the maximum height {max_height}"
                 );
                 let bits_reduced = log_max_height - log2_height;
                 let reduced_index = index >> bits_reduced;
