@@ -11,7 +11,11 @@ p3-symmetric = { path = "../symmetric" }
 # https://github.com/succinctlabs/BLAKE3/pull/2
 # blake3 = { git = "https://github.com/succinctlabs/BLAKE3.git", rev = "1f5a9f02a4e6d4359e38d8b49a58d7cdfadf0ab9" }
 # uncomment what shouldn't have been commented out
-blake3 = { git = "https://github.com/succinctlabs/BLAKE3.git", rev = "471bf5a1c1efbe1ff3e866f82d2e08751ec4d294" }
+# blake3 = { git = "https://github.com/succinctlabs/BLAKE3.git", rev = "471bf5a1c1efbe1ff3e866f82d2e08751ec4d294" }
+# println to help identify which one i'm running
+blake3 = { git = "https://github.com/succinctlabs/BLAKE3.git", rev = "adf8f4bc94bbd189cd2b5a1641f1935f43cde6aa" }
+
+
 
 
 [features]
