@@ -84,7 +84,6 @@ where
         &'a self,
         prover_data: &'a Self::ProverData,
     ) -> Vec<RowMajorMatrixView<'a, P::Scalar>> {
-        assert!(false);
         prover_data.leaves.iter().map(|mat| mat.as_view()).collect()
     }
 

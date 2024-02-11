@@ -227,6 +227,8 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
             .map(|(data, points)| (self.mmcs.get_matrices(data), *points))
             .collect_vec();
 
+        assert!(false);
+
         let max_width = mats_and_points
             .iter()
             .flat_map(|(mats, _)| mats)
