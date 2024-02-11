@@ -240,8 +240,6 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
         // for that point, and precompute 1/(X - z) for the largest subgroup (in bitrev order).
         let inv_denoms = compute_inverse_denominators(&mats_and_points, C::Val::generator());
 
-        assert!(false);
-
         let mut all_opened_values: OpenedValues<C::Challenge> = vec![];
         let mut reduced_openings: [_; 32] = core::array::from_fn(|_| None);
         let mut num_reduced = [0; 32];
@@ -298,6 +296,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
 
         let (fri_proof, query_indices) = prover::prove(&self.fri, &reduced_openings, challenger);
 
+        assert!(false);
         let query_openings = query_indices
             .into_iter()
             .map(|index| {
