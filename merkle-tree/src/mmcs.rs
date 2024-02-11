@@ -1,7 +1,6 @@
 use alloc::vec::Vec;
 use core::cmp::Reverse;
 use core::marker::PhantomData;
-use std::println;
 
 use itertools::Itertools;
 use p3_commit::{DirectMmcs, Mmcs};
