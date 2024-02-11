@@ -1,6 +1,7 @@
 use alloc::vec::Vec;
 use core::cmp::Reverse;
 use core::marker::PhantomData;
+use std::println;
 
 use itertools::Itertools;
 use p3_commit::{DirectMmcs, Mmcs};
@@ -67,12 +68,12 @@ where
             .iter()
             .map(|matrix| {
                 let log2_height = log2_ceil_usize(matrix.height());
+                assert_eq!(log2_height, 32);
                 let bits_reduced = log_max_height - log2_height;
                 let reduced_index = index >> bits_reduced;
                 matrix.row(reduced_index).collect()
             })
             .collect_vec();
-        assert!(false);
 
         let proof = (0..log_max_height)
             .map(|i| prover_data.digest_layers[i][(index >> i) ^ 1])
