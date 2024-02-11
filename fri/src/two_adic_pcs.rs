@@ -296,7 +296,6 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
 
         let (fri_proof, query_indices) = prover::prove(&self.fri, &reduced_openings, challenger);
 
-        assert!(false);
         let query_openings = query_indices
             .into_iter()
             .map(|index| {
@@ -312,6 +311,8 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                     .collect()
             })
             .collect();
+
+        assert!(false);
 
         (
             all_opened_values,
