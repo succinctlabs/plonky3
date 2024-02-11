@@ -73,7 +73,6 @@ where
                     "matrix {i} has height greater than the maximum height {max_height}"
                 );
                 let bits_reduced = log_max_height - log2_height;
-                assert!(bits_reduced != 0);
                 let reduced_index = index >> bits_reduced;
                 assert!(
                     reduced_index < matrix.height(),
