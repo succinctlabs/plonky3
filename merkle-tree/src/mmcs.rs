@@ -68,7 +68,7 @@ where
             .enumerate()
             .map(|(i, matrix)| {
                 let log2_height = log2_ceil_usize(matrix.height());
-                assert_eq!(log2_height, 20, "matrix height is too large for {i}");
+                // assert_eq!(log2_height, 20, "matrix height is too large for {i}");
                 let bits_reduced = log_max_height - log2_height;
                 let reduced_index = index >> bits_reduced;
                 assert!(
