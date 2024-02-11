@@ -74,7 +74,10 @@ where
                 );
                 let bits_reduced = log_max_height - log2_height;
                 assert_eq!(bits_reduced, 0);
-                let reduced_index = index >> bits_reduced;
+                let mut reduced_index = index >> bits_reduced;
+                if bits_reduced > 0 {
+                    reduced_index = index >> 1;
+                }
                 assert!(
                     reduced_index < matrix.height(),
                     "index {reduced_index} out of bounds for matrix {i} and index {index}"
