@@ -227,8 +227,6 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
             .map(|(data, points)| (self.mmcs.get_matrices(data), *points))
             .collect_vec();
 
-        assert!(false);
-
         let max_width = mats_and_points
             .iter()
             .flat_map(|(mats, _)| mats)
@@ -241,6 +239,8 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
         // For each unique opening point z, we will find the largest degree bound
         // for that point, and precompute 1/(X - z) for the largest subgroup (in bitrev order).
         let inv_denoms = compute_inverse_denominators(&mats_and_points, C::Val::generator());
+
+        assert!(false);
 
         let mut all_opened_values: OpenedValues<C::Challenge> = vec![];
         let mut reduced_openings: [_; 32] = core::array::from_fn(|_| None);
