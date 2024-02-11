@@ -71,7 +71,10 @@ where
                 assert_eq!(log2_height, 20, "matrix height is too large for {i}");
                 let bits_reduced = log_max_height - log2_height;
                 let reduced_index = index >> bits_reduced;
-                assert!(reduced_index < matrix.height());
+                assert!(
+                    reduced_index < matrix.height(),
+                    "index {reduced_index} out of bounds for matrix {i}"
+                );
                 matrix.row(reduced_index).collect()
             })
             .collect_vec();
