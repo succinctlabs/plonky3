@@ -6,7 +6,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 p3-symmetric = { path = "../symmetric" }
-blake3 = { git = "https://github.com/succinctlabs/BLAKE3.git", branch="hide/compress-inner-patch-off-1-5-0" }
+blake3 = { git = "https://github.com/succinctlabs/BLAKE3.git", branch="kevjue/force_using_portable" }
 
 [features]
 neon = ["blake3/neon"]
