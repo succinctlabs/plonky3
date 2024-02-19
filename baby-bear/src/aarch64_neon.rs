@@ -6,7 +6,10 @@ use core::mem::transmute;
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use p3_field::{AbstractField, Field, PackedField};
+
+#[cfg(feature = "rand")]
 use rand::distributions::{Distribution, Standard};
+#[cfg(feature = "rand")]
 use rand::Rng;
 
 use crate::BabyBear;
@@ -540,6 +543,7 @@ impl Sub<PackedBabyBearNeon> for BabyBear {
     }
 }
 
+#[cfg(feature = "perf")]
 impl Distribution<PackedBabyBearNeon> for Standard {
     #[inline]
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> PackedBabyBearNeon {

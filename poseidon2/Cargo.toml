@@ -11,7 +11,11 @@ p3-mersenne-31 = { path = "../mersenne-31" }
 p3-field = { path = "../field" }
 p3-mds = { path = "../mds" }
 p3-symmetric = { path = "../symmetric" }
-rand = "0.8.5"
+rand = { version = "0.8.5", optional = true }
+succinct-zkvm = { git="https://github.com/succinctlabs/vm.git", branch="kevjue/recursive_verifier_profiler" }
+
+[features]
+rand = ["dep:rand"]
 
 [dev-dependencies]
 criterion = "0.5.1"

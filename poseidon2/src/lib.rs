@@ -4,8 +4,6 @@
 //! - https://github.com/HorizenLabs/poseidon2/blob/main/plain_implementations/src/poseidon2/poseidon2.rs
 //! - https://eprint.iacr.org/2023/323.pdf
 
-#![no_std]
-
 extern crate alloc;
 
 mod babybear;
@@ -21,8 +19,13 @@ pub use goldilocks::DiffusionMatrixGoldilocks;
 use p3_field::{AbstractField, PrimeField};
 use p3_mds::m4::M4Mds;
 use p3_symmetric::{CryptographicPermutation, Permutation};
+// use p3_baby_bear::IN_HASH;
+
+#[cfg(feature = "rand")]
 use rand::distributions::Standard;
+#[cfg(feature = "rand")]
 use rand::prelude::Distribution;
+#[cfg(feature = "rand")]
 use rand::Rng;
 
 const SUPPORTED_WIDTHS: [usize; 8] = [2, 3, 4, 8, 12, 16, 20, 24];
@@ -68,6 +71,7 @@ where
     }
 
     /// Create a new Poseidon2 configuration with random parameters.
+    #[cfg(feature = "rand")]
     pub fn new_from_rng<R: Rng>(
         rounds_f: usize,
         rounds_p: usize,
@@ -137,6 +141,11 @@ where
 {
     fn permute_mut(&self, state: &mut [AF; WIDTH]) {
         // The initial linear layer.
+        // let mut in_hash = IN_HASH.lock().unwrap();
+        // *in_hash = true;
+        // drop(in_hash);
+
+        // println!("cycle-tracker-start: posiedon2_external_round");
         self.external_linear_permute_mut(state);
 
         // The first half of the external rounds.
@@ -147,6 +156,7 @@ where
             self.sbox(state);
             self.external_linear_permute_mut(state);
         }
+        // println!("cycle-tracker-end: posiedon2_external_round");
 
         // The internal rounds.
         let p_end = rounds_f_beggining + self.rounds_p;
@@ -156,12 +166,17 @@ where
             self.internal_linear_layer.permute_mut(state);
         }
 
+        // println!("cycle-tracker-start: posiedon2_external_round");
         // The second half of the external rounds.
         for r in p_end..rounds {
             self.add_rc(state, &self.constants[r]);
             self.sbox(state);
             self.external_linear_permute_mut(state);
         }
+        // let mut in_hash = IN_HASH.lock().unwrap();
+        // *in_hash = false;
+        // drop(in_hash);
+        // println!("cycle-tracker-end: posiedon2_external_round");
     }
 }
 

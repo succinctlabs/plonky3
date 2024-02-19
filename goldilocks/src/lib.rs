@@ -15,7 +15,10 @@ use p3_field::{
     TwoAdicField,
 };
 use p3_util::{assume, branch_hint};
+
+#[cfg(feature = "rand")]
 use rand::distributions::{Distribution, Standard};
+#[cfg(feature = "rand")]
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -73,6 +76,7 @@ impl Debug for Goldilocks {
     }
 }
 
+#[cfg(feature = "rand")]
 impl Distribution<Goldilocks> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Goldilocks {
         loop {

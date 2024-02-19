@@ -8,7 +8,9 @@ use p3_field::{
     exp_1717986917, exp_u64_by_squaring, AbstractField, Field, PrimeField, PrimeField32,
     PrimeField64,
 };
+#[cfg(feature = "rand")]
 use rand::distributions::{Distribution, Standard};
+#[cfg(feature = "rand")]
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -68,6 +70,7 @@ impl Debug for Mersenne31 {
     }
 }
 
+#[cfg(feature = "rand")]
 impl Distribution<Mersenne31> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Mersenne31 {
         loop {
@@ -425,5 +428,6 @@ mod tests {
         assert_eq!(F::two().exp_u64(1717986917).exp_const_u64::<5>(), F::two());
     }
 
+    #[cfg(feature = "rand")]
     test_field!(crate::Mersenne31);
 }

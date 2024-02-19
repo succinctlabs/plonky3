@@ -2,7 +2,9 @@ use alloc::vec::Vec;
 use core::iter;
 use core::ops::Range;
 
+#[cfg(feature = "rand")]
 use rand::distributions::{Distribution, Standard};
+#[cfg(feature = "rand")]
 use rand::Rng;
 
 use crate::Matrix;
@@ -35,6 +37,7 @@ impl<T> CsrMatrix<T> {
         &mut self.nonzero_values[range]
     }
 
+    #[cfg(feature = "rand")]
     pub fn rand_fixed_row_weight<R: Rng>(
         rng: &mut R,
         rows: usize,

@@ -1,14 +1,27 @@
 use core::fmt::{self, Debug, Display, Formatter};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::collections::HashMap;
 
 use p3_field::{
     exp_1725656503, exp_u64_by_squaring, AbstractField, Field, PrimeField, PrimeField32,
     PrimeField64, TwoAdicField,
 };
+
+use lazy_static::lazy_static;
+use succinct_zkvm::{io, unconstrained};
+use std::sync::Mutex;
+
+#[cfg(feature = "rand")]
 use rand::distributions::{Distribution, Standard};
+#[cfg(feature = "rand")]
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+
+lazy_static! {
+    // pub static ref IN_HASH: Mutex<bool> = Mutex::new(false);
+    // pub static ref FUNC_COUNTS: Mutex<HashMap<String, u32>> = Mutex::new(HashMap::new());
+}
 
 /// The Baby Bear prime
 const P: u32 = 0x78000001;
@@ -76,6 +89,7 @@ impl Debug for BabyBear {
     }
 }
 
+#[cfg(feature = "rand")]
 impl Distribution<BabyBear> for Standard {
     #[inline]
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> BabyBear {
@@ -199,9 +213,24 @@ impl Field for BabyBear {
             return None;
         }
 
+        // let in_hash = IN_HASH.lock().unwrap();
+        // if !*in_hash {
+        //     println!("cycle-tracker-start: BabyBear_inv");
+        // }
+        // drop(in_hash);
+        // println!("cycle-tracker-start: BabyBear_inv");
+
+
         // From Fermat's little theorem, in a prime field `F_p`, the inverse of `a` is `a^(p-2)`.
         // Here p-2 = 2013265919 = 1110111111111111111111111111111_2.
         // Uses 30 Squares + 7 Multiplications => 37 Operations total.
+
+        // let in_hash = IN_HASH.lock().unwrap();
+        // if !*in_hash {
+        //     println!("cycle-tracker-end: BabyBear_inv");
+        // }
+        // drop(in_hash);
+        // println!("cycle-tracker-end: BabyBear_inv");
 
         let p1 = *self;
         let p100000000 = p1.exp_power_of_2(8);
@@ -303,12 +332,51 @@ impl Add for BabyBear {
 
     #[inline]
     fn add(self, rhs: Self) -> Self {
-        let mut sum = self.value + rhs.value;
-        let (corr_sum, over) = sum.overflowing_sub(P);
-        if !over {
-            sum = corr_sum;
+        // let in_hash = IN_HASH.lock().unwrap();
+        // if !*in_hash {
+        //     println!("cycle-tracker-start: BabyBear_add");
+        // }
+        // let mut func_counts = FUNC_COUNTS.lock().unwrap();
+        // *func_counts
+        // .entry("add".to_string())
+        // .or_insert(0) += 1;
+        #[cfg(target_os = "zkvm")]
+        {
+            // unconstrained!
+            {
+                let mut sum = self.value + rhs.value;
+                let (corr_sum, over) = sum.overflowing_sub(P);
+                if !over {
+                    sum = corr_sum;
+                }
+
+                unconstrained!
+                {
+                    io::hint_slice(&sum.to_le_bytes());
+                }
+            }
+
+            let mut bytes: [u8; 4] = [0; 4];
+            io::read_hint_slice(&mut bytes);
+            Self { value: u32::from_le_bytes(bytes) }
         }
-        Self { value: sum }
+
+        // if !*in_hash {
+        //     println!("cycle-tracker-end: BabyBear_add");
+        // }
+        // drop(in_hash);
+        // drop(func_counts);
+
+        #[cfg(not(target_os = "zkvm"))]
+        {
+            let mut sum = self.value + rhs.value;
+            let (corr_sum, over) = sum.overflowing_sub(P);
+            if !over {
+                sum = corr_sum;
+            }
+
+            Self { value: sum }
+        }
     }
 }
 
@@ -331,10 +399,48 @@ impl Sub for BabyBear {
 
     #[inline]
     fn sub(self, rhs: Self) -> Self {
-        let (mut diff, over) = self.value.overflowing_sub(rhs.value);
-        let corr = if over { P } else { 0 };
-        diff = diff.wrapping_add(corr);
-        BabyBear { value: diff }
+        // let in_hash = IN_HASH.lock().unwrap();
+        // if !*in_hash {
+        //     println!("cycle-tracker-start: BabyBear_sub");
+        // }
+        // let mut func_counts = FUNC_COUNTS.lock().unwrap();
+        // *func_counts
+        // .entry("sub".to_string())
+        // .or_insert(0) += 1;
+
+        #[cfg(target_os = "zkvm")]
+        {
+            // unconstrained!
+            {
+                let (mut diff, over) = self.value.overflowing_sub(rhs.value);
+                let corr = if over { P } else { 0 };
+                diff = diff.wrapping_add(corr);
+
+                unconstrained!
+                {
+                    io::hint_slice(&diff.to_le_bytes());
+                }
+            }
+
+            let mut bytes: [u8; 4] = [0; 4];
+            io::read_hint_slice(&mut bytes);
+            Self {value: u32::from_le_bytes(bytes)}
+        }
+
+        // if !*in_hash {
+        //     println!("cycle-tracker-end: BabyBear_sub");
+        // }
+        // drop(in_hash);
+        // drop(func_counts);
+
+        #[cfg(not(target_os = "zkvm"))]
+        {
+            let (mut diff, over) = self.value.overflowing_sub(rhs.value);
+            let corr = if over { P } else { 0 };
+            diff = diff.wrapping_add(corr);
+
+            Self { value: diff }
+        }
     }
 }
 
@@ -359,9 +465,45 @@ impl Mul for BabyBear {
 
     #[inline]
     fn mul(self, rhs: Self) -> Self {
-        let long_prod = self.value as u64 * rhs.value as u64;
-        Self {
-            value: monty_reduce(long_prod),
+        // let in_hash = IN_HASH.lock().unwrap();
+        // if !*in_hash {
+        //     println!("cycle-tracker-start: BabyBear_mul");
+        // }
+        // let mut func_counts = FUNC_COUNTS.lock().unwrap();
+        // *func_counts
+        // .entry("mul".to_string())
+        // .or_insert(0) += 1;
+
+        #[cfg(target_os = "zkvm")]
+        {
+            // unconstrained!
+            {
+                let long_prod = self.value as u64 * rhs.value as u64;
+                let value = monty_reduce(long_prod);
+
+                unconstrained!
+                {
+                    io::hint_slice(&value.to_le_bytes());
+                }
+            }
+
+            let mut bytes: [u8; 4] = [0; 4];
+            io::read_hint_slice(&mut bytes);
+            Self {value: u32::from_le_bytes(bytes)}
+        }
+        // if !*in_hash {
+        //     println!("cycle-tracker-end: BabyBear_mul");
+        // }
+        // drop(in_hash);
+        // drop(func_counts);
+
+        #[cfg(not(target_os = "zkvm"))]
+        {
+            let long_prod = self.value as u64 * rhs.value as u64;
+            let ret = Self {
+                value: monty_reduce(long_prod),
+            };
+            ret
         }
     }
 }
@@ -386,7 +528,19 @@ impl Div for BabyBear {
     #[allow(clippy::suspicious_arithmetic_impl)]
     #[inline]
     fn div(self, rhs: Self) -> Self {
+        // let in_hash = IN_HASH.lock().unwrap();
+        // if !*in_hash {        
+        //     println!("cycle-tracker-start: BabyBear_div");
+        // }
+        // drop(in_hash);
+
         self * rhs.inverse()
+
+        // let in_hash = IN_HASH.lock().unwrap();
+        // if !*in_hash {        
+        //     println!("cycle-tracker-end: BabyBear_div");
+        // }
+        // drop(in_hash);
     }
 }
 

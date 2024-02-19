@@ -178,6 +178,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "rand")]
     test_field!(p3_field::extension::Complex<crate::Mersenne31>);
     test_two_adic_field!(p3_field::extension::Complex<crate::Mersenne31>);
 }

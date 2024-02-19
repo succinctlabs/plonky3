@@ -5,7 +5,9 @@ use core::slice;
 
 use p3_field::{ExtensionField, Field, PackedField};
 use p3_maybe_rayon::prelude::*;
+#[cfg(feature = "rand")]
 use rand::distributions::{Distribution, Standard};
+#[cfg(feature = "rand")]
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -155,6 +157,7 @@ impl<T> RowMajorMatrix<T> {
         (0..self.width).map(move |col| P::from_fn(|i| self.get(r + i, col)))
     }
 
+    #[cfg(feature = "rand")]    
     pub fn rand<R: Rng>(rng: &mut R, rows: usize, cols: usize) -> Self
     where
         Standard: Distribution<T>,
@@ -166,6 +169,7 @@ impl<T> RowMajorMatrix<T> {
         }
     }
 
+    #[cfg(feature = "rand")]
     pub fn rand_nonzero<R: Rng>(rng: &mut R, rows: usize, cols: usize) -> Self
     where
         T: Field,

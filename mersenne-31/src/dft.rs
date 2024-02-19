@@ -177,6 +177,7 @@ impl Mersenne31Dft {
     }
 }
 
+#[cfg(feature = "rand")]
 #[cfg(test)]
 mod tests {
     use rand::distributions::{Distribution, Standard};

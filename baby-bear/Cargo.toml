@@ -6,13 +6,18 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 p3-field = { path = "../field" }
-rand = "0.8.5"
+rand = { version = "0.8.5", optional = true }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
+lazy_static = "1.4"
+succinct-zkvm = { git="https://github.com/succinctlabs/vm.git", branch="kevjue/recursive_verifier_profiler" }
 
 [dev-dependencies]
 p3-field-testing = { path = "../field-testing" }
 criterion = "0.5.1"
 rand_chacha = "0.3.1"
+
+[features]
+rand = ["dep:rand"]
 
 [[bench]]
 name = "inverse"

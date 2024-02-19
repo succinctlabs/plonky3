@@ -6,7 +6,9 @@ use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use itertools::Itertools;
+#[cfg(feature = "rand")]
 use rand::distributions::Standard;
+#[cfg(feature = "rand")]
 use rand::prelude::Distribution;
 use serde::{Deserialize, Serialize};
 
@@ -518,6 +520,7 @@ where
     }
 }
 
+#[cfg(feature = "rand")]
 impl<F: BinomiallyExtendable<D>, const D: usize> Distribution<BinomialExtensionField<F, D>>
     for Standard
 where

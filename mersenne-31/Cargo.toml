@@ -11,8 +11,11 @@ p3-field = { path = "../field" }
 p3-matrix = { path = "../matrix" }
 p3-maybe-rayon = { path = "../maybe-rayon" }
 p3-util = { path = "../util" }
-rand = "0.8.5"
+rand = { version = "0.8.5", optional = true }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
+
+[features]
+rand = ["dep:rand"]
 
 [[bench]]
 name = "bench_field"
@@ -26,3 +29,4 @@ harness = false
 criterion = "0.5"
 p3-field-testing = { path = "../field-testing" }
 rand_chacha = "0.3.1"
+rand = "0.8.5"

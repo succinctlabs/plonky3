@@ -100,13 +100,16 @@ impl HasTwoAdicComplexBinomialExtension<3> for Mersenne31 {
 #[cfg(test)]
 mod test_cubic_extension {
     use p3_field::extension::{BinomialExtensionField, Complex};
-    use p3_field_testing::{test_field, test_two_adic_extension_field};
+    #[cfg(feature = "rand")]
+    use p3_field_testing::test_field;
+    use p3_field_testing::test_two_adic_extension_field;
 
     use crate::Mersenne31;
 
     type F = Complex<Mersenne31>;
     type EF = BinomialExtensionField<F, 3>;
 
+    #[cfg(feature = "rand")]
     test_field!(super::EF);
 
     test_two_adic_extension_field!(super::F, super::EF);
@@ -116,13 +119,16 @@ mod test_cubic_extension {
 mod test_quadratic_extension {
 
     use p3_field::extension::{BinomialExtensionField, Complex};
-    use p3_field_testing::{test_field, test_two_adic_extension_field};
+    #[cfg(feature = "rand")]
+    use p3_field_testing::test_field;
+    use p3_field_testing::test_two_adic_extension_field;
 
     use crate::Mersenne31;
 
     type F = Complex<Mersenne31>;
     type EF = BinomialExtensionField<F, 2>;
 
+    #[cfg(feature = "rand")]
     test_field!(super::EF);
 
     test_two_adic_extension_field!(super::F, super::EF);
