@@ -13,6 +13,7 @@ mod round_flags;
 
 pub use air::*;
 pub use columns::*;
+pub use constants::*;
 pub use generation::*;
 
 pub const NUM_ROUNDS: usize = 24;
