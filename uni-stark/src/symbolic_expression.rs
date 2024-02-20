@@ -1,5 +1,5 @@
 use alloc::rc::Rc;
-use core::fmt::{Debug, Display, Formatter};
+use core::fmt::Debug;
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -38,7 +38,7 @@ pub enum SymbolicExpression<F: Field> {
 
 impl<F: Field> SymbolicExpression<F> {
     /// Returns the multiple of `n` (the trace length) in this expression's degree.
-    pub fn degree_multiple(&self) -> usize {
+    pub(crate) fn degree_multiple(&self) -> usize {
         match self {
             SymbolicExpression::Variable(_) => 1,
             SymbolicExpression::IsFirstRow => 1,
@@ -264,21 +264,5 @@ impl<F: Field> Product for SymbolicExpression<F> {
 impl<F: Field> Product<F> for SymbolicExpression<F> {
     fn product<I: Iterator<Item = F>>(iter: I) -> Self {
         iter.map(|x| Self::from(x)).product()
-    }
-}
-
-impl<F: Field> Display for SymbolicExpression<F> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        match self {
-            SymbolicExpression::Variable(v) => write!(f, "{}", v),
-            SymbolicExpression::IsFirstRow => write!(f, "IsFirstRow"),
-            SymbolicExpression::IsLastRow => write!(f, "IsLastRow"),
-            SymbolicExpression::IsTransition => write!(f, "IsTransition"),
-            SymbolicExpression::Constant(c) => write!(f, "{}", c),
-            SymbolicExpression::Add { x, y, .. } => write!(f, "({} + {})", x, y),
-            SymbolicExpression::Sub { x, y, .. } => write!(f, "({} - {})", x, y),
-            SymbolicExpression::Neg { x, .. } => write!(f, "-{}", x),
-            SymbolicExpression::Mul { x, y, .. } => write!(f, "({} * {})", x, y),
-        }
     }
 }
