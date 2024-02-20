@@ -48,6 +48,16 @@ impl BabyBear {
     pub(crate) const fn new(n: u32) -> Self {
         Self { value: to_monty(n) }
     }
+
+    #[inline]
+    pub const fn as_monty(&self) -> u32 {
+        self.value
+    }
+
+    #[inline]
+    pub const fn from_monty(monty: u32) -> Self {
+        Self { value: monty }
+    }
 }
 
 impl Ord for BabyBear {
