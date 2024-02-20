@@ -294,7 +294,11 @@ pub trait AbstractExtensionField<Base: AbstractField>:
 }
 
 pub trait ExtensionField<Base: Field>: Field + AbstractExtensionField<Base> {
-    type ExtensionPacking: AbstractExtensionField<Base::Packing, F = Self>;
+    type ExtensionPacking: AbstractExtensionField<Base::Packing, F = Self>
+        + 'static
+        + Copy
+        + Send
+        + Sync;
 
     fn is_in_basefield(&self) -> bool {
         self.as_base_slice()[1..].iter().all(Field::is_zero)
