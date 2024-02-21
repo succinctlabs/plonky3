@@ -15,8 +15,9 @@ mod symbolic_variable;
 mod verifier;
 mod zerofier_coset;
 
-pub mod check_constraints;
+mod check_constraints;
 
+pub use check_constraints::*;
 pub use config::*;
 pub use decompose::*;
 pub use folder::*;
