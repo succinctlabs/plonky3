@@ -1,14 +1,14 @@
 use alloc::vec;
 use alloc::vec::Vec;
-use core::array;
 use core::cmp::Reverse;
+use core::mem::MaybeUninit;
+use core::{array, mem};
 
 use itertools::Itertools;
-use p3_field::{AbstractField, Field, PackedField};
 use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::{Matrix, MatrixRowSlices};
 use p3_maybe_rayon::prelude::*;
-use p3_symmetric::{CryptographicHasher, PseudoCompressionFunction};
+use p3_symmetric::{CryptographicHasher, PackedValue, PseudoCompressionFunction};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
@@ -27,14 +27,14 @@ pub struct FieldMerkleTree<F, const DIGEST_ELEMS: usize> {
     pub(crate) digest_layers: Vec<Vec<[F; DIGEST_ELEMS]>>,
 }
 
-impl<F: Field, const DIGEST_ELEMS: usize> FieldMerkleTree<F, DIGEST_ELEMS> {
+impl<F: Clone, const DIGEST_ELEMS: usize> FieldMerkleTree<F, DIGEST_ELEMS> {
     /// Matrix heights need not be powers of two. However, if the heights of two given matrices
     /// round up to the same power of two, they must be equal.
     #[instrument(name = "build merkle tree", level = "debug", skip_all,
                  fields(dimensions = alloc::format!("{:?}", leaves.iter().map(|l| l.dimensions()).collect::<Vec<_>>())))]
     pub fn new<P, H, C>(h: &H, c: &C, leaves: Vec<RowMajorMatrix<F>>) -> Self
     where
-        P: PackedField<Scalar = F>,
+        P: PackedValue<Value = F>,
         H: CryptographicHasher<F, [F; DIGEST_ELEMS]>,
         H: CryptographicHasher<P, [P; DIGEST_ELEMS]>,
         H: Sync,
@@ -94,18 +94,21 @@ impl<F: Field, const DIGEST_ELEMS: usize> FieldMerkleTree<F, DIGEST_ELEMS> {
     }
 
     #[must_use]
-    pub fn root(&self) -> [F; DIGEST_ELEMS] {
+    pub fn root(&self) -> [F; DIGEST_ELEMS]
+    where
+        F: Copy,
+    {
         self.digest_layers.last().unwrap()[0]
     }
 }
 
 fn first_digest_layer<P, H, const DIGEST_ELEMS: usize>(
     h: &H,
-    tallest_matrices: Vec<&RowMajorMatrix<P::Scalar>>,
-) -> Vec<[P::Scalar; DIGEST_ELEMS]>
+    tallest_matrices: Vec<&RowMajorMatrix<P::Value>>,
+) -> Vec<[P::Value; DIGEST_ELEMS]>
 where
-    P: PackedField,
-    H: CryptographicHasher<P::Scalar, [P::Scalar; DIGEST_ELEMS]>,
+    P: PackedValue,
+    H: CryptographicHasher<P::Value, [P::Value; DIGEST_ELEMS]>,
     H: CryptographicHasher<P, [P; DIGEST_ELEMS]>,
     H: Sync,
 {
@@ -113,8 +116,8 @@ where
     let max_height = tallest_matrices[0].height();
     let max_height_padded = max_height.next_power_of_two();
 
-    let default_digest = [P::Scalar::zero(); DIGEST_ELEMS];
-    let mut digests = vec![default_digest; max_height_padded];
+    let uninit_digest: MaybeUninit<[P::Value; DIGEST_ELEMS]> = MaybeUninit::uninit();
+    let mut digests = vec![uninit_digest; max_height_padded];
 
     digests[0..max_height]
         .par_chunks_exact_mut(width)
@@ -127,7 +130,7 @@ where
                     .flat_map(|m| m.packed_row(first_row)),
             );
             for (dst, src) in digests_chunk.iter_mut().zip(unpack_array(packed_digest)) {
-                *dst = src;
+                dst.write(src);
             }
         });
 
@@ -135,26 +138,27 @@ where
     // for the last bit.
     #[allow(clippy::needless_range_loop)]
     for i in (max_height / width * width)..max_height {
-        digests[i] = h.hash_iter_slices(tallest_matrices.iter().map(|m| m.row_slice(i)));
+        digests[i].write(h.hash_iter_slices(tallest_matrices.iter().map(|m| m.row_slice(i))));
     }
 
-    digests
+    // Everything has been initialized so we can safely cast.
+    unsafe { mem::transmute(digests) }
 }
 
 /// Compress `n` digests from the previous layer into `n/2` digests, while potentially mixing in
 /// some leaf data, if there are input matrices with (padded) height `n/2`.
 fn compress_and_inject<P, H, C, const DIGEST_ELEMS: usize>(
-    prev_layer: &[[P::Scalar; DIGEST_ELEMS]],
-    matrices_to_inject: Vec<&RowMajorMatrix<P::Scalar>>,
+    prev_layer: &[[P::Value; DIGEST_ELEMS]],
+    matrices_to_inject: Vec<&RowMajorMatrix<P::Value>>,
     h: &H,
     c: &C,
-) -> Vec<[P::Scalar; DIGEST_ELEMS]>
+) -> Vec<[P::Value; DIGEST_ELEMS]>
 where
-    P: PackedField,
-    H: CryptographicHasher<P::Scalar, [P::Scalar; DIGEST_ELEMS]>,
+    P: PackedValue,
+    H: CryptographicHasher<P::Value, [P::Value; DIGEST_ELEMS]>,
     H: CryptographicHasher<P, [P; DIGEST_ELEMS]>,
     H: Sync,
-    C: PseudoCompressionFunction<[P::Scalar; DIGEST_ELEMS], 2>,
+    C: PseudoCompressionFunction<[P::Value; DIGEST_ELEMS], 2>,
     C: PseudoCompressionFunction<[P; DIGEST_ELEMS], 2>,
     C: Sync,
 {
@@ -166,8 +170,8 @@ where
     let next_len = matrices_to_inject[0].height();
     let next_len_padded = prev_layer.len() / 2;
 
-    let default_digest = [P::Scalar::zero(); DIGEST_ELEMS];
-    let mut next_digests = vec![default_digest; next_len_padded];
+    let uninit_digest: MaybeUninit<[P::Value; DIGEST_ELEMS]> = MaybeUninit::uninit();
+    let mut next_digests = vec![uninit_digest; next_len_padded];
 
     next_digests[0..next_len]
         .par_chunks_exact_mut(width)
@@ -184,7 +188,7 @@ where
             );
             packed_digest = c.compress([packed_digest, tallest_digest]);
             for (dst, src) in digests_chunk.iter_mut().zip(unpack_array(packed_digest)) {
-                *dst = src;
+                dst.write(src);
             }
         });
 
@@ -195,29 +199,30 @@ where
         let right = prev_layer[2 * i + 1];
         let digest = c.compress([left, right]);
         let rows_digest = h.hash_iter_slices(matrices_to_inject.iter().map(|m| m.row_slice(i)));
-        next_digests[i] = c.compress([digest, rows_digest]);
+        next_digests[i].write(c.compress([digest, rows_digest]));
     }
 
     // At this point, we've exceeded the height of the matrices to inject, so we continue the
     // process above except with default_digest in place of an input digest.
-    for i in next_len..next_len_padded {
-        let left = prev_layer[2 * i];
-        let right = prev_layer[2 * i + 1];
-        let digest = c.compress([left, right]);
-        next_digests[i] = c.compress([digest, default_digest]);
-    }
+    assert_eq!(next_len, next_len_padded);
+    // for i in next_len..next_len_padded {
+    //     let left = prev_layer[2 * i];
+    //     let right = prev_layer[2 * i + 1];
+    //     let digest = c.compress([left, right]);
+    //     next_digests[i].write(c.compress([digest, default_digest]));
+    // }
 
-    next_digests
+    unsafe { mem::transmute(next_digests) }
 }
 
 /// Compress `n` digests from the previous layer into `n/2` digests.
 fn compress<P, C, const DIGEST_ELEMS: usize>(
-    prev_layer: &[[P::Scalar; DIGEST_ELEMS]],
+    prev_layer: &[[P::Value; DIGEST_ELEMS]],
     c: &C,
-) -> Vec<[P::Scalar; DIGEST_ELEMS]>
+) -> Vec<[P::Value; DIGEST_ELEMS]>
 where
-    P: PackedField,
-    C: PseudoCompressionFunction<[P::Scalar; DIGEST_ELEMS], 2>,
+    P: PackedValue,
+    C: PseudoCompressionFunction<[P::Value; DIGEST_ELEMS], 2>,
     C: PseudoCompressionFunction<[P; DIGEST_ELEMS], 2>,
     C: Sync,
 {
@@ -225,8 +230,8 @@ where
     let width = P::WIDTH;
     let next_len = prev_layer.len() / 2;
 
-    let default_digest = [P::Scalar::zero(); DIGEST_ELEMS];
-    let mut next_digests = vec![default_digest; next_len];
+    let uninit_digest: MaybeUninit<[P::Value; DIGEST_ELEMS]> = MaybeUninit::uninit();
+    let mut next_digests = vec![uninit_digest; next_len];
 
     next_digests[0..next_len]
         .par_chunks_exact_mut(width)
@@ -237,7 +242,7 @@ where
             let right = array::from_fn(|j| P::from_fn(|k| prev_layer[2 * (first_row + k) + 1][j]));
             let packed_digest = c.compress([left, right]);
             for (dst, src) in digests_chunk.iter_mut().zip(unpack_array(packed_digest)) {
-                *dst = src;
+                dst.write(src);
             }
         });
 
@@ -247,16 +252,17 @@ where
         let left = prev_layer[2 * i];
         let right = prev_layer[2 * i + 1];
         let digest = c.compress([left, right]);
-        next_digests[i] = digest;
+        next_digests[i].write(digest);
     }
 
-    next_digests
+    // Everything has been initialized so we can safely cast.
+    unsafe { mem::transmute(next_digests) }
 }
 
 /// Converts a packed array `[P; N]` into its underlying `P::WIDTH` scalar arrays.
 #[inline]
-fn unpack_array<P: PackedField, const N: usize>(
+fn unpack_array<P: PackedValue, const N: usize>(
     packed_digest: [P; N],
-) -> impl Iterator<Item = [P::Scalar; N]> {
+) -> impl Iterator<Item = [P::Value; N]> {
     (0..P::WIDTH).map(move |j| packed_digest.map(|p| p.as_slice()[j]))
 }
