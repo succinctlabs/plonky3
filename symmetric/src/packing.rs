@@ -1,3 +1,7 @@
+use core::{mem, slice};
+
+use p3_field::PackedField;
+
 /// # Safety
 /// - `WIDTH` is assumed to be a power of 2.
 /// - If `P` implements `PackedField` then `P` must be castable to/from `[P::Value; P::WIDTH]`
