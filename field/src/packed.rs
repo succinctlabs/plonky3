@@ -6,7 +6,7 @@ use crate::AbstractField;
 
 /// # Safety
 /// - `WIDTH` is assumed to be a power of 2.
-/// - If `P` implements `PackedField` then `P` must be castable to/from `[P::Scalar; P::WIDTH]`
+/// - If `P` implements `PackedField` then `P` must be castable to/from `[P::Value; P::WIDTH]`
 ///   without UB.
 pub unsafe trait PackedValue: 'static + Copy + From<Self::Value> + Send + Sync {
     type Value: 'static + Copy + Send + Sync;
