@@ -48,7 +48,7 @@ where
     C: Sync,
     [P::Scalar; DIGEST_ELEMS]: Serialize + for<'de> Deserialize<'de>,
 {
-    type ProverData = FieldMerkleTree<P::Scalar, DIGEST_ELEMS>;
+    type ProverData = FieldMerkleTree<P::Scalar, P::Scalar, DIGEST_ELEMS>;
     type Commitment = [P::Scalar; DIGEST_ELEMS];
     type Proof = Vec<[P::Scalar; DIGEST_ELEMS]>;
     type Error = ();
@@ -57,7 +57,7 @@ where
     fn open_batch(
         &self,
         index: usize,
-        prover_data: &FieldMerkleTree<P::Scalar, DIGEST_ELEMS>,
+        prover_data: &FieldMerkleTree<P::Scalar, P::Scalar, DIGEST_ELEMS>,
     ) -> (Vec<Vec<P::Scalar>>, Vec<[P::Scalar; DIGEST_ELEMS]>) {
         let max_height = self.get_max_height(prover_data);
         let log_max_height = log2_ceil_usize(max_height);
@@ -166,7 +166,7 @@ where
         &self,
         inputs: Vec<RowMajorMatrix<P::Scalar>>,
     ) -> (Self::Commitment, Self::ProverData) {
-        let tree = FieldMerkleTree::new::<P, H, C>(&self.hash, &self.compress, inputs);
+        let tree = FieldMerkleTree::new::<P, P, H, C>(&self.hash, &self.compress, inputs);
         let root = tree.root();
         (root, tree)
     }
@@ -188,7 +188,7 @@ mod tests {
     };
     use rand::thread_rng;
 
-    use crate::FieldMerkleTreeMmcs;
+    use super::FieldMerkleTreeMmcs;
 
     type F = BabyBear;
 
