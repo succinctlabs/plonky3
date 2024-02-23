@@ -9,11 +9,10 @@ use itertools::Itertools;
 use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::{Matrix, MatrixRowSlices};
 use p3_maybe_rayon::prelude::*;
+use p3_symmetric::Hash;
 use p3_symmetric::{CryptographicHasher, PseudoCompressionFunction};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-
-use crate::root::FieldMerkleRoot;
 
 /// A binary Merkle tree for field data. It has leaves of type `F` and digests of type
 /// `[F; DIGEST_ELEMS]`.
@@ -104,7 +103,7 @@ impl<F: Clone, W: Clone, const DIGEST_ELEMS: usize> FieldMerkleTree<F, W, DIGEST
     }
 
     #[must_use]
-    pub fn root(&self) -> FieldMerkleRoot<F, W, DIGEST_ELEMS>
+    pub fn root(&self) -> Hash<F, W, DIGEST_ELEMS>
     where
         W: Copy,
     {

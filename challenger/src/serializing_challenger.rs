@@ -3,10 +3,12 @@ use core::marker::PhantomData;
 use alloc::vec::Vec;
 use p3_field::{ExtensionField, PrimeField32};
 use p3_maybe_rayon::prelude::*;
-use p3_symmetric::CryptographicHasher;
+use p3_symmetric::{CryptographicHasher, Hash};
 use tracing::instrument;
 
-use crate::{CanObserve, CanSample, CanSampleBits, GrindingChallenger, HashChallenger};
+use crate::{
+    CanObserve, CanSample, CanSampleBits, FieldChallenger, GrindingChallenger, HashChallenger,
+};
 
 #[derive(Clone, Debug)]
 pub struct SerializingChallenger32<F, Inner> {
@@ -23,15 +25,14 @@ impl<F: PrimeField32, Inner: CanObserve<u8>> SerializingChallenger32<F, Inner> {
     }
 }
 
-pub fn serializing32_from_hasher<F, H>(
-    initial_state: Vec<u8>,
-    hasher: H,
-) -> SerializingChallenger32<F, HashChallenger<u8, H, 32>>
+impl<F, H> SerializingChallenger32<F, HashChallenger<u8, H, 32>>
 where
     F: PrimeField32,
     H: CryptographicHasher<u8, [u8; 32]>,
 {
-    SerializingChallenger32::new(HashChallenger::new(initial_state, hasher))
+    pub fn from_hasher(initial_state: Vec<u8>, hasher: H) -> Self {
+        Self::new(HashChallenger::new(initial_state, hasher))
+    }
 }
 
 impl<F: PrimeField32, Inner: CanObserve<u8>> CanObserve<F> for SerializingChallenger32<F, Inner> {
@@ -41,15 +42,15 @@ impl<F: PrimeField32, Inner: CanObserve<u8>> CanObserve<F> for SerializingChalle
     }
 }
 
-// impl<F: PrimeField32, const N: usize, Inner: CanObserve<u8>> CanObserve<[u8; N]>
-//     for SerializingChallenger32<F, Inner>
-// {
-//     fn observe(&mut self, values: [F; N]) {
-//         for value in values {
-//             self.observe(value);
-//         }
-//     }
-// }
+impl<F: PrimeField32, const N: usize, Inner: CanObserve<u8>> CanObserve<Hash<F, u8, N>>
+    for SerializingChallenger32<F, Inner>
+{
+    fn observe(&mut self, values: Hash<F, u8, N>) {
+        for value in values {
+            self.inner.observe(value);
+        }
+    }
+}
 
 impl<F, EF, Inner> CanSample<EF> for SerializingChallenger32<F, Inner>
 where
@@ -97,4 +98,11 @@ where
         assert!(self.check_witness(bits, witness));
         witness
     }
+}
+
+impl<F, Inner> FieldChallenger<F> for SerializingChallenger32<F, Inner>
+where
+    F: PrimeField32,
+    Inner: CanSample<u8> + CanObserve<u8> + Clone + Send + Sync,
+{
 }

@@ -3,6 +3,7 @@ use alloc::vec::Vec;
 
 use p3_field::{ExtensionField, Field, PrimeField64};
 use p3_symmetric::CryptographicPermutation;
+use p3_symmetric::Hash;
 
 use crate::{CanObserve, CanSample, CanSampleBits, FieldChallenger};
 
@@ -81,6 +82,19 @@ where
     P: CryptographicPermutation<[F; WIDTH]>,
 {
     fn observe(&mut self, values: [F; N]) {
+        for value in values {
+            self.observe(value);
+        }
+    }
+}
+
+impl<F, P, const N: usize, const WIDTH: usize> CanObserve<Hash<F, F, N>>
+    for DuplexChallenger<F, P, WIDTH>
+where
+    F: Copy,
+    P: CryptographicPermutation<[F; WIDTH]>,
+{
+    fn observe(&mut self, values: Hash<F, F, N>) {
         for value in values {
             self.observe(value);
         }
