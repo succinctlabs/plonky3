@@ -11,6 +11,7 @@ use p3_symmetric::{CryptographicHasher, PseudoCompressionFunction};
 use p3_util::log2_ceil_usize;
 use serde::{Deserialize, Serialize};
 
+use crate::root::FieldMerkleRoot;
 use crate::FieldMerkleTree;
 
 /// A vector commitment scheme backed by a `FieldMerkleTree`.
@@ -51,7 +52,7 @@ where
     [PW::Value; DIGEST_ELEMS]: Serialize + for<'de> Deserialize<'de>,
 {
     type ProverData = FieldMerkleTree<P::Scalar, PW::Value, DIGEST_ELEMS>;
-    type Commitment = [PW::Value; DIGEST_ELEMS];
+    type Commitment = FieldMerkleRoot<P::Scalar, PW::Value, DIGEST_ELEMS>;
     type Proof = Vec<[PW::Value; DIGEST_ELEMS]>;
     type Error = ();
     type Mat<'a> = RowMajorMatrixView<'a, P::Scalar> where H: 'a, C: 'a;
@@ -144,7 +145,7 @@ where
             }
         }
 
-        if &root == commit {
+        if commit == &root {
             Ok(())
         } else {
             Err(())
