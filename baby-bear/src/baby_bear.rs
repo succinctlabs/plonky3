@@ -309,17 +309,6 @@ impl TwoAdicField for BabyBear {
             _ => unreachable!("Already asserted that bits <= Self::TWO_ADICITY"),
         }
     }
-    fn to_u32(&self) -> u32 {
-        self.as_canonical_u32()
-    }
-
-    fn to_value(&self) -> u32 {
-        self.value
-    }
-
-    fn from_value(value: u32) -> Self {
-        Self{value}
-    }
 }
 
 impl Add for BabyBear {
@@ -416,7 +405,7 @@ impl Div for BabyBear {
 
 #[inline]
 #[must_use]
-pub const fn to_monty(x: u32) -> u32 {
+const fn to_monty(x: u32) -> u32 {
     (((x as u64) << MONTY_BITS) % P as u64) as u32
 }
 
@@ -428,7 +417,7 @@ fn to_monty_64(x: u64) -> u32 {
 
 #[inline]
 #[must_use]
-pub fn from_monty(x: u32) -> u32 {
+fn from_monty(x: u32) -> u32 {
     monty_reduce(x as u64)
 }
 

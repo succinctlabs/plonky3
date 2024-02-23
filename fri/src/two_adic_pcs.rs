@@ -17,6 +17,7 @@ use p3_matrix::{Dimensions, Matrix, MatrixRows};
 use p3_maybe_rayon::prelude::*;
 use p3_util::linear_map::LinearMap;
 use p3_util::{log2_strict_usize, reverse_bits_len, reverse_slice_index_bits, VecExt};
+use p3_field::AbstractExtensionField;
 use serde::{Deserialize, Serialize};
 use tracing::{info_span, instrument};
 
@@ -383,24 +384,24 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
                         {
                             array_arg[array_idx] = x.as_canonical_u32();
-                            alpha.as_base_slice_2().iter().for_each(|x| {
+                            alpha.as_base_slice().iter().for_each(|x| {
                                 array_idx += 1;
                                 array_arg[array_idx] = x.as_canonical_u32();
                             });
                         }
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
-                        let save_arg: [*mut u32; 2] = [ro[log_height].as_base_slice_2_mut() as *mut u32, alpha_pow[log_height].as_base_slice_2_mut() as *mut u32];
+                        let save_arg: [*mut u32; 2] = [ro[log_height].as_base_slice_mut() as *mut u32, alpha_pow[log_height].as_base_slice_mut() as *mut u32];
                         for (&z, ps_at_z) in izip!(mat_points, mat_at_z) {
                             #[allow(clippy::never_loop)]
                             for (&p_at_x, &p_at_z) in izip!(mat_opening, ps_at_z) {
                                 cfg_if::cfg_if! {
                                     if #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))] {
                                         let mut idx = array_idx;
-                                        z.as_base_slice_2().iter().for_each(|x| {
+                                        z.as_base_slice().iter().for_each(|x| {
                                             idx += 1;
                                             array_arg[idx] = x.as_canonical_u32();
                                         });
-                                        p_at_z.as_base_slice_2().iter().for_each(|x| {
+                                        p_at_z.as_base_slice().iter().for_each(|x| {
                                             idx += 1;
                                             array_arg[idx] = x.as_canonical_u32();
                                         });

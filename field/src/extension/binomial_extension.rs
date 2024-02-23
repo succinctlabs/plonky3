@@ -547,18 +547,6 @@ impl<F: Field + HasTwoAdicBionmialExtension<D>, const D: usize> TwoAdicField
             value: F::ext_two_adic_generator(bits),
         }
     }
-
-    fn to_u32(&self) -> u32 {
-        todo!("implement later");
-    }
-
-    fn to_value(&self) -> u32 {
-        todo!("implement later");
-    }
-
-    fn from_value(_value: u32) -> Self {
-        todo!("implement later");
-    }
 }
 
 ///Section 11.3.6b in Handbook of Elliptic and Hyperelliptic Curve Cryptography.

@@ -361,12 +361,6 @@ pub trait TwoAdicField: Field {
     /// Assumes `bits < TWO_ADICITY`, otherwise the result is undefined.
     #[must_use]
     fn two_adic_generator(bits: usize) -> Self;
-
-    fn to_u32(&self) -> u32;
-
-    fn to_value(&self) -> u32;
-
-    fn from_value(value: u32) -> Self;
 }
 
 /// An iterator over the powers of a certain base element `b`: `b^0, b^1, b^2, ...`.

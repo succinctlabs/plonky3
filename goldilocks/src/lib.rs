@@ -249,18 +249,6 @@ impl TwoAdicField for Goldilocks {
         let base = Self::new(1_753_635_133_440_165_772); // generates the whole 2^TWO_ADICITY group
         base.exp_power_of_2(Self::TWO_ADICITY - bits)
     }
-
-    fn to_u32(&self) -> u32 {
-        todo!("implement later");
-    }
-
-    fn to_value(&self) -> u32 {
-        todo!()
-    }
-
-    fn from_value(_value: u32) -> Self {
-        todo!()
-    }
 }
 
 impl Add for Goldilocks {
