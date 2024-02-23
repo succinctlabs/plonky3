@@ -516,6 +516,10 @@ where
     fn as_base_slice(&self) -> &[AF] {
         &self.value
     }
+
+    fn as_base_slice_mut(&mut self) -> *mut AF {
+        self.value.as_mut_ptr()
+    }
 }
 
 impl<F: BinomiallyExtendable<D>, const D: usize> Distribution<BinomialExtensionField<F, D>>
@@ -541,6 +545,18 @@ impl<F: Field + HasTwoAdicBionmialExtension<D>, const D: usize> TwoAdicField
         Self {
             value: F::ext_two_adic_generator(bits),
         }
+    }
+
+    fn to_u32(&self) -> u32 {
+        todo!("implement later");
+    }
+
+    fn to_value(&self) -> u32 {
+        todo!("implement later");
+    }
+
+    fn from_value(_value: u32) -> Self {
+        todo!("implement later");
     }
 }
 
