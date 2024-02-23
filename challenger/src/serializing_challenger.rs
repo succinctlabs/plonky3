@@ -75,7 +75,7 @@ where
     fn sample_bits(&mut self, bits: usize) -> usize {
         debug_assert!(bits < (usize::BITS as usize));
         // Limiting the number of bits to a u32 for
-        debug_assert!((1 << bits) < 1 << 32);
+        debug_assert!((1 << bits) <= (u32::MAX as usize));
         let rand_usize = u32::from_le_bytes(self.inner.sample_array::<4>()) as usize;
         rand_usize & ((1 << bits) - 1)
     }
