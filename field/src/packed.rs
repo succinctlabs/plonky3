@@ -4,7 +4,7 @@ use core::{mem, slice};
 use crate::field::Field;
 use crate::AbstractField;
 
-pub trait Packable :  'static + Default + Copy + Send + Sync + PartialEq + Eq {}
+pub trait Packable: 'static + Default + Copy + Send + Sync + PartialEq + Eq {}
 
 /// # Safety
 /// - `WIDTH` is assumed to be a power of 2.
@@ -69,7 +69,7 @@ pub unsafe trait PackedValue: 'static + Copy + From<Self::Value> + Send + Sync {
 }
 
 /// # Safety
-/// Same as `PackedValue`. 
+/// Same as `PackedValue`.
 pub unsafe trait PackedField: AbstractField<F = Self::Scalar> 
      + PackedValue<Value = Self::Scalar>
     + From<Self::Scalar>
