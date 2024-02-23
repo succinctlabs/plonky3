@@ -1,8 +1,7 @@
 use alloc::vec;
 use alloc::vec::Vec;
+use core::array;
 use core::cmp::Reverse;
-use core::mem::MaybeUninit;
-use core::{array, mem};
 use p3_field::{PackedField, PackedValue};
 
 use itertools::Itertools;
@@ -126,7 +125,7 @@ where
     let max_height = tallest_matrices[0].height();
     let max_height_padded = max_height.next_power_of_two();
 
-    let default_digest: MaybeUninit<[PW::Value; DIGEST_ELEMS]> = MaybeUninit::uninit();
+    let default_digest: [PW::Value; DIGEST_ELEMS] = [PW::Value::default(); DIGEST_ELEMS];
     let mut digests = vec![default_digest; max_height_padded];
 
     digests[0..max_height]
@@ -140,7 +139,7 @@ where
                     .flat_map(|m| m.packed_row(first_row)),
             );
             for (dst, src) in digests_chunk.iter_mut().zip(unpack_array(packed_digest)) {
-                dst.write(src);
+                *dst = src;
             }
         });
 
@@ -148,11 +147,11 @@ where
     // for the last bit.
     #[allow(clippy::needless_range_loop)]
     for i in (max_height / width * width)..max_height {
-        digests[i].write(h.hash_iter_slices(tallest_matrices.iter().map(|m| m.row_slice(i))));
+        digests[i] = h.hash_iter_slices(tallest_matrices.iter().map(|m| m.row_slice(i)));
     }
 
     // Everything has been initialized so we can safely cast.
-    unsafe { mem::transmute(digests) }
+    digests
 }
 
 /// Compress `n` digests from the previous layer into `n/2` digests, while potentially mixing in
