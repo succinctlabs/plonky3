@@ -28,25 +28,25 @@ impl<Inner> SerializingHasher64<Inner> {
     }
 }
 
-impl<F, Inner> CryptographicHasher<F, [F; 8]> for SerializingHasher32<Inner>
+impl<F, Inner> CryptographicHasher<F, [u8; 32]> for SerializingHasher32<Inner>
 where
     F: PrimeField32,
     Inner: CryptographicHasher<u8, [u8; 32]>,
 {
-    fn hash_iter<I>(&self, input: I) -> [F; 8]
+    fn hash_iter<I>(&self, input: I) -> [u8; 32]
     where
         I: IntoIterator<Item = F>,
     {
-        let inner_out = self.inner.hash_iter(
+        self.inner.hash_iter(
             input
                 .into_iter()
                 .flat_map(|x| x.as_canonical_u32().to_le_bytes()),
-        );
+        )
 
-        core::array::from_fn(|i| {
-            let inner_out_chunk: [u8; 4] = inner_out[i * 4..(i + 1) * 4].try_into().unwrap();
-            F::from_wrapped_u32(u32::from_le_bytes(inner_out_chunk))
-        })
+        // core::array::from_fn(|i| {
+        //     let inner_out_chunk: [u8; 4] = inner_out[i * 4..(i + 1) * 4].try_into().unwrap();
+        //     F::from_wrapped_u32(u32::from_le_bytes(inner_out_chunk))
+        // })
     }
 }
 

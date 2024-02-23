@@ -4,10 +4,10 @@ use core::marker::PhantomData;
 
 use itertools::Itertools;
 use p3_commit::{DirectMmcs, Mmcs};
-use p3_field::PackedField;
+use p3_field::{PackedField, PackedValue};
 use p3_matrix::dense::{RowMajorMatrix, RowMajorMatrixView};
 use p3_matrix::{Dimensions, Matrix, MatrixRows};
-use p3_symmetric::{CryptographicHasher, PackedWord, PseudoCompressionFunction};
+use p3_symmetric::{CryptographicHasher, PseudoCompressionFunction};
 use p3_util::log2_ceil_usize;
 use serde::{Deserialize, Serialize};
 
@@ -40,27 +40,27 @@ impl<P, PW, H, C, const DIGEST_ELEMS: usize> Mmcs<P::Scalar>
     for FieldMerkleTreeMmcs<P, PW, H, C, DIGEST_ELEMS>
 where
     P: PackedField,
-    PW: PackedWord,
-    H: CryptographicHasher<P::Scalar, [PW::Word; DIGEST_ELEMS]>,
+    PW: PackedValue,
+    H: CryptographicHasher<P::Scalar, [PW::Value; DIGEST_ELEMS]>,
     H: CryptographicHasher<P, [PW; DIGEST_ELEMS]>,
     H: Sync,
-    C: PseudoCompressionFunction<[PW::Word; DIGEST_ELEMS], 2>,
+    C: PseudoCompressionFunction<[PW::Value; DIGEST_ELEMS], 2>,
     C: PseudoCompressionFunction<[PW; DIGEST_ELEMS], 2>,
     C: Sync,
-    PW::Word: Eq,
-    [PW::Word; DIGEST_ELEMS]: Serialize + for<'de> Deserialize<'de>,
+    PW::Value: Eq,
+    [PW::Value; DIGEST_ELEMS]: Serialize + for<'de> Deserialize<'de>,
 {
-    type ProverData = FieldMerkleTree<P::Scalar, PW::Word, DIGEST_ELEMS>;
-    type Commitment = [PW::Word; DIGEST_ELEMS];
-    type Proof = Vec<[PW::Word; DIGEST_ELEMS]>;
+    type ProverData = FieldMerkleTree<P::Scalar, PW::Value, DIGEST_ELEMS>;
+    type Commitment = [PW::Value; DIGEST_ELEMS];
+    type Proof = Vec<[PW::Value; DIGEST_ELEMS]>;
     type Error = ();
     type Mat<'a> = RowMajorMatrixView<'a, P::Scalar> where H: 'a, C: 'a;
 
     fn open_batch(
         &self,
         index: usize,
-        prover_data: &FieldMerkleTree<P::Scalar, PW::Word, DIGEST_ELEMS>,
-    ) -> (Vec<Vec<P::Scalar>>, Vec<[PW::Word; DIGEST_ELEMS]>) {
+        prover_data: &FieldMerkleTree<P::Scalar, PW::Value, DIGEST_ELEMS>,
+    ) -> (Vec<Vec<P::Scalar>>, Vec<[PW::Value; DIGEST_ELEMS]>) {
         let max_height = self.get_max_height(prover_data);
         let log_max_height = log2_ceil_usize(max_height);
 
@@ -156,15 +156,15 @@ impl<P, PW, H, C, const DIGEST_ELEMS: usize> DirectMmcs<P::Scalar>
     for FieldMerkleTreeMmcs<P, PW, H, C, DIGEST_ELEMS>
 where
     P: PackedField,
-    PW: PackedWord,
-    H: CryptographicHasher<P::Scalar, [PW::Word; DIGEST_ELEMS]>,
+    PW: PackedValue,
+    H: CryptographicHasher<P::Scalar, [PW::Value; DIGEST_ELEMS]>,
     H: CryptographicHasher<P, [PW; DIGEST_ELEMS]>,
     H: Sync,
-    C: PseudoCompressionFunction<[PW::Word; DIGEST_ELEMS], 2>,
+    C: PseudoCompressionFunction<[PW::Value; DIGEST_ELEMS], 2>,
     C: PseudoCompressionFunction<[PW; DIGEST_ELEMS], 2>,
     C: Sync,
-    PW::Word: Eq,
-    [PW::Word; DIGEST_ELEMS]: Serialize + for<'de> Deserialize<'de>,
+    PW::Value: Eq,
+    [PW::Value; DIGEST_ELEMS]: Serialize + for<'de> Deserialize<'de>,
 {
     fn commit(
         &self,

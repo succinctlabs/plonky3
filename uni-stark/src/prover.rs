@@ -5,9 +5,9 @@ use itertools::Itertools;
 use p3_air::{Air, TwoRowMatrixView};
 use p3_challenger::{CanObserve, FieldChallenger};
 use p3_commit::{Pcs, UnivariatePcs, UnivariatePcsWithLde};
+use p3_field::PackedValue;
 use p3_field::{
-    cyclic_subgroup_coset_known_order, AbstractExtensionField, AbstractField, Field, PackedField,
-    TwoAdicField,
+    cyclic_subgroup_coset_known_order, AbstractExtensionField, AbstractField, Field, TwoAdicField,
 };
 use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::{Matrix, MatrixGet, MatrixRows};
