@@ -258,7 +258,7 @@ impl TwoAdicField for Goldilocks {
         todo!()
     }
 
-    fn from_value(value: u32) -> Self {
+    fn from_value(_value: u32) -> Self {
         todo!()
     }
 }
