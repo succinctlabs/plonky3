@@ -1,17 +1,18 @@
 use alloc::vec;
 use alloc::vec::Vec;
-use core::ops::{Add, Mul};
+use core::ops::Mul;
 
 use p3_field::{AbstractField, Field};
 
 /// An affine function over columns in a PAIR.
+#[derive(Clone, Debug)]
 pub struct VirtualPairCol<F: Field> {
     column_weights: Vec<(PairCol, F)>,
     constant: F,
 }
 
 /// A column in a PAIR, i.e. either a preprocessed column or a main trace column.
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum PairCol {
     Preprocessed(usize),
     Main(usize),
@@ -111,10 +112,11 @@ impl<F: Field> VirtualPairCol<F> {
 
     pub fn apply<Expr, Var>(&self, preprocessed: &[Var], main: &[Var]) -> Expr
     where
-        Expr: AbstractField + Mul<F, Output = Expr> + Add<F, Output = Expr>,
+        F: Into<Expr>,
+        Expr: AbstractField + Mul<F, Output = Expr>,
         Var: Into<Expr> + Copy,
     {
-        let mut result = Expr::zero() + self.constant;
+        let mut result = self.constant.into();
         for (column, weight) in &self.column_weights {
             result += column.get(preprocessed, main).into() * *weight;
         }

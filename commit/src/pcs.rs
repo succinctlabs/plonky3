@@ -89,7 +89,7 @@ where
     fn commit_shifted_batches(
         &self,
         polynomials: Vec<In>,
-        coset_shifts: &[Val],
+        coset_shift: &[Val],
     ) -> (Self::Commitment, Self::ProverData);
 
     fn commit_shifted_batch(

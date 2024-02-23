@@ -1,6 +1,6 @@
 use crate::BITS_PER_LIMB;
 
-pub(crate) const R: [[u8; 5]; 5] = [
+pub const R: [[u8; 5]; 5] = [
     [0, 36, 3, 41, 18],
     [1, 44, 10, 45, 2],
     [62, 6, 43, 15, 61],
