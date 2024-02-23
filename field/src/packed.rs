@@ -71,7 +71,8 @@ pub unsafe trait PackedValue: 'static + Copy + From<Self::Value> + Send + Sync {
     }
 }
 
-/// # Safety: see `PackedValue` above.
+/// # Safety
+/// - See `PackedValue` above.
 pub unsafe trait PackedField: AbstractField<F = Self::Scalar>
     + PackedValue<Value = Self::Scalar>
     + From<Self::Scalar>
