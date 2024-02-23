@@ -1,6 +1,6 @@
+use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-use alloc::vec::Vec;
 use p3_field::{ExtensionField, PrimeField32};
 use p3_maybe_rayon::prelude::*;
 use p3_symmetric::{CryptographicHasher, Hash};

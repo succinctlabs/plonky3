@@ -2,14 +2,13 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::array;
 use core::cmp::Reverse;
-use p3_field::{PackedField, PackedValue};
 
 use itertools::Itertools;
+use p3_field::{PackedField, PackedValue};
 use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::{Matrix, MatrixRowSlices};
 use p3_maybe_rayon::prelude::*;
-use p3_symmetric::Hash;
-use p3_symmetric::{CryptographicHasher, PseudoCompressionFunction};
+use p3_symmetric::{CryptographicHasher, Hash, PseudoCompressionFunction};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 

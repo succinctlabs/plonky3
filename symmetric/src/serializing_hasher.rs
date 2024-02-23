@@ -1,4 +1,5 @@
-use core::{borrow::Borrow, marker::PhantomData};
+use core::borrow::Borrow;
+use core::marker::PhantomData;
 
 use p3_field::{PrimeField32, PrimeField64};
 use serde::{Deserialize, Serialize};

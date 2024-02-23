@@ -2,8 +2,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use p3_field::{ExtensionField, Field, PrimeField64};
-use p3_symmetric::CryptographicPermutation;
-use p3_symmetric::Hash;
+use p3_symmetric::{CryptographicPermutation, Hash};
 
 use crate::{CanObserve, CanSample, CanSampleBits, FieldChallenger};
 
