@@ -4,12 +4,13 @@ use core::cmp::Reverse;
 use core::mem::MaybeUninit;
 use core::{array, mem};
 use p3_field::PackedField;
+use p3_symmetric::Word;
 
 use itertools::Itertools;
 use p3_matrix::dense::RowMajorMatrix;
 use p3_matrix::{Matrix, MatrixRowSlices};
 use p3_maybe_rayon::prelude::*;
-use p3_symmetric::{CryptographicHasher, PackedValue, PseudoCompressionFunction};
+use p3_symmetric::{CryptographicHasher, PackedWord, PseudoCompressionFunction};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
@@ -36,7 +37,7 @@ impl<F: Clone, W: Clone, const DIGEST_ELEMS: usize> FieldMerkleTree<F, W, DIGEST
     pub fn new<P, PW, H, C>(h: &H, c: &C, leaves: Vec<RowMajorMatrix<F>>) -> Self
     where
         P: PackedField<Scalar = F>,
-        PW: PackedValue<Value = W>,
+        PW: PackedWord<Word = W>,
         H: CryptographicHasher<F, [W; DIGEST_ELEMS]>,
         H: CryptographicHasher<P, [PW; DIGEST_ELEMS]>,
         H: Sync,
@@ -45,6 +46,8 @@ impl<F: Clone, W: Clone, const DIGEST_ELEMS: usize> FieldMerkleTree<F, W, DIGEST
         C: Sync,
     {
         assert!(!leaves.is_empty(), "No matrices given?");
+
+        assert_eq!(P::WIDTH, PW::WIDTH, "Packing widths must match");
 
         // check height property
         assert!(
@@ -111,11 +114,11 @@ impl<F: Clone, W: Clone, const DIGEST_ELEMS: usize> FieldMerkleTree<F, W, DIGEST
 fn first_digest_layer<P, PW, H, const DIGEST_ELEMS: usize>(
     h: &H,
     tallest_matrices: Vec<&RowMajorMatrix<P::Scalar>>,
-) -> Vec<[PW::Value; DIGEST_ELEMS]>
+) -> Vec<[PW::Word; DIGEST_ELEMS]>
 where
     P: PackedField,
-    PW: PackedValue,
-    H: CryptographicHasher<P::Scalar, [PW::Value; DIGEST_ELEMS]>,
+    PW: PackedWord,
+    H: CryptographicHasher<P::Scalar, [PW::Word; DIGEST_ELEMS]>,
     H: CryptographicHasher<P, [PW; DIGEST_ELEMS]>,
     H: Sync,
 {
@@ -123,8 +126,8 @@ where
     let max_height = tallest_matrices[0].height();
     let max_height_padded = max_height.next_power_of_two();
 
-    let uninit_digest: MaybeUninit<[PW::Value; DIGEST_ELEMS]> = MaybeUninit::uninit();
-    let mut digests = vec![uninit_digest; max_height_padded];
+    let default_digest: MaybeUninit<[PW::Word; DIGEST_ELEMS]> = MaybeUninit::uninit();
+    let mut digests = vec![default_digest; max_height_padded];
 
     digests[0..max_height]
         .par_chunks_exact_mut(width)
@@ -155,18 +158,18 @@ where
 /// Compress `n` digests from the previous layer into `n/2` digests, while potentially mixing in
 /// some leaf data, if there are input matrices with (padded) height `n/2`.
 fn compress_and_inject<P, PW, H, C, const DIGEST_ELEMS: usize>(
-    prev_layer: &[[PW::Value; DIGEST_ELEMS]],
+    prev_layer: &[[PW::Word; DIGEST_ELEMS]],
     matrices_to_inject: Vec<&RowMajorMatrix<P::Scalar>>,
     h: &H,
     c: &C,
-) -> Vec<[PW::Value; DIGEST_ELEMS]>
+) -> Vec<[PW::Word; DIGEST_ELEMS]>
 where
-    PW: PackedValue,
+    PW: PackedWord,
     P: PackedField,
-    H: CryptographicHasher<P::Scalar, [PW::Value; DIGEST_ELEMS]>,
+    H: CryptographicHasher<P::Scalar, [PW::Word; DIGEST_ELEMS]>,
     H: CryptographicHasher<P, [PW; DIGEST_ELEMS]>,
     H: Sync,
-    C: PseudoCompressionFunction<[PW::Value; DIGEST_ELEMS], 2>,
+    C: PseudoCompressionFunction<[PW::Word; DIGEST_ELEMS], 2>,
     C: PseudoCompressionFunction<[PW; DIGEST_ELEMS], 2>,
     C: Sync,
 {
@@ -178,8 +181,8 @@ where
     let next_len = matrices_to_inject[0].height();
     let next_len_padded = prev_layer.len() / 2;
 
-    let uninit_digest: MaybeUninit<[PW::Value; DIGEST_ELEMS]> = MaybeUninit::uninit();
-    let mut next_digests = vec![uninit_digest; next_len_padded];
+    let default_digest: [PW::Word; DIGEST_ELEMS] = [PW::Word::padding_value(); DIGEST_ELEMS];
+    let mut next_digests = vec![default_digest; next_len_padded];
 
     next_digests[0..next_len]
         .par_chunks_exact_mut(width)
@@ -196,7 +199,7 @@ where
             );
             packed_digest = c.compress([packed_digest, tallest_digest]);
             for (dst, src) in digests_chunk.iter_mut().zip(unpack_array(packed_digest)) {
-                dst.write(src);
+                *dst = src;
             }
         });
 
@@ -207,30 +210,29 @@ where
         let right = prev_layer[2 * i + 1];
         let digest = c.compress([left, right]);
         let rows_digest = h.hash_iter_slices(matrices_to_inject.iter().map(|m| m.row_slice(i)));
-        next_digests[i].write(c.compress([digest, rows_digest]));
+        next_digests[i] = c.compress([digest, rows_digest]);
     }
 
     // At this point, we've exceeded the height of the matrices to inject, so we continue the
     // process above except with default_digest in place of an input digest.
-    assert_eq!(next_len, next_len_padded);
-    // for i in next_len..next_len_padded {
-    //     let left = prev_layer[2 * i];
-    //     let right = prev_layer[2 * i + 1];
-    //     let digest = c.compress([left, right]);
-    //     next_digests[i].write(c.compress([digest, default_digest]));
-    // }
+    for i in next_len..next_len_padded {
+        let left = prev_layer[2 * i];
+        let right = prev_layer[2 * i + 1];
+        let digest = c.compress([left, right]);
+        next_digests[i] = c.compress([digest, default_digest]);
+    }
 
-    unsafe { mem::transmute(next_digests) }
+    next_digests
 }
 
 /// Compress `n` digests from the previous layer into `n/2` digests.
 fn compress<P, C, const DIGEST_ELEMS: usize>(
-    prev_layer: &[[P::Value; DIGEST_ELEMS]],
+    prev_layer: &[[P::Word; DIGEST_ELEMS]],
     c: &C,
-) -> Vec<[P::Value; DIGEST_ELEMS]>
+) -> Vec<[P::Word; DIGEST_ELEMS]>
 where
-    P: PackedValue,
-    C: PseudoCompressionFunction<[P::Value; DIGEST_ELEMS], 2>,
+    P: PackedWord,
+    C: PseudoCompressionFunction<[P::Word; DIGEST_ELEMS], 2>,
     C: PseudoCompressionFunction<[P; DIGEST_ELEMS], 2>,
     C: Sync,
 {
@@ -238,8 +240,8 @@ where
     let width = P::WIDTH;
     let next_len = prev_layer.len() / 2;
 
-    let uninit_digest: MaybeUninit<[P::Value; DIGEST_ELEMS]> = MaybeUninit::uninit();
-    let mut next_digests = vec![uninit_digest; next_len];
+    let default_digest: [P::Word; DIGEST_ELEMS] = [P::Word::padding_value(); DIGEST_ELEMS];
+    let mut next_digests = vec![default_digest; next_len];
 
     next_digests[0..next_len]
         .par_chunks_exact_mut(width)
@@ -250,7 +252,7 @@ where
             let right = array::from_fn(|j| P::from_fn(|k| prev_layer[2 * (first_row + k) + 1][j]));
             let packed_digest = c.compress([left, right]);
             for (dst, src) in digests_chunk.iter_mut().zip(unpack_array(packed_digest)) {
-                dst.write(src);
+                *dst = src;
             }
         });
 
@@ -260,17 +262,17 @@ where
         let left = prev_layer[2 * i];
         let right = prev_layer[2 * i + 1];
         let digest = c.compress([left, right]);
-        next_digests[i].write(digest);
+        next_digests[i] = digest;
     }
 
     // Everything has been initialized so we can safely cast.
-    unsafe { mem::transmute(next_digests) }
+    next_digests
 }
 
 /// Converts a packed array `[P; N]` into its underlying `P::WIDTH` scalar arrays.
 #[inline]
-fn unpack_array<P: PackedValue, const N: usize>(
+fn unpack_array<P: PackedWord, const N: usize>(
     packed_digest: [P; N],
-) -> impl Iterator<Item = [P::Value; N]> {
+) -> impl Iterator<Item = [P::Word; N]> {
     (0..P::WIDTH).map(move |j| packed_digest.map(|p| p.as_slice()[j]))
 }

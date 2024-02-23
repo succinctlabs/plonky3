@@ -115,7 +115,7 @@ where
     let mut group = criterion.benchmark_group(name);
     group.sample_size(10);
 
-    let mmcs = FieldMerkleTreeMmcs::<P, H, C, DIGEST_ELEMS>::new(h, c);
+    let mmcs = FieldMerkleTreeMmcs::<P, P, H, C, DIGEST_ELEMS>::new(h, c);
     group.bench_with_input(params, &leaves, |b, input| {
         b.iter(|| mmcs.commit(input.clone()))
     });
