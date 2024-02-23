@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 use core::iter::Cloned;
 use core::slice;
 
-use p3_field::{ExtensionField, Field, PackedField};
+use p3_field::{ExtensionField, Field, PackedValue};
 use p3_maybe_rayon::prelude::*;
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
@@ -148,8 +148,8 @@ impl<T> RowMajorMatrix<T> {
     #[inline]
     pub fn packed_row<P>(&self, r: usize) -> impl Iterator<Item = P> + '_
     where
-        T: Field,
-        P: PackedField<Scalar = T>,
+        T: Clone,
+        P: PackedValue<Value = T>,
     {
         debug_assert!(r + P::WIDTH <= self.height());
         (0..self.width).map(move |col| P::from_fn(|i| self.get(r + i, col)))
