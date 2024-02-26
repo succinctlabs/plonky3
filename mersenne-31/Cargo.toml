@@ -14,6 +14,11 @@ p3-util = { path = "../util" }
 rand = "0.8.5"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 
+[dev-dependencies]
+criterion = "0.5"
+p3-field-testing = { path = "../field-testing" }
+rand_chacha = "0.3.1"
+
 [[bench]]
 name = "bench_field"
 harness = false
@@ -21,8 +26,3 @@ harness = false
 [[bench]]
 name = "extension"
 harness = false
-
-[dev-dependencies]
-criterion = "0.5"
-p3-field-testing = { path = "../field-testing" }
-rand_chacha = "0.3.1"

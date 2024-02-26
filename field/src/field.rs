@@ -11,6 +11,7 @@ use serde::Serialize;
 
 use crate::exponentiation::exp_u64_by_squaring;
 use crate::packed::PackedField;
+use crate::Packable;
 
 /// A generalization of `Field` which permits things like
 /// - an actual field element
@@ -149,6 +150,7 @@ pub trait AbstractField:
 /// An element of a finite field.
 pub trait Field:
     AbstractField<F = Self>
+    + Packable
     + 'static
     + Copy
     + Div<Self, Output = Self>
