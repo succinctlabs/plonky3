@@ -19,7 +19,7 @@ pub enum PairCol {
 }
 
 impl PairCol {
-    fn get<T: Copy>(&self, preprocessed: &[T], main: &[T]) -> T {
+    pub const fn get<T: Copy>(&self, preprocessed: &[T], main: &[T]) -> T {
         match self {
             PairCol::Preprocessed(i) => preprocessed[*i],
             PairCol::Main(i) => main[*i],
