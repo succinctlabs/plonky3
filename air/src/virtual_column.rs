@@ -29,7 +29,7 @@ impl PairCol {
 }
 
 impl<'a, F: Field> VirtualPairCol<'a, F> {
-    pub fn new(column_weights: Vec<(PairCol, F)>, constant: F) -> Self {
+    pub const fn new(column_weights: Vec<(PairCol, F)>, constant: F) -> Self {
         Self {
             column_weights: Cow::Owned(column_weights),
             constant,
