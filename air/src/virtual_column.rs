@@ -8,8 +8,8 @@ use p3_field::{AbstractField, Field};
 /// An affine function over columns in a PAIR.
 #[derive(Clone, Debug)]
 pub struct VirtualPairCol<'a, F: Field> {
-    pub column_weights: Cow<'a, [(PairCol, F)]>,
-    pub constant: F,
+    column_weights: Cow<'a, [(PairCol, F)]>,
+    constant: F,
 }
 
 /// A column in a PAIR, i.e. either a preprocessed column or a main trace column.
@@ -64,7 +64,7 @@ impl<'a, F: Field> VirtualPairCol<'a, F> {
     #[must_use]
     pub fn constant(x: F) -> Self {
         Self {
-            column_weights: Cow::from(vec![]),
+            column_weights: Cow::Owned(vec![]),
             constant: x,
         }
     }
@@ -72,7 +72,7 @@ impl<'a, F: Field> VirtualPairCol<'a, F> {
     #[must_use]
     pub fn single(column: PairCol) -> Self {
         Self {
-            column_weights: Cow::from(vec![(column, F::one())]),
+            column_weights: Cow::Owned(vec![(column, F::one())]),
             constant: F::zero(),
         }
     }
