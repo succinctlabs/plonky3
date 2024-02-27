@@ -1,3 +1,4 @@
+use alloc::borrow::Cow;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::ops::Mul;
@@ -6,8 +7,8 @@ use p3_field::{AbstractField, Field};
 
 /// An affine function over columns in a PAIR.
 #[derive(Clone, Debug)]
-pub struct VirtualPairCol<F: Field> {
-    column_weights: Vec<(PairCol, F)>,
+pub struct VirtualPairCol<'a, F: Field> {
+    column_weights: Cow<'a, [(PairCol, F)]>,
     constant: F,
 }
 
@@ -19,7 +20,7 @@ pub enum PairCol {
 }
 
 impl PairCol {
-    fn get<T: Copy>(&self, preprocessed: &[T], main: &[T]) -> T {
+    pub const fn get<T: Copy>(&self, preprocessed: &[T], main: &[T]) -> T {
         match self {
             PairCol::Preprocessed(i) => preprocessed[*i],
             PairCol::Main(i) => main[*i],
@@ -27,10 +28,24 @@ impl PairCol {
     }
 }
 
-impl<F: Field> VirtualPairCol<F> {
-    pub fn new(column_weights: Vec<(PairCol, F)>, constant: F) -> Self {
+impl<'a, F: Field> VirtualPairCol<'a, F> {
+    pub const fn new(column_weights: Cow<'a, [(PairCol, F)]>, constant: F) -> Self {
         Self {
             column_weights,
+            constant,
+        }
+    }
+
+    pub const fn new_owned(column_weights: Vec<(PairCol, F)>, constant: F) -> Self {
+        Self {
+            column_weights: Cow::Owned(column_weights),
+            constant,
+        }
+    }
+
+    pub const fn new_borrowed(column_weights: &'a [(PairCol, F)], constant: F) -> Self {
+        Self {
+            column_weights: Cow::Borrowed(column_weights),
             constant,
         }
     }
@@ -63,7 +78,7 @@ impl<F: Field> VirtualPairCol<F> {
     #[must_use]
     pub fn constant(x: F) -> Self {
         Self {
-            column_weights: vec![],
+            column_weights: Cow::Owned(vec![]),
             constant: x,
         }
     }
@@ -71,7 +86,7 @@ impl<F: Field> VirtualPairCol<F> {
     #[must_use]
     pub fn single(column: PairCol) -> Self {
         Self {
-            column_weights: vec![(column, F::one())],
+            column_weights: Cow::Owned(vec![(column, F::one())]),
             constant: F::zero(),
         }
     }
@@ -117,7 +132,7 @@ impl<F: Field> VirtualPairCol<F> {
         Var: Into<Expr> + Copy,
     {
         let mut result = self.constant.into();
-        for (column, weight) in &self.column_weights {
+        for (column, weight) in self.column_weights.iter() {
             result += column.get(preprocessed, main).into() * *weight;
         }
         result
