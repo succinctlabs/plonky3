@@ -70,6 +70,14 @@ impl<'a, F: Field> VirtualPairCol<'a, F> {
         )
     }
 
+    pub fn get_column_weights(&self) -> &[(PairCol, F)] {
+        &self.column_weights
+    }
+
+    pub const fn get_constant(&self) -> F {
+        self.constant
+    }
+
     #[must_use]
     pub fn one() -> Self {
         Self::constant(F::one())
