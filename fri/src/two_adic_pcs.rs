@@ -77,7 +77,7 @@ pub struct TwoAdicFriPcs<C: TwoAdicFriPcsGenericConfig> {
 }
 
 impl<C: TwoAdicFriPcsGenericConfig> TwoAdicFriPcs<C> {
-    pub fn new(fri: FriConfig<C::FriMmcs>, dft: C::Dft, mmcs: C::InputMmcs) -> Self {
+    pub const fn new(fri: FriConfig<C::FriMmcs>, dft: C::Dft, mmcs: C::InputMmcs) -> Self {
         Self { fri, dft, mmcs }
     }
 }

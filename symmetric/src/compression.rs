@@ -58,7 +58,7 @@ where
     T: Clone,
     H: CryptographicHasher<T, [T; CHUNK]>,
 {
-    pub fn new(hasher: H) -> Self {
+    pub const fn new(hasher: H) -> Self {
         Self {
             hasher,
             _phantom: PhantomData,
