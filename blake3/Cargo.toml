@@ -7,7 +7,6 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 p3-symmetric = { path = "../symmetric" }
 blake3 = "1.5"
-blake3_zkvm = { git = "https://github.com/sp1-patches/BLAKE3.git", branch = "patch-blake3_zkvm/v.1.0.0" }
 
 [features]
 neon = ["blake3/neon"]
