@@ -61,17 +61,20 @@ where
     }
 }
 
-impl<F: PrimeField32, Inner: CanObserve<u8>> CanObserve<F> for SerializingChallenger32<F, u8, Inner> {
+impl<F: PrimeField32, Inner: CanObserve<u8>> CanObserve<F>
+    for SerializingChallenger32<F, u8, Inner>
+{
     fn observe(&mut self, value: F) {
         self.inner
             .observe_slice(&value.as_canonical_u32().to_le_bytes());
     }
 }
 
-impl<F: PrimeField32, Inner: CanObserve<u32>> CanObserve<F> for SerializingChallenger32<F, u32, Inner> {
+impl<F: PrimeField32, Inner: CanObserve<u32>> CanObserve<F>
+    for SerializingChallenger32<F, u32, Inner>
+{
     fn observe(&mut self, value: F) {
-        self.inner
-            .observe(value.as_canonical_u32());
+        self.inner.observe(value.as_canonical_u32());
     }
 }
 
@@ -129,7 +132,6 @@ where
     }
 }
 
-
 impl<F, Inner> CanSampleBits<usize> for SerializingChallenger32<F, u8, Inner>
 where
     F: PrimeField32,
@@ -158,7 +160,6 @@ where
     }
 }
 
-
 impl<F, Inner> GrindingChallenger for SerializingChallenger32<F, u8, Inner>
 where
     F: PrimeField32,
@@ -167,8 +168,7 @@ where
     type Witness = F;
 
     #[instrument(name = "grind for proof-of-work witness", skip_all)]
-    fn grind(&mut self, bits: usize) -> Self::Witness
-    {
+    fn grind(&mut self, bits: usize) -> Self::Witness {
         let witness = (0..F::ORDER_U64)
             .into_par_iter()
             .map(|i| F::from_canonical_u64(i))
@@ -187,8 +187,7 @@ where
     type Witness = F;
 
     #[instrument(name = "grind for proof-of-work witness", skip_all)]
-    fn grind(&mut self, bits: usize) -> Self::Witness
-    {
+    fn grind(&mut self, bits: usize) -> Self::Witness {
         let witness = (0..F::ORDER_U64)
             .into_par_iter()
             .map(|i| F::from_canonical_u64(i))
