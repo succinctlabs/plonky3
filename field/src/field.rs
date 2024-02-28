@@ -287,6 +287,8 @@ pub trait AbstractExtensionField<Base: AbstractField>:
     /// different f might have been used.
     fn as_base_slice(&self) -> &[Base];
 
+    fn as_base_slice_mut(&mut self) -> *mut Base;
+
     /// Returns the monomial `X^exponent`.
     fn monomial(exponent: usize) -> Self {
         let mut vec = vec![Base::zero(); Self::D];
@@ -312,6 +314,14 @@ pub trait ExtensionField<Base: Field>: Field + AbstractExtensionField<Base> {
             None
         }
     }
+
+    fn as_base_slice_2(&self) -> &[Base] {
+        self.as_base_slice()
+    }
+
+    fn as_base_slice_2_mut(&mut self) -> *mut Base {
+        self.as_base_slice_mut()
+    }
 }
 
 impl<F: Field> ExtensionField<F> for F {
@@ -336,6 +346,10 @@ impl<AF: AbstractField> AbstractExtensionField<AF> for AF {
 
     fn as_base_slice(&self) -> &[AF] {
         slice::from_ref(self)
+    }
+
+    fn as_base_slice_mut(&mut self) -> *mut AF {
+        todo!()
     }
 }
 

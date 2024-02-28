@@ -521,6 +521,10 @@ where
     fn as_base_slice(&self) -> &[AF] {
         &self.value
     }
+
+    fn as_base_slice_mut(&mut self) -> *mut AF {
+        self.value.as_mut_ptr()
+    }
 }
 
 impl<F: BinomiallyExtendable<D>, const D: usize> Distribution<BinomialExtensionField<F, D>>

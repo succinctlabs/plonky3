@@ -7,9 +7,10 @@ use itertools::{izip, Itertools};
 use p3_challenger::{CanObserve, CanSample, FieldChallenger, GrindingChallenger};
 use p3_commit::{DirectMmcs, Mmcs, OpenedValues, Pcs, UnivariatePcs, UnivariatePcsWithLde};
 use p3_dft::TwoAdicSubgroupDft;
+use p3_field::AbstractExtensionField;
 use p3_field::{
     batch_multiplicative_inverse, cyclic_subgroup_coset_known_order, AbstractField, ExtensionField,
-    Field, PackedValue, TwoAdicField,
+    Field, PackedField, PackedValue, PrimeField32, TwoAdicField,
 };
 use p3_interpolation::interpolate_coset;
 use p3_matrix::bitrev::{BitReversableMatrix, BitReversedMatrixView};
@@ -26,7 +27,7 @@ use crate::{prover, FriConfig, FriProof};
 
 /// We group all of our type bounds into this trait to reduce duplication across signatures.
 pub trait TwoAdicFriPcsGenericConfig: Default {
-    type Val: TwoAdicField;
+    type Val: TwoAdicField + PrimeField32;
     type Challenge: TwoAdicField + ExtensionField<Self::Val>;
     type Challenger: FieldChallenger<Self::Val>
         + GrindingChallenger<Witness = Self::Val>
@@ -52,7 +53,7 @@ impl<Val, Challenge, Challenger, Dft, InputMmcs, FriMmcs> Default
 impl<Val, Challenge, Challenger, Dft, InputMmcs, FriMmcs> TwoAdicFriPcsGenericConfig
     for TwoAdicFriPcsConfig<Val, Challenge, Challenger, Dft, InputMmcs, FriMmcs>
 where
-    Val: TwoAdicField,
+    Val: TwoAdicField + PrimeField32,
     Challenge: TwoAdicField + ExtensionField<Val>,
     Challenger: FieldChallenger<Val>
         + GrindingChallenger<Witness = Val>
@@ -171,6 +172,11 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
         });
         self.mmcs.commit(ldes)
     }
+}
+
+#[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+extern "C" {
+    fn syscall_fri_fold(input_mem_ptr: *const u32, output_mem_ptr: *const *mut u32);
 }
 
 impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
@@ -366,15 +372,51 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         let bits_reduced = log_max_height - log_height;
                         let rev_reduced_index = reverse_bits_len(index >> bits_reduced, log_height);
 
+                        // A field mul with (field lookup then field exp)
                         let x = C::Val::generator()
                             * C::Val::two_adic_generator(log_height)
                                 .exp_u64(rev_reduced_index as u64);
 
+                        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+                        let mut array_arg: [u32; 14] = [0u32; 14];
+                        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+                        let mut array_idx = 0;
+                        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+                        {
+                            array_arg[array_idx] = x.as_canonical_u32();
+                            alpha.as_base_slice().iter().for_each(|x| {
+                                array_idx += 1;
+                                array_arg[array_idx] = x.as_canonical_u32();
+                            });
+                        }
+                        #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
+                        let save_arg: [*mut u32; 2] = [ro[log_height].as_base_slice_mut() as *mut u32, alpha_pow[log_height].as_base_slice_mut() as *mut u32];
                         for (&z, ps_at_z) in izip!(mat_points, mat_at_z) {
+                            #[allow(clippy::never_loop)]
                             for (&p_at_x, &p_at_z) in izip!(mat_opening, ps_at_z) {
-                                let quotient = (-p_at_z + p_at_x) / (-z + x);
-                                ro[log_height] += alpha_pow[log_height] * quotient;
-                                alpha_pow[log_height] *= alpha;
+                                cfg_if::cfg_if! {
+                                    if #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))] {
+                                        let mut idx = array_idx;
+                                        z.as_base_slice().iter().for_each(|x| {
+                                            idx += 1;
+                                            array_arg[idx] = x.as_canonical_u32();
+                                        });
+                                        p_at_z.as_base_slice().iter().for_each(|x| {
+                                            idx += 1;
+                                            array_arg[idx] = x.as_canonical_u32();
+                                        });
+                                        idx += 1;
+                                        array_arg[idx] = p_at_x.as_canonical_u32();
+
+                                        unsafe {
+                                            syscall_fri_fold((&array_arg).as_ptr(), (&save_arg).as_ptr());
+                                        }
+                                    } else {
+                                        let quotient = (-p_at_z + p_at_x) / (-z + x);
+                                        ro[log_height] += alpha_pow[log_height] * quotient;
+                                        alpha_pow[log_height] *= alpha;
+                                    }
+                                }
                             }
                         }
                     }
