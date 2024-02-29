@@ -19,7 +19,7 @@ use p3_maybe_rayon::prelude::*;
 use p3_util::linear_map::LinearMap;
 use p3_util::{log2_strict_usize, reverse_bits_len, reverse_slice_index_bits, VecExt};
 use serde::{Deserialize, Serialize};
-use tracing::{info_span, instrument};
+use tracing::{debug_span, info_span, instrument};
 
 use crate::verifier::{self, FriError};
 use crate::{prover, FriConfig, FriProof};
@@ -176,7 +176,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
 impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
     UnivariatePcs<C::Val, C::Challenge, In, C::Challenger> for TwoAdicFriPcs<C>
 {
-    #[instrument(name = "open_multi_batches", skip_all)]
+    #[instrument(name = "open_multi_batches", skip_all, level = "debug")]
     fn open_multi_batches(
         &self,
         prover_data_and_points: &[(&Self::ProverData, &[Vec<C::Challenge>])],
@@ -256,10 +256,10 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                 let opened_values_for_mat = opened_values_for_round.pushed_mut(vec![]);
                 for &point in points_for_mat {
                     let _guard =
-                        info_span!("reduce matrix quotient", dims = %mat.dimensions()).entered();
+                        debug_span!("reduce matrix quotient", dims = %mat.dimensions()).entered();
 
                     // Use Barycentric interpolation to evaluate the matrix at the given point.
-                    let ys = info_span!("compute opened values with Lagrange interpolation")
+                    let ys = debug_span!("compute opened values with Lagrange interpolation")
                         .in_scope(|| {
                             let (low_coset, _) =
                                 mat.split_rows(mat.height() >> self.fri.log_blowup);
@@ -273,7 +273,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                     let alpha_pow_offset = alpha.exp_u64(num_reduced[log_height] as u64);
                     let sum_alpha_pows_times_y = alpha_reducer.reduce_ext(&ys);
 
-                    info_span!("reduce rows").in_scope(|| {
+                    debug_span!("reduce rows").in_scope(|| {
                         reduced_opening_for_log_height
                             .par_iter_mut()
                             .zip_eq(mat.par_rows())
