@@ -176,7 +176,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
 impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
     UnivariatePcs<C::Val, C::Challenge, In, C::Challenger> for TwoAdicFriPcs<C>
 {
-    #[instrument(name = "open_multi_batches", skip_all)]
+    #[instrument(name = "open_multi_batches", skip_all, level = "debug")]
     fn open_multi_batches(
         &self,
         prover_data_and_points: &[(&Self::ProverData, &[Vec<C::Challenge>])],
