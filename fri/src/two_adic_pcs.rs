@@ -19,7 +19,7 @@ use p3_maybe_rayon::prelude::*;
 use p3_util::linear_map::LinearMap;
 use p3_util::{log2_strict_usize, reverse_bits_len, reverse_slice_index_bits, VecExt};
 use serde::{Deserialize, Serialize};
-use tracing::{info_span, instrument};
+use tracing::{debug_span, info_span, instrument};
 
 use crate::verifier::{self, FriError};
 use crate::{prover, FriConfig, FriProof};
@@ -256,7 +256,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                 let opened_values_for_mat = opened_values_for_round.pushed_mut(vec![]);
                 for &point in points_for_mat {
                     let _guard =
-                        info_span!("reduce matrix quotient", dims = %mat.dimensions()).entered();
+                        debug_span!("reduce matrix quotient", dims = %mat.dimensions()).entered();
 
                     // Use Barycentric interpolation to evaluate the matrix at the given point.
                     let ys = info_span!("compute opened values with Lagrange interpolation")
