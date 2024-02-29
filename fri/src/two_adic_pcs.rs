@@ -273,7 +273,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                     let alpha_pow_offset = alpha.exp_u64(num_reduced[log_height] as u64);
                     let sum_alpha_pows_times_y = alpha_reducer.reduce_ext(&ys);
 
-                    info_span!("reduce rows").in_scope(|| {
+                    debug_span!("reduce rows").in_scope(|| {
                         reduced_opening_for_log_height
                             .par_iter_mut()
                             .zip_eq(mat.par_rows())
