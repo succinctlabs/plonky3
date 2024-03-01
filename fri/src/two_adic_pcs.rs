@@ -108,8 +108,8 @@ pub struct TwoAdicFriPcsProof<C: TwoAdicFriPcsGenericConfig> {
 
 #[derive(Serialize, Deserialize)]
 pub struct BatchOpening<C: TwoAdicFriPcsGenericConfig> {
-    pub(crate) opened_values: Vec<Vec<C::Val>>,
-    pub(crate) opening_proof: <C::InputMmcs as Mmcs<C::Val>>::Proof,
+    pub opened_values: Vec<Vec<C::Val>>,
+    pub opening_proof: <C::InputMmcs as Mmcs<C::Val>>::Proof,
 }
 
 impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>> Pcs<C::Val, In> for TwoAdicFriPcs<C> {
