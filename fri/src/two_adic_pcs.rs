@@ -101,9 +101,9 @@ impl<C: TwoAdicFriPcsGenericConfig> Debug for VerificationError<C> {
 #[derive(Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct TwoAdicFriPcsProof<C: TwoAdicFriPcsGenericConfig> {
-    pub(crate) fri_proof: FriProof<C::Challenge, C::FriMmcs, C::Val>,
+    pub fri_proof: FriProof<C::Challenge, C::FriMmcs, C::Val>,
     /// For each query, for each committed batch, query openings for that batch
-    pub(crate) query_openings: Vec<Vec<BatchOpening<C>>>,
+    pub query_openings: Vec<Vec<BatchOpening<C>>>,
 }
 
 #[derive(Serialize, Deserialize)]
