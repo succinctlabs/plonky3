@@ -372,15 +372,20 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         *batch_points,
                         batch_at_z
                     ) {
+
                         let log_height = log2_strict_usize(mat_dims.height) + self.fri.log_blowup;
 
+
                         let bits_reduced = log_max_height - log_height;
+
+                        println!("cycle-tracker-start: reverse bits len");
                         let rev_reduced_index = reverse_bits_len(index >> bits_reduced, log_height);
 
                         // A field mul with (field lookup then field exp)
                         let x = C::Val::generator()
                             * C::Val::two_adic_generator(log_height)
                                 .exp_u64(rev_reduced_index as u64);
+                        println!("cycle-tracker-end: reverse bits len");
 
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
                         let mut array_arg: [u32; 14] = [0u32; 14];
