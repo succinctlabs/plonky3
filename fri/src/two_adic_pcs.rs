@@ -337,6 +337,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
     ) -> Result<(), Self::Error> {
         // Batch combination challenge
         let alpha = <C::Challenger as CanSample<C::Challenge>>::sample(challenger);
+        let alpha_u32 = alpha.as_base_slice().iter().map(|x| x.as_canonical_u32()).collect::<Vec<_>>();
 
         let fri_challenges =
             verifier::verify_shape_and_sample_challenges(&self.fri, &proof.fri_proof, challenger)
@@ -387,12 +388,16 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         let mut array_idx = 0;
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
                         {
-                            // println!("cycle-tracker-start: alpha prelude");
-                            array_arg[array_idx] = x.as_canonical_u32();
-                            alpha.as_base_slice().iter().for_each(|x| {
+                            for i in 0..alpha_u32.len() {
                                 array_idx += 1;
-                                array_arg[array_idx] = x.as_canonical_u32();
-                            });
+                                array_arg[array_idx] = alpha_u32[i];
+                            }
+                            // println!("cycle-tracker-start: alpha prelude");
+                            // array_arg[array_idx] = x.as_canonical_u32();
+                            // alpha.as_base_slice().iter().for_each(|x| {
+                            //     array_idx += 1;
+                            //     array_arg[array_idx] = x.as_canonical_u32();
+                            // });
                             // println!("cycle-tracker-end: alpha prelude");
                         }
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
