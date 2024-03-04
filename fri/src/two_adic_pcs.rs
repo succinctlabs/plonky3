@@ -32,10 +32,10 @@ pub trait TwoAdicFriPcsGenericConfig: Default {
         + GrindingChallenger<Witness = Self::Val>
         + CanObserve<<Self::FriMmcs as Mmcs<Self::Challenge>>::Commitment>
         + CanSample<Self::Challenge>;
-    type Dft: TwoAdicSubgroupDft<Self::Val> + Copy;
+    type Dft: TwoAdicSubgroupDft<Self::Val>;
     type InputMmcs: 'static
-        + for<'a> DirectMmcs<Self::Val, Mat<'a> = RowMajorMatrixView<'a, Self::Val>> + Copy;
-    type FriMmcs: DirectMmcs<Self::Challenge> + Copy;
+        + for<'a> DirectMmcs<Self::Val, Mat<'a> = RowMajorMatrixView<'a, Self::Val>>;
+    type FriMmcs: DirectMmcs<Self::Challenge>;
 }
 
 pub struct TwoAdicFriPcsConfig<Val, Challenge, Challenger, Dft, InputMmcs, FriMmcs>(
@@ -58,9 +58,9 @@ where
         + GrindingChallenger<Witness = Val>
         + CanObserve<<FriMmcs as Mmcs<Challenge>>::Commitment>
         + CanSample<Challenge>,
-    Dft: TwoAdicSubgroupDft<Val> + Copy,
-    InputMmcs: 'static + for<'a> DirectMmcs<Val, Mat<'a> = RowMajorMatrixView<'a, Val>> + Copy,
-    FriMmcs: DirectMmcs<Challenge> + Copy,
+    Dft: TwoAdicSubgroupDft<Val>,
+    InputMmcs: 'static + for<'a> DirectMmcs<Val, Mat<'a> = RowMajorMatrixView<'a, Val>>,
+    FriMmcs: DirectMmcs<Challenge>,
 {
     type Val = Val;
     type Challenge = Challenge;
