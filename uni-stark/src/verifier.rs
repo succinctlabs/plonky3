@@ -51,9 +51,9 @@ where
 
     let local_and_next = [vec![zeta, zeta * g_subgroup]];
     let commits_and_points = &[
-        (commitments.trace.clone(), local_and_next.as_slice()),
+        (&commitments.trace, local_and_next.as_slice()),
         (
-            commitments.quotient_chunks.clone(),
+            &commitments.quotient_chunks,
             &[vec![zeta.exp_power_of_2(log_quotient_degree)]],
         ),
     ];
