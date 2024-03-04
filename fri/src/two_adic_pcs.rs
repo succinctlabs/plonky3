@@ -389,10 +389,14 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
                         {
                             array_arg[array_idx] = x.as_canonical_u32();
-                            for i in 0..alpha_u32.len() {
+                            alpha_u32.iter().for_each(|x| {
                                 array_idx += 1;
-                                array_arg[array_idx] = alpha_u32[i];
-                            }
+                                array_arg[array_idx] = x;
+                            });
+                            // for i in 0..alpha_u32.len() {
+                            //     array_idx += 1;
+                            //     array_arg[array_idx] = alpha_u32[i];
+                            // }
                             // println!("cycle-tracker-start: alpha prelude");
                             // array_arg[array_idx] = x.as_canonical_u32();
                             // alpha.as_base_slice().iter().for_each(|x| {
