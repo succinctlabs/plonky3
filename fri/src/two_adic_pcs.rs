@@ -329,7 +329,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
 
     fn verify_multi_batches(
         &self,
-        commits_and_points: &[(Self::Commitment, &[Vec<C::Challenge>])],
+        commits_and_points: &[(&Self::Commitment, &[Vec<C::Challenge>])],
         dims: &[Vec<Dimensions>],
         values: OpenedValues<C::Challenge>,
         proof: &Self::Proof,
