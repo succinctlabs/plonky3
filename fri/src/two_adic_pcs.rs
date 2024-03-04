@@ -386,13 +386,13 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         let mut array_idx = 0;
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
                         {
-                            println!("cycle-tracker-start: alpha prelude");
+                            // println!("cycle-tracker-start: alpha prelude");
                             array_arg[array_idx] = x.as_canonical_u32();
                             alpha.as_base_slice().iter().for_each(|x| {
                                 array_idx += 1;
                                 array_arg[array_idx] = x.as_canonical_u32();
                             });
-                            println!("cycle-tracker-end: alpha prelude");
+                            // println!("cycle-tracker-end: alpha prelude");
                         }
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
                         let save_arg: [*mut u32; 2] = [ro[log_height].as_base_slice_mut() as *mut u32, alpha_pow[log_height].as_base_slice_mut() as *mut u32];
