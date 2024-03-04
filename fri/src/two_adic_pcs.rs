@@ -401,7 +401,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                             for (&p_at_x, &p_at_z) in izip!(mat_opening, ps_at_z) {
                                 cfg_if::cfg_if! {
                                     if #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))] {
-                                        println!("cycle-tracker-start: fri fold prelude");
+                                        // println!("cycle-tracker-start: fri fold prelude");
                                         let mut idx = array_idx;
                                         z.as_base_slice().iter().for_each(|x| {
                                             idx += 1;
@@ -413,7 +413,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                                         });
                                         idx += 1;
                                         array_arg[idx] = p_at_x.as_canonical_u32();
-                                        println!("cycle-tracker-end: fri fold prelude");
+                                        // println!("cycle-tracker-end: fri fold prelude");
 
                                         unsafe {
                                             syscall_fri_fold((&array_arg).as_ptr(), (&save_arg).as_ptr());
