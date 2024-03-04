@@ -314,14 +314,6 @@ pub trait ExtensionField<Base: Field>: Field + AbstractExtensionField<Base> {
             None
         }
     }
-
-    fn as_base_slice_2(&self) -> &[Base] {
-        self.as_base_slice()
-    }
-
-    fn as_base_slice_2_mut(&mut self) -> *mut Base {
-        self.as_base_slice_mut()
-    }
 }
 
 impl<F: Field> ExtensionField<F> for F {
