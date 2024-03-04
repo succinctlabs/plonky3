@@ -43,7 +43,7 @@ where
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct CompressionFunctionFromHasher<T, H, const N: usize, const CHUNK: usize>
 where
     T: Clone,
