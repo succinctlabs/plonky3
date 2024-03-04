@@ -388,6 +388,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         let mut array_idx = 0;
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
                         {
+                            array_arg[array_idx] = x.as_canonical_u32();
                             for i in 0..alpha_u32.len() {
                                 array_idx += 1;
                                 array_arg[array_idx] = alpha_u32[i];
