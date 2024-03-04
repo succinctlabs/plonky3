@@ -6,7 +6,7 @@ use crate::permutation::CryptographicPermutation;
 /// A padding-free, overwrite-mode sponge function.
 ///
 /// `WIDTH` is the sponge's rate plus the sponge's capacity.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct PaddingFreeSponge<P, const WIDTH: usize, const RATE: usize, const OUT: usize> {
     permutation: P,
 }

@@ -20,7 +20,7 @@ pub const MATRIX_DIAG_24_BABYBEAR: [u64; 24] = [
     0x2fc5fbec, 0x770d61b0, 0x5715aae9, 0x03ef0e90, 0x75b6c770, 0x242adf5f, 0x00d0ca4c, 0x36c0e388,
 ];
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct DiffusionMatrixBabybear;
 
 impl<AF: AbstractField<F = BabyBear>> Permutation<[AF; 16]> for DiffusionMatrixBabybear {

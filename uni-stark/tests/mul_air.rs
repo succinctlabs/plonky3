@@ -73,14 +73,18 @@ fn test_prove_baby_bear() -> Result<(), VerificationError> {
     type Val = BabyBear;
     type Challenge = BinomialExtensionField<Val, 4>;
 
-    type Perm = Poseidon2<Val, DiffusionMatrixBabybear, 16, 7>;
-    let perm = Perm::new_from_rng(8, 22, DiffusionMatrixBabybear, &mut thread_rng());
+    const ROUNDS_F: usize = 8;
+    const ROUNDS_P: usize = 22;
+    const NUM_ROUNDS: usize = ROUNDS_F + ROUNDS_P;
+
+    type Perm = Poseidon2<Val, DiffusionMatrixBabybear, 16, NUM_ROUNDS, ROUNDS_F, ROUNDS_P, 7>;
+    let perm = Perm::new_from_rng(DiffusionMatrixBabybear, &mut thread_rng());
 
     type MyHash = PaddingFreeSponge<Perm, 16, 8, 8>;
-    let hash = MyHash::new(perm.clone());
+    let hash = MyHash::new(perm);
 
     type MyCompress = TruncatedPermutation<Perm, 2, 8, 16>;
-    let compress = MyCompress::new(perm.clone());
+    let compress = MyCompress::new(perm);
 
     type ValMmcs = FieldMerkleTreeMmcs<
         <Val as Field>::Packing,
@@ -92,7 +96,7 @@ fn test_prove_baby_bear() -> Result<(), VerificationError> {
     let val_mmcs = ValMmcs::new(hash, compress);
 
     type ChallengeMmcs = ExtensionMmcs<Val, Challenge, ValMmcs>;
-    let challenge_mmcs = ChallengeMmcs::new(val_mmcs.clone());
+    let challenge_mmcs = ChallengeMmcs::new(val_mmcs);
 
     type Dft = Radix2DitParallel;
     let dft = Dft {};
@@ -112,7 +116,7 @@ fn test_prove_baby_bear() -> Result<(), VerificationError> {
     type MyConfig = StarkConfig<Val, Challenge, Pcs, Challenger>;
     let config = StarkConfig::new(pcs);
 
-    let mut challenger = Challenger::new(perm.clone());
+    let mut challenger = Challenger::new(perm);
     let trace = random_valid_trace::<Val>(HEIGHT);
     let proof = prove::<MyConfig, _>(&config, &MulAir, &mut challenger, trace);
 

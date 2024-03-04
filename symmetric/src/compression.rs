@@ -13,7 +13,7 @@ pub trait PseudoCompressionFunction<T, const N: usize>: Clone {
 /// An `N`-to-1 compression function.
 pub trait CompressionFunction<T, const N: usize>: PseudoCompressionFunction<T, N> {}
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct TruncatedPermutation<InnerP, const N: usize, const CHUNK: usize, const WIDTH: usize> {
     inner_permutation: InnerP,
 }

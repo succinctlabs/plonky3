@@ -17,14 +17,17 @@ fn make_test_fri_pcs(log_degrees: &[usize]) {
     type Val = BabyBear;
     type Challenge = BinomialExtensionField<Val, 4>;
 
-    type Perm = Poseidon2<Val, DiffusionMatrixBabybear, 16, 7>;
-    let perm = Perm::new_from_rng(8, 22, DiffusionMatrixBabybear, &mut rng);
+    const ROUNDS_F: usize = 8;
+    const ROUNDS_P: usize = 22;
+    const NUM_ROUNDS: usize = ROUNDS_F + ROUNDS_P;
+    type Perm = Poseidon2<Val, DiffusionMatrixBabybear, 16, NUM_ROUNDS, ROUNDS_F, ROUNDS_P, 7>;
+    let perm = Perm::new_from_rng(DiffusionMatrixBabybear, &mut rng);
 
     type MyHash = PaddingFreeSponge<Perm, 16, 8, 8>;
-    let hash = MyHash::new(perm.clone());
+    let hash = MyHash::new(perm);
 
     type MyCompress = TruncatedPermutation<Perm, 2, 8, 16>;
-    let compress = MyCompress::new(perm.clone());
+    let compress = MyCompress::new(perm);
 
     type ValMmcs = FieldMerkleTreeMmcs<
         <Val as Field>::Packing,
@@ -36,7 +39,7 @@ fn make_test_fri_pcs(log_degrees: &[usize]) {
     let val_mmcs = ValMmcs::new(hash, compress);
 
     type ChallengeMmcs = ExtensionMmcs<Val, Challenge, ValMmcs>;
-    let challenge_mmcs = ChallengeMmcs::new(val_mmcs.clone());
+    let challenge_mmcs = ChallengeMmcs::new(val_mmcs);
 
     type Dft = Radix2DitParallel;
     let dft = Dft {};
@@ -53,7 +56,7 @@ fn make_test_fri_pcs(log_degrees: &[usize]) {
         TwoAdicFriPcs<TwoAdicFriPcsConfig<Val, Challenge, Challenger, Dft, ValMmcs, ChallengeMmcs>>;
     let pcs = Pcs::new(fri_config, dft, val_mmcs);
 
-    let mut challenger = Challenger::new(perm.clone());
+    let mut challenger = Challenger::new(perm);
 
     let polynomials = log_degrees
         .iter()

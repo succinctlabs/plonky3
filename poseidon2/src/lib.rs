@@ -27,36 +27,28 @@ use rand::Rng;
 const SUPPORTED_WIDTHS: [usize; 8] = [2, 3, 4, 8, 12, 16, 20, 24];
 
 /// The Poseidon2 permutation.
-#[derive(Clone)]
-pub struct Poseidon2<F, Diffusion, const WIDTH: usize, const D: u64> {
-    /// The number of external rounds.
-    rounds_f: usize,
-
-    /// The number of internal rounds.
-    rounds_p: usize,
-
+#[derive(Clone, Copy)]
+pub struct Poseidon2<F, Diffusion, const WIDTH: usize, const NUM_ROUNDS: usize, const ROUNDS_F: usize, const ROUNDS_P: usize, const D: u64> {
     /// The round constants.
-    constants: Vec<[F; WIDTH]>,
+    constants: [[F; WIDTH]; NUM_ROUNDS],
 
     /// The linear layer used in internal rounds (only needs diffusion property, not MDS).
     internal_linear_layer: Diffusion,
 }
 
-impl<F, Diffusion, const WIDTH: usize, const D: u64> Poseidon2<F, Diffusion, WIDTH, D>
+impl<F, Diffusion, const WIDTH: usize, const NUM_ROUNDS: usize, const ROUNDS_F: usize, const ROUNDS_P: usize, const D: u64> Poseidon2<F, Diffusion, WIDTH, NUM_ROUNDS, ROUNDS_F, ROUNDS_P, D>
 where
     F: PrimeField,
 {
     /// Create a new Poseidon2 configuration.
     pub fn new(
-        rounds_f: usize,
-        rounds_p: usize,
-        constants: Vec<[F; WIDTH]>,
+        constants: [[F; WIDTH]; NUM_ROUNDS],
         internal_linear_layer: Diffusion,
     ) -> Self {
         assert!(SUPPORTED_WIDTHS.contains(&WIDTH));
+        assert!(NUM_ROUNDS == ROUNDS_F + ROUNDS_P);
+
         Self {
-            rounds_f,
-            rounds_p,
             constants,
             internal_linear_layer,
         }
@@ -64,24 +56,21 @@ where
 
     /// Create a new Poseidon2 configuration with random parameters.
     pub fn new_from_rng<R: Rng>(
-        rounds_f: usize,
-        rounds_p: usize,
         internal_mds: Diffusion,
         rng: &mut R,
     ) -> Self
     where
         Standard: Distribution<F>,
     {
+        assert!(NUM_ROUNDS == ROUNDS_F + ROUNDS_P);
+
         let mut constants = Vec::new();
-        let rounds = rounds_f + rounds_p;
-        for _ in 0..rounds {
+        for _ in 0..NUM_ROUNDS {
             constants.push(rng.gen::<[F; WIDTH]>());
         }
 
         Self {
-            rounds_f,
-            rounds_p,
-            constants,
+            constants: constants.as_slice().try_into().unwrap(),
             internal_linear_layer: internal_mds,
         }
     }
@@ -114,8 +103,8 @@ where
     }
 }
 
-impl<AF, Diffusion, const WIDTH: usize, const D: u64> Permutation<[AF; WIDTH]>
-    for Poseidon2<AF::F, Diffusion, WIDTH, D>
+impl<AF, Diffusion, const WIDTH: usize, const NUM_ROUNDS: usize, const ROUNDS_F: usize, const ROUNDS_P: usize, const D: u64> Permutation<[AF; WIDTH]>
+    for Poseidon2<AF::F, Diffusion, WIDTH, NUM_ROUNDS, ROUNDS_F, ROUNDS_P, D>
 where
     AF: AbstractField,
     AF::F: PrimeField,
@@ -128,8 +117,8 @@ where
         external_linear_layer.permute_mut(state);
 
         // The first half of the external rounds.
-        let rounds = self.rounds_f + self.rounds_p;
-        let rounds_f_beginning = self.rounds_f / 2;
+        let rounds = ROUNDS_F + ROUNDS_P;
+        let rounds_f_beginning = ROUNDS_F / 2;
         for r in 0..rounds_f_beginning {
             self.add_rc(state, &self.constants[r]);
             self.sbox(state);
@@ -137,7 +126,7 @@ where
         }
 
         // The internal rounds.
-        let p_end = rounds_f_beginning + self.rounds_p;
+        let p_end = rounds_f_beginning + ROUNDS_P;
         for r in rounds_f_beginning..p_end {
             state[0] += AF::from_f(self.constants[r][0]);
             state[0] = self.sbox_p(&state[0]);
@@ -153,8 +142,8 @@ where
     }
 }
 
-impl<AF, Diffusion, const WIDTH: usize, const D: u64> CryptographicPermutation<[AF; WIDTH]>
-    for Poseidon2<AF::F, Diffusion, WIDTH, D>
+impl<AF, Diffusion, const WIDTH: usize, const NUM_ROUNDS: usize, const ROUNDS_F: usize, const ROUNDS_P: usize, const D: u64> CryptographicPermutation<[AF; WIDTH]>
+    for Poseidon2<AF::F, Diffusion, WIDTH, NUM_ROUNDS, ROUNDS_F, ROUNDS_P, D>
 where
     AF: AbstractField,
     AF::F: PrimeField,
@@ -205,6 +194,7 @@ mod tests {
         const D: u64 = 7;
         const ROUNDS_F: usize = 8;
         const ROUNDS_P: usize = 22;
+        const NUM_ROUNDS: usize = ROUNDS_F + ROUNDS_P;
 
         type F = Goldilocks;
 
@@ -227,10 +217,8 @@ mod tests {
             .collect();
 
         // Our Poseidon2 implementation.
-        let poseidon2: Poseidon2<Goldilocks, DiffusionMatrixGoldilocks, WIDTH, D> = Poseidon2::new(
-            ROUNDS_F,
-            ROUNDS_P,
-            round_constants,
+        let poseidon2: Poseidon2<Goldilocks, DiffusionMatrixGoldilocks, WIDTH, NUM_ROUNDS, ROUNDS_F, ROUNDS_P, D> = Poseidon2::new(
+            round_constants.try_into().unwrap(),
             DiffusionMatrixGoldilocks,
         );
 
@@ -272,6 +260,7 @@ mod tests {
         const D: u64 = 7;
         const ROUNDS_F: usize = 8;
         const ROUNDS_P: usize = 22;
+        const NUM_ROUNDS: usize = ROUNDS_F + ROUNDS_P;
 
         type F = Goldilocks;
 
@@ -294,10 +283,8 @@ mod tests {
             .collect();
 
         // Our Poseidon2 implementation.
-        let poseidon2: Poseidon2<Goldilocks, DiffusionMatrixGoldilocks, WIDTH, D> = Poseidon2::new(
-            ROUNDS_F,
-            ROUNDS_P,
-            round_constants,
+        let poseidon2: Poseidon2<Goldilocks, DiffusionMatrixGoldilocks, WIDTH, NUM_ROUNDS, ROUNDS_F, ROUNDS_P, D> = Poseidon2::new(
+            round_constants.try_into().unwrap(),
             DiffusionMatrixGoldilocks,
         );
 
@@ -339,6 +326,7 @@ mod tests {
         const D: u64 = 7;
         const ROUNDS_F: usize = 8;
         const ROUNDS_P: usize = 13;
+        const NUM_ROUNDS: usize = ROUNDS_F + ROUNDS_P;
 
         type F = BabyBear;
 
@@ -361,8 +349,8 @@ mod tests {
             .collect();
 
         // Our Poseidon2 implementation.
-        let poseidon2: Poseidon2<BabyBear, DiffusionMatrixBabybear, WIDTH, D> =
-            Poseidon2::new(ROUNDS_F, ROUNDS_P, round_constants, DiffusionMatrixBabybear);
+        let poseidon2: Poseidon2<BabyBear, DiffusionMatrixBabybear, WIDTH, NUM_ROUNDS, ROUNDS_F, ROUNDS_P, D> =
+            Poseidon2::new(round_constants.try_into().unwrap(), DiffusionMatrixBabybear);
 
         // Generate random input and convert to both BabyBear field formats.
         let input_u32 = rng.gen::<[u32; WIDTH]>();
