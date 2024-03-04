@@ -349,11 +349,13 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
             .iter()
             .zip(&fri_challenges.query_indices)
             .map(|(query_opening, &index)| {
+                println!("cycle-tracker-start: verify opening");
                 let mut ro = [C::Challenge::zero(); 32];
                 let mut alpha_pow = [C::Challenge::one(); 32];
                 for (batch_opening, batch_dims, (batch_commit, batch_points), batch_at_z) in
                     izip!(query_opening, dims, commits_and_points, &values)
                 {
+                    println!("cycle-tracker-start: verify opening batch");
                     self.mmcs.verify_batch(
                         batch_commit,
                         batch_dims,
@@ -361,6 +363,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         &batch_opening.opened_values,
                         &batch_opening.opening_proof,
                     )?;
+                    println!("cycle-tracker-end: verify opening batch");
                     for (mat_opening, mat_dims, mat_points, mat_at_z) in izip!(
                         &batch_opening.opened_values,
                         batch_dims,
@@ -383,11 +386,13 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         let mut array_idx = 0;
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
                         {
+                            println!("cycle-tracker-start: alpha prelude");
                             array_arg[array_idx] = x.as_canonical_u32();
                             alpha.as_base_slice().iter().for_each(|x| {
                                 array_idx += 1;
                                 array_arg[array_idx] = x.as_canonical_u32();
                             });
+                            println!("cycle-tracker-end: alpha prelude");
                         }
                         #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))]
                         let save_arg: [*mut u32; 2] = [ro[log_height].as_base_slice_mut() as *mut u32, alpha_pow[log_height].as_base_slice_mut() as *mut u32];
@@ -396,6 +401,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                             for (&p_at_x, &p_at_z) in izip!(mat_opening, ps_at_z) {
                                 cfg_if::cfg_if! {
                                     if #[cfg(all(target_os = "zkvm", target_arch = "riscv32"))] {
+                                        println!("cycle-tracker-start: fri fold prelude");
                                         let mut idx = array_idx;
                                         z.as_base_slice().iter().for_each(|x| {
                                             idx += 1;
@@ -407,6 +413,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                                         });
                                         idx += 1;
                                         array_arg[idx] = p_at_x.as_canonical_u32();
+                                        println!("cycle-tracker-end: fri fold prelude");
 
                                         unsafe {
                                             syscall_fri_fold((&array_arg).as_ptr(), (&save_arg).as_ptr());
@@ -421,11 +428,13 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         }
                     }
                 }
+                println!("cycle-tracker-end: verify opening");
                 Ok(ro)
             })
             .collect::<Result<Vec<_>, <C::InputMmcs as Mmcs<C::Val>>::Error>>()
             .map_err(VerificationError::InputMmcsError)?;
 
+        println!("cycle-tracker-start: verify challenges");
         verifier::verify_challenges(
             &self.fri,
             &proof.fri_proof,
@@ -433,6 +442,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
             &reduced_openings,
         )
         .map_err(VerificationError::FriError)?;
+        println!("cycle-tracker-end: verify challenges");
 
         Ok(())
     }
