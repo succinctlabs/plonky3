@@ -55,16 +55,43 @@ pub const fn reverse_bits(x: usize, n: usize) -> usize {
     reverse_bits_len(x, n.trailing_zeros() as usize)
 }
 
+// #[inline]
+// pub const fn reverse_bits_len(x: usize, bit_len: usize) -> usize {
+//     // NB: The only reason we need overflowing_shr() here as opposed
+//     // to plain '>>' is to accommodate the case n == num_bits == 0,
+//     // which would become `0 >> 64`. Rust thinks that any shift of 64
+//     // bits causes overflow, even when the argument is zero.
+//     x.reverse_bits()
+//         .overflowing_shr(usize::BITS - bit_len as u32)
+//         .0
+// }
+
 #[inline]
 pub const fn reverse_bits_len(x: usize, bit_len: usize) -> usize {
-    // NB: The only reason we need overflowing_shr() here as opposed
-    // to plain '>>' is to accommodate the case n == num_bits == 0,
-    // which would become `0 >> 64`. Rust thinks that any shift of 64
-    // bits causes overflow, even when the argument is zero.
-    x.reverse_bits()
-        .overflowing_shr(usize::BITS - bit_len as u32)
-        .0
+    let mut result = 0;
+    let mut i = 0;
+    while i < bit_len {
+        if (x & (1 << i)) != 0 {
+            result |= 1 << (bit_len - 1 - i);
+        }
+        i += 1;
+    }
+    result
 }
+
+// #[inline]
+// pub const fn reverse_bits_len(x: usize, bit_len: usize) -> usize {
+//     let mut result = 0;
+//     while i < 
+//     (0..bit_len).for_each(|i| {
+//         // Check if the i-th bit is set in x
+//         if (x & (1 << i)) != 0 {
+//             // Set the corresponding bit in the reversed position
+//             result |= 1 << (bit_len - 1 - i);
+//         }
+//     });
+//     result
+// }
 
 pub fn reverse_slice_index_bits<F>(vals: &mut [F]) {
     let n = vals.len();
