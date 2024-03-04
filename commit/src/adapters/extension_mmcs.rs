@@ -7,7 +7,7 @@ use p3_matrix::{Dimensions, Matrix, MatrixRows};
 
 use crate::{DirectMmcs, Mmcs};
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct ExtensionMmcs<F, EF, InnerMmcs> {
     inner: InnerMmcs,
     _phantom: PhantomData<(F, EF)>,

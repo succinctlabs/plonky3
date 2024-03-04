@@ -54,7 +54,6 @@ where
         internal_linear_layer: Diffusion,
     ) -> Self {
         assert!(SUPPORTED_WIDTHS.contains(&WIDTH));
-
         Self {
             rounds_f,
             rounds_p,
