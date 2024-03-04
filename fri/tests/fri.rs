@@ -19,11 +19,7 @@ use rand_chacha::ChaCha20Rng;
 type Val = BabyBear;
 type Challenge = BinomialExtensionField<Val, 4>;
 
-const ROUNDS_F: usize = 8;
-const ROUNDS_P: usize = 22;
-const NUM_ROUNDS: usize = ROUNDS_F + ROUNDS_P;
-
-type Perm = Poseidon2<Val, DiffusionMatrixBabybear, 16, NUM_ROUNDS, ROUNDS_F, ROUNDS_P, 7>;
+type Perm = Poseidon2<Val, DiffusionMatrixBabybear, 16, 7>;
 type MyHash = PaddingFreeSponge<Perm, 16, 8, 8>;
 type MyCompress = TruncatedPermutation<Perm, 2, 8, 16>;
 type ValMmcs =
@@ -33,9 +29,9 @@ type Challenger = DuplexChallenger<Val, Perm, 16>;
 type MyFriConfig = FriConfig<ChallengeMmcs>;
 
 fn get_ldt_for_testing<R: Rng>(rng: &mut R) -> (Perm, MyFriConfig) {
-    let perm = Perm::new_from_rng(DiffusionMatrixBabybear, rng);
-    let hash = MyHash::new(perm);
-    let compress = MyCompress::new(perm);
+    let perm = Perm::new_from_rng(8, 22, DiffusionMatrixBabybear, rng);
+    let hash = MyHash::new(perm.clone());
+    let compress = MyCompress::new(perm.clone());
     let mmcs = ChallengeMmcs::new(ValMmcs::new(hash, compress));
     let fri_config = FriConfig {
         log_blowup: 1,
@@ -63,7 +59,7 @@ fn do_test_fri_ldt<R: Rng>(rng: &mut R) {
 
     let (proof, reduced_openings, p_sample) = {
         // Prover world
-        let mut chal = Challenger::new(perm);
+        let mut chal = Challenger::new(perm.clone());
         let alpha: Challenge = chal.sample_ext_element();
 
         let input: [_; 32] = core::array::from_fn(|log_height| {
