@@ -364,6 +364,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                         &batch_opening.opening_proof,
                     )?;
                     println!("cycle-tracker-end: verify opening batch");
+                    println!("cycle-tracker-start: fri fold");
                     for (mat_opening, mat_dims, mat_points, mat_at_z) in izip!(
                         &batch_opening.opened_values,
                         batch_dims,
@@ -427,6 +428,7 @@ impl<C: TwoAdicFriPcsGenericConfig, In: MatrixRows<C::Val>>
                             }
                         }
                     }
+                    println!("cycle-tracker-end: fri fold");
                 }
                 println!("cycle-tracker-end: verify opening");
                 Ok(ro)
