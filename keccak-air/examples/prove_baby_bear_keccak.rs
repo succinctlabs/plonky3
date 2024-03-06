@@ -48,7 +48,7 @@ fn main() -> Result<(), VerificationError> {
     type Dft = Radix2DitParallel;
     let dft = Dft {};
 
-    type Challenger = SerializingChallenger32<Val, HashChallenger<u8, ByteHash, 32>>;
+    type Challenger = SerializingChallenger32<Val, u8, HashChallenger<u8, ByteHash, 32>>;
 
     let fri_config = FriConfig {
         log_blowup: 1,
