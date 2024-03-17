@@ -58,7 +58,7 @@ where
     x.iter_mut().zip(y).for_each(|(x_i, y_i)| *x_i += y_i * s);
 }
 
-/// Extend a field `AF` element `x` to an arry of length `D`
+/// Extend a field `AF` element `x` to an array of length `D`
 /// by filling zeros.
 pub fn field_to_array<AF: AbstractField, const D: usize>(x: AF) -> [AF; D] {
     let mut arr = array::from_fn(|_| AF::zero());
@@ -98,4 +98,32 @@ pub fn eval_poly<AF: AbstractField>(poly: &[AF], x: AF) -> AF {
         acc += coeff.clone();
     }
     acc
+}
+
+/// Given an element x from a 32 bit field F_P compute x/2.
+#[inline]
+pub fn halve_u32<const P: u32>(input: u32) -> u32 {
+    let shift = (P + 1) >> 1;
+    let shr = input >> 1;
+    let lo_bit = input & 1;
+    let shr_corr = shr + shift;
+    if lo_bit == 0 {
+        shr
+    } else {
+        shr_corr
+    }
+}
+
+/// Given an element x from a 64 bit field F_P compute x/2.
+#[inline]
+pub fn halve_u64<const P: u64>(input: u64) -> u64 {
+    let shift = (P + 1) >> 1;
+    let shr = input >> 1;
+    let lo_bit = input & 1;
+    let shr_corr = shr + shift;
+    if lo_bit == 0 {
+        shr
+    } else {
+        shr_corr
+    }
 }
